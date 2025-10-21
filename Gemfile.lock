@@ -93,6 +93,7 @@ GEM
     airbrussh (1.5.3)
       sshkit (>= 1.6.1, != 1.7.0)
     base64 (0.3.0)
+    bcrypt_pbkdf (1.1.1)
     benchmark (0.4.1)
     bigdecimal (3.3.1)
     bindex (0.8.1)
@@ -125,6 +126,7 @@ GEM
       irb (~> 1.10)
       reline (>= 0.3.8)
     drb (2.2.3)
+    ed25519 (1.4.0)
     erb (5.1.1)
     erubi (1.13.1)
     geocoder (1.8.6)
@@ -362,12 +364,14 @@ PLATFORMS
 
 DEPENDENCIES
   activerecord-postgis-adapter
+  bcrypt_pbkdf (>= 1.0, < 2.0)
   bootsnap
   capistrano
   capybara
   chartkick
   cssbundling-rails
   debug
+  ed25519 (>= 1.2, < 2.0)
   geocoder
   jbuilder
   jsbundling-rails
