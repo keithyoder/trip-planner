@@ -58,3 +58,4 @@ build-iPhoneSimulator/
 # .rubocop-https?--*
 
 /config/credentials/production.key
+/config/master.key
