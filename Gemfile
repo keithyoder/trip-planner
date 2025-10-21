@@ -30,6 +30,10 @@ gem "jbuilder"
 # Use Redis adapter to run Action Cable in production
 gem "redis", "~> 4.0"
 gem 'capistrano'
+gem 'capistrano-rails', require: false
+gem 'capistrano-bundler', require: false
+gem 'capistrano-rbenv', require: false
+gem 'capistrano-passenger', require: false
 gem "pg"
 gem "money"
 gem 'activerecord-postgis-adapter'

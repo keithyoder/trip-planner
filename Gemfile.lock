@@ -105,6 +105,16 @@ GEM
       i18n
       rake (>= 10.0.0)
       sshkit (>= 1.9.0)
+    capistrano-bundler (2.1.1)
+      capistrano (~> 3.1)
+    capistrano-passenger (0.2.1)
+      capistrano (~> 3.0)
+    capistrano-rails (1.7.0)
+      capistrano (~> 3.1)
+      capistrano-bundler (>= 1.1, < 3)
+    capistrano-rbenv (2.2.0)
+      capistrano (~> 3.1)
+      sshkit (~> 1.3)
     capybara (3.40.0)
       addressable
       matrix
@@ -371,6 +381,10 @@ DEPENDENCIES
   bcrypt_pbkdf (>= 1.0, < 2.0)
   bootsnap
   capistrano
+  capistrano-bundler
+  capistrano-passenger
+  capistrano-rails
+  capistrano-rbenv
   capybara
   chartkick
   cssbundling-rails
