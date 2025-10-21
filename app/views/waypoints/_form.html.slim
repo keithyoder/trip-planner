@@ -1,0 +1,27 @@
+= form_with(model: [@trip, waypoint]) do |form|
+  - if waypoint.errors.any?
+    div[style="color: red"]
+      h2
+        = pluralize(waypoint.errors.count, "error")
+        |  prohibited this waypoint from being saved:
+      ul
+        - waypoint.errors.each do |error|
+          li
+            = error.full_message
+  div
+    = form.label :name, style: "display: block"
+    = form.text_field :name
+  div
+    = form.label :sequence, style: "display: block"
+    = form.number_field :sequence
+  div
+    = form.label :waypoint_type, style: "display: block"
+    = form.select :waypoint_type, options_for_select(Waypoint.waypoint_types.map { |key, value| [key.humanize, Waypoint.waypoint_types.key(value)]}, @waypoint.waypoint_type), { include_blank: false }
+  div
+    = form.label :latlon, style: "display: block"
+    = form.text_field :latlon
+  div
+    = form.label :toll, style: "display: block"
+    = form.number_field :toll
+  div
+    = form.submit

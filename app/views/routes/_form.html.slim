@@ -1,0 +1,18 @@
+= form_with(model: [@trip, route]) do |form|
+  - if route.errors.any?
+    div[style="color: red"]
+      h2
+        = pluralize(route.errors.count, "error")
+        |  prohibited this route from being saved:
+      ul
+        - route.errors.each do |error|
+          li
+            = error.full_message
+  div
+    = form.label :waypoint_start_id, style: "display: block"
+    = form.select :waypoint_start_id, options_for_select(@trip.waypoints.order(:sequence).map { |w| ["#{w.sequence} - #{w.name}", w.id] }, route.waypoint_start), { include_blank: false }
+  div
+    = form.label :waypoint_end_id, style: "display: block"
+    = form.select :waypoint_end_id, options_for_select(@trip.waypoints.order(:sequence).map { |w| ["#{w.sequence} - #{w.name}", w.id] }, route.waypoint_end), { include_blank: false }
+  div
+    = form.submit

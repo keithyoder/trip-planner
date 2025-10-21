@@ -1,0 +1,11 @@
+p[style="color: green"]
+  = notice
+div[data-controller="maps"]
+  #mycontainer[data-maps-target="container" class="h-[25rem] w-auto"style="min-height: 800px;" data-lon="#{@waypoint.lonlat.y}" data-lat="#{@waypoint.lonlat.x}"]
+= render @waypoint
+= image_tag "https://tiles.stadiamaps.com/static/outdoors.png?api_key=765f44f6-f827-4cb3-822b-3dfa00386480&center=#{@waypoint.lonlat.y},#{@waypoint.lonlat.x}&zoom=14&size=700x500"
+div
+  = link_to "Edit this waypoint", edit_trip_waypoint_path(@trip, @waypoint)
+  |  | 
+  = link_to "Back to waypoints", trip_waypoints_path(@trip)
+  = button_to "Destroy this waypoint", [@trip, @waypoint], method: :delete

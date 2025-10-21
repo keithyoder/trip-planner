@@ -1,0 +1,19 @@
+p[style="color: green"]
+  = notice
+h1
+  | Trips
+#trips
+  .table-responsive
+    table.table.table-striped
+      thead
+        tr 
+          th Name
+          th Start Date
+          th Distance
+      tbody
+        - @trips.each do |trip|
+          tr 
+            td =link_to trip.name, trip
+            td =trip.start_on
+            td =trip.track&.distance&.km&.round&.to_i
+= link_to "New Trip", new_trip_path
