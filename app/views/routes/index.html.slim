@@ -1,0 +1,23 @@
+p[style="color: green"]
+  = notice
+h1
+  | Routes
+#routes
+  .table-responsive
+    table.table.table-striped
+      thead
+        tr 
+          th Day
+          th Route 
+          th Distance
+          th Driving Time
+          th Stopped Time
+      tbody
+        - @routes.each do |route|
+          tr 
+            td =route.date
+            td =link_to route.route_name, trip_route_url(route.trip, route.route_id)
+            td ="#{route.distance&.km&.round&.to_i} km"
+            td =route.driving_duration.inspect
+            td =route.stopped_time.inspect
+= link_to "New Route", new_trip_route_path(@trip)

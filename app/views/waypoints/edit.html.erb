@@ -1,0 +1,10 @@
+<h1>Editing waypoint</h1>
+
+<%= render "form", waypoint: @waypoint %>
+
+<br>
+
+<div>
+  <%= link_to "Show this waypoint", [@trip, @waypoint] %> |
+  <%= link_to "Back to waypoints", trip_waypoints_path(@trip) %>
+</div>

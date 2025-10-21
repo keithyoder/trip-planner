@@ -1,0 +1,12 @@
+- cor = defined?(cor) ? cor : 'bg-primary'
+div class=("card border-secondary m-1 p-0 #{cor}") 
+  .card-header
+    = campo
+  .card-text.d-flex.align-items-end.justify-content-end.text-end.m-2[style="height: 3rem;"]
+    -if defined?(link)
+      = link_to link, class: "stretched-link" do
+        = valor
+        | &nbsp
+    -else
+      = valor
+      | &nbsp

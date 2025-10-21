@@ -1,0 +1,13 @@
+.card-header
+  .row
+    .col-sm
+      h3
+        => link_to({controller: controller.controller_name, action: :index, params: params.permitted? ? params : {}}, class: "btn btn-sm btn-outline-dark") do
+          i.bi.bi-backspace[aria-hidden="true"]
+        - if true #if can? :update, object
+          => link_to({controller: controller.controller_name, action: :edit, id: object}, class: "btn btn-sm btn-outline-dark") do
+            i.bi.bi-pencil-fill[aria-hidden="true"]
+        = defined?(titulo) ? titulo.html_safe : object.model_name.singular.capitalize + ' ' + object.nome
+    /.d-print-none.col-sm-2[align="right"]
+    /  = link_to(current_page_params.merge(format: :pdf), class: "btn btn-sm btn-outline-dark", target: "_blank") do
+    /    i.bi.bi-printer-fill[aria-hidden="true"]

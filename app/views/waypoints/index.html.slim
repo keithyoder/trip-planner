@@ -1,0 +1,27 @@
+p[style="color: green"]
+  = notice
+h1
+  | Waypoints
+#waypoints
+  .table-responsive
+    table.table.table-striped
+      thead
+        tr 
+          th Sequence
+          th Type
+          th Name
+          th Location
+          th Toll 
+          th Segment Distance 
+          th Trip Distance
+      tbody
+        - @waypoints.each do |waypoint|
+          tr 
+            td =waypoint.sequence
+            td =waypoint.waypoint_type.to_s.titleize
+            td =link_to waypoint.name, [waypoint.trip, waypoint.waypoint]
+            td =waypoint.location
+            td =format_currency(waypoint)
+            td =waypoint.segment_distance&.km 
+            td =number_with_delimiter(waypoint.trip_distance&.km&.round.to_i)
+= link_to "New Waypoint", new_trip_waypoint_path(@trip)
