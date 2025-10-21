@@ -11,8 +11,8 @@ default: &default
 
 development:
   <<: *default
-  database: trip
-  # url: postgis://trip:10515bch@www2.tessi.com.br/trip
+  #database: trip
+  url: <%= ENV['DATABASE_URL'] %>
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -23,4 +23,4 @@ test:
 
 production:
   <<: *default
-  database: trip
+  url: <%= Rails.application.credentials.dig(:database_url) %>
