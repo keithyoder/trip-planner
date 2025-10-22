@@ -27,12 +27,18 @@ export default class extends Controller {
     
     // Initialize the map and store it as an instance variable
     this.map = L.map(this.containerTarget).setView([lat, lon], 6);
+    
+    // Store original bounds (will be set after route is displayed)
+    this.originalBounds = null;
 
     // Add tile layer
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(this.map);
+    
+    // Add custom reset view control
+    this.addResetViewControl();
     
     console.log("Map initialized");
     
@@ -91,6 +97,7 @@ export default class extends Controller {
           // Fit map to show all segments
           if (bounds.isValid()) {
             this.map.fitBounds(bounds);
+            this.originalBounds = bounds; // Save original bounds
             console.log("Map fitted to route bounds");
           }
           
@@ -120,6 +127,7 @@ export default class extends Controller {
           }).addTo(this.map);
           
           this.map.fitBounds(polyline.getBounds());
+          this.originalBounds = polyline.getBounds(); // Save original bounds
           
           // Add markers
           L.marker(coords[0]).addTo(this.map).bindPopup('Start');
@@ -191,6 +199,48 @@ export default class extends Controller {
     } catch (error) {
       console.error("Error parsing LINESTRING:", error);
       return [];
+    }
+  }
+
+  addResetViewControl() {
+    // Create a custom Leaflet control for the reset button
+    const ResetControl = L.Control.extend({
+      options: {
+        position: 'topleft'
+      },
+      
+      onAdd: (map) => {
+        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+        
+        const link = L.DomUtil.create('a', '', container);
+        link.href = '#';
+        link.title = 'Reset view to show entire route';
+        link.setAttribute('role', 'button');
+        link.setAttribute('aria-label', 'Reset view');
+        link.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+        
+        link.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.resetView();
+        };
+        
+        // Prevent map drag when clicking the button
+        L.DomEvent.disableClickPropagation(container);
+        
+        return container;
+      }
+    });
+    
+    this.map.addControl(new ResetControl());
+  }
+
+  resetView() {
+    if (this.originalBounds) {
+      this.map.fitBounds(this.originalBounds);
+      console.log("View reset to original bounds");
+    } else {
+      console.warn("No original bounds saved");
     }
   }
 
