@@ -59,3 +59,4 @@ build-iPhoneSimulator/
 
 /config/credentials/production.key
 /config/master.key
+/public/assets
