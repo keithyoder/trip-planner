@@ -1,4 +1,5 @@
 class TripsController < ApplicationController
+  layout 'welcome'
   before_action :set_trip, only: %i[ show edit update destroy ]
 
   # GET /trips or /trips.json

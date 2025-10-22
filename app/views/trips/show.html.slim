@@ -15,9 +15,9 @@
             p.text-muted.mb-0 = @trip.start_on.strftime("Starting on %B %d, %Y")
         
         .btn-group role="group"
-          = link_to edit_trip_path(@trip), class: "btn btn-outline-primary" do
+          = link_to trip_routes_path(@trip), class: "btn btn-outline-primary" do
             i.bi.bi-pencil-square.me-2
-            | Edit Trip
+            | Trip Routes
           = link_to trips_path, class: "btn btn-outline-secondary" do
             i.bi.bi-arrow-left.me-2
             | Back
