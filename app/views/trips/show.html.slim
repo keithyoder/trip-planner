@@ -1,12 +1,71 @@
-p[style="color: green"]
-  = notice
-= render @trip
-
-div[data-controller="routes"]
-  #routescontainer[data-routes-target="container" class="h-[25rem] w-50"style="min-height: 500px;" data-lon="34.5" data-lat="-8.5" data-route="#{@trip.track&.geom&.to_s}"]
-
-div
-  = link_to "Edit this trip", edit_trip_path(@trip)
-  |  | 
-  = link_to "Back to trips", trips_path
-  = button_to "Destroy this trip", @trip, method: :delete
+.container-fluid.py-4
+  / Flash notice
+  - if notice
+    .alert.alert-success.alert-dismissible.fade.show role="alert"
+      = notice
+      button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+  
+  .row
+    .col-12
+      / Trip header with title and actions
+      .d-flex.justify-content-between.align-items-center.mb-4
+        div
+          h1.display-5.fw-bold.mb-1 = @trip.name || "Trip Details"
+          - if @trip.start_on
+            p.text-muted.mb-0 = @trip.start_on.strftime("Starting on %B %d, %Y")
+        
+        .btn-group role="group"
+          = link_to edit_trip_path(@trip), class: "btn btn-outline-primary" do
+            i.bi.bi-pencil-square.me-2
+            | Edit Trip
+          = link_to trips_path, class: "btn btn-outline-secondary" do
+            i.bi.bi-arrow-left.me-2
+            | Back
+  
+  .row.g-4
+    / Map section - takes full width on mobile, 8 cols on larger screens
+    .col-lg-8
+      .card.shadow-sm.h-100
+        .card-header.bg-white.border-bottom
+          h5.card-title.mb-0
+            i.bi.bi-map.me-2
+            | Route Map
+        .card-body.p-0
+          div[data-controller="routes"]
+            #routescontainer.w-100[
+              data-routes-target="container" 
+              style="min-height: 500px; height: 60vh;" 
+              data-lon="34.5" 
+              data-lat="-8.5" 
+              data-route="#{@trip.track&.geom&.to_s}"
+            ]
+    
+    / Trip details sidebar
+    .col-lg-4
+      .card.shadow-sm.mb-4
+        .card-header.bg-white.border-bottom
+          h5.card-title.mb-0
+            i.bi.bi-info-circle.me-2
+            | Trip Information
+        .card-body
+          = render @trip
+      
+/ Optional: Add custom styles
+css:
+  .card {
+    border-radius: 0.5rem;
+  }
+  
+  .card-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  #routescontainer {
+    border-radius: 0 0 0.5rem 0.5rem;
+  }
+  
+  @media (max-width: 991px) {
+    #routescontainer {
+      height: 400px !important;
+    }
+  }
