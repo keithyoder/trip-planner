@@ -1,0 +1,29 @@
+div[id=dom_id(trip)]
+  .row.g-3
+    .col-md-6
+      .info-item
+        small.text-muted.d-block.mb-1
+          i.bi.bi-tag.me-1
+          | Trip Name
+        p.mb-0.fw-semibold = trip.name
+    
+    .col-md-6
+      .info-item
+        small.text-muted.d-block.mb-1
+          i.bi.bi-calendar-event.me-1
+          | Start Date
+        p.mb-0.fw-semibold = trip.start_on&.strftime("%B %d, %Y") || "Not set"
+    
+    .col-md-6
+      .info-item
+        small.text-muted.d-block.mb-1
+          i.bi.bi-sign-turn-right.me-1
+          | Distance (km)
+        p.mb-0.fw-semibold = number_with_delimiter(trip.distance&.km&.to_i) || 'N/A'
+    
+    .col-md-6
+      .info-item
+        small.text-muted.d-block.mb-1
+          i.bi.bi-hourglass-split.me-1
+          | Duration
+        p.mb-0.fw-semibold = trip.duration_days ? "#{trip.duration_days.to_i} #{'day'.pluralize(trip.duration_days)}" : 'N/A'

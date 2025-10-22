@@ -1,19 +1,66 @@
-p[style="color: green"]
-  = notice
-h1
-  | Trips
-#trips
-  .table-responsive
-    table.table.table-striped
-      thead
-        tr 
-          th Name
-          th Start Date
-          th Distance
-      tbody
-        - @trips.each do |trip|
-          tr 
-            td =link_to trip.name, trip
-            td =trip.start_on
-            td =trip.track&.distance&.km&.round&.to_i
-= link_to "New Trip", new_trip_path
+.container-fluid.py-4
+  - if notice
+    .alert.alert-success.alert-dismissible.fade.show role="alert"
+      = notice
+      button.btn-close type="button" data-bs-dismiss="alert"
+  
+  .row.mb-4
+    .col-12
+      .d-flex.justify-content-between.align-items-center
+        div
+          h1.display-5.fw-bold.mb-1
+            i.bi.bi-suitcase-lg.me-2
+            | My Trips
+          p.text-muted.mb-0 Plan and manage your adventures
+        = link_to new_trip_path, class: "btn btn-primary btn-lg" do
+          i.bi.bi-plus-circle.me-2
+          | New Trip
+  
+  - if @trips.any?
+    .row.row-cols-1.row-cols-md-2.row-cols-lg-3.g-4
+      - @trips.each do |trip|
+        .col
+          .card.shadow-sm.h-100.trip-card
+            .card-header.bg-white.border-bottom
+              h5.card-title.mb-0
+                = link_to trip, class: "text-decoration-none text-dark" do
+                  i.bi.bi-map.me-2
+                  = trip.name
+            .card-body
+              .row.g-2.mb-3
+                .col-6
+                  small.text-muted.d-block
+                    i.bi.bi-calendar-event.me-1
+                    | Start Date
+                  strong.d-block = trip.start_on&.strftime("%b %d, %Y") || "Not set"
+                .col-6
+                  small.text-muted.d-block
+                    i.bi.bi-sign-turn-right.me-1
+                    | Distance
+                  strong.d-block = trip.distance ? "#{number_with_delimiter(number_with_delimiter(trip.distance&.km&.to_i))} km" : "N/A"
+              - if trip.duration_days
+                .mb-2
+                  small.text-muted
+                    i.bi.bi-hourglass-split.me-1
+                    | Duration:
+                  strong<> = "#{trip.duration_days.to_i} #{'day'.pluralize(trip.duration_days)}"
+            .card-footer.bg-white.border-top
+              .d-flex.gap-2
+                = link_to trip, class: "btn btn-sm btn-outline-primary flex-fill" do
+                  i.bi.bi-eye.me-1
+                  | View
+                = link_to edit_trip_path(trip), class: "btn btn-sm btn-outline-secondary" do
+                  i.bi.bi-pencil
+                = button_to trip, method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete this trip?" } } do
+                  i.bi.bi-trash
+  - else
+    .row
+      .col-12
+        .card.shadow-sm.text-center.py-5
+          .card-body
+            i.bi.bi-suitcase.text-muted style="font-size: 4rem;"
+            h3.mt-3.mb-2 No trips yet
+            p.text-muted.mb-4 Start planning your first adventure!
+            = link_to new_trip_path, class: "btn btn-primary btn-lg" do
+              i.bi.bi-plus-circle.me-2
+              | Create Your First Trip
