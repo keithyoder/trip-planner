@@ -1,0 +1,42 @@
+= form_with(model: trip, local: true, html: { class: "trip-form" }) do |form|
+  / Error messages
+  - if trip.errors.any?
+    .alert.alert-danger.alert-dismissible.fade.show role="alert"
+      button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+      h5.alert-heading
+        i.bi.bi-exclamation-triangle.me-2
+        = pluralize(trip.errors.count, "error")
+        |  prohibited this trip from being saved:
+      ul.mb-0
+        - trip.errors.full_messages.each do |message|
+          li = message
+  
+  / Trip Name
+  .mb-3
+    = form.label :name, class: "form-label fw-semibold"
+      | Trip Name
+      span.text-danger<>  *
+    = form.text_field :name, class: "form-control form-control-lg", placeholder: "e.g., Summer Road Trip 2025", required: true
+    small.form-text.text-muted Give your trip a memorable name
+  
+  / Description
+  .mb-3
+    = form.label :description, class: "form-label fw-semibold" do
+      | Description
+    = form.text_area :description, rows: 4, class: "form-control", placeholder: "Describe your trip, destinations, or special notes..."
+    small.form-text.text-muted Optional details about your trip
+  
+  / Start Date
+  .row.mb-3
+    .col-md-6
+      = form.label :start_on, class: "form-label fw-semibold" do
+        | Start Date
+      = form.date_field :start_on, class: "form-control"
+        
+  / Form Actions
+  .d-flex.gap-2.mt-4.pt-3.border-top
+    = form.submit class: "btn btn-primary btn-lg px-4" do
+      i.bi.bi-check-circle.me-2
+      | Save Changes
+    
+    = link_to "Cancel", trip.persisted? ? trip : trips_path, class: "btn btn-outline-secondary btn-lg px-4"
