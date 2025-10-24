@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_07_17_001153) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_24_142254) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "ltree"
   enable_extension "plpgsql"
@@ -19,11 +19,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_17_001153) do
   create_table "boundaries", force: :cascade do |t|
     t.string "name"
     t.integer "level"
-    t.geography "geom", limit: {:srid=>4326, :type=>"multi_polygon", :geographic=>true}
+    t.geography "geom", limit: {srid: 4326, type: "multi_polygon", geographic: true}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.ltree "hierarchy"
-    t.geography "admin_point", limit: {:srid=>4326, :type=>"st_point", :geographic=>true}
+    t.geography "admin_point", limit: {srid: 4326, type: "st_point", geographic: true}
     t.integer "osm_id"
     t.bigint "admin_node_id"
     t.string "timezone"
@@ -47,7 +47,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_17_001153) do
     t.string "province"
     t.string "state"
     t.string "street"
-    t.geography "geom", limit: {:srid=>4326, :type=>"st_point", :geographic=>true}
+    t.geography "geom", limit: {srid: 4326, type: "st_point", geographic: true}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -56,7 +56,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_17_001153) do
     t.bigint "waypoint_start_id", null: false
     t.bigint "waypoint_end_id", null: false
     t.jsonb "segments"
-    t.geography "geom", limit: {:srid=>4326, :type=>"line_string", :has_z=>true, :has_m=>true, :geographic=>true}
+    t.geography "geom", limit: {srid: 4326, type: "line_string", has_z: true, has_m: true, geographic: true}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.interval "start_time"
@@ -75,11 +75,28 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_17_001153) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "users", force: :cascade do |t|
+    t.string "email", default: "", null: false
+    t.string "provider"
+    t.string "uid"
+    t.string "name"
+    t.string "avatar_url"
+    t.integer "sign_in_count", default: 0, null: false
+    t.datetime "current_sign_in_at"
+    t.datetime "last_sign_in_at"
+    t.string "current_sign_in_ip"
+    t.string "last_sign_in_ip"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
+  end
+
   create_table "waypoints", force: :cascade do |t|
     t.string "name"
     t.string "address"
     t.integer "sequence"
-    t.geography "lonlat", limit: {:srid=>4326, :type=>"st_point", :geographic=>true}
+    t.geography "lonlat", limit: {srid: 4326, type: "st_point", geographic: true}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "waypoint_type"
@@ -97,11 +114,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_17_001153) do
   add_foreign_key "routes", "waypoints", column: "waypoint_start_id"
   add_foreign_key "waypoints", "trips"
 
-  create_view "route_tracks", sql_definition: <<-SQL
-      SELECT (st_union((routes.geom)::geometry))::geography AS track,
-      st_length((st_union((routes.geom)::geometry))::geography) AS distance
-     FROM routes;
-  SQL
   create_view "route_elevations", sql_definition: <<-SQL
       SELECT routes.id AS route_id,
       (route_points.dp).path[1] AS index,
@@ -116,12 +128,54 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_17_001153) do
       routes
     WHERE (route_points.id = routes.id);
   SQL
+  create_view "route_sequences", sql_definition: <<-SQL
+      WITH r1 AS (
+           SELECT routes.id AS route_id,
+              routes.trip_id,
+              w1.sequence,
+              (((w1.name)::text || ' - '::text) || (w2.name)::text) AS route_name,
+              ((sum(w3.delay) || ' seconds'::text))::interval AS stopped_time,
+              st_length(routes.geom) AS distance,
+              (((st_m(st_endpoint((routes.geom)::geometry)) - st_m(st_startpoint((routes.geom)::geometry))) || ' second'::text))::interval AS duration
+             FROM routes,
+              waypoints w1,
+              waypoints w2,
+              waypoints w3
+            WHERE ((routes.waypoint_start_id = w1.id) AND (routes.waypoint_end_id = w2.id) AND (routes.trip_id = w1.trip_id) AND (routes.trip_id = w2.trip_id) AND (routes.trip_id = w3.trip_id) AND ((w3.sequence >= w1.sequence) AND (w3.sequence <= w2.sequence)))
+            GROUP BY routes.id, w1.sequence, w1.name, w2.name
+          ), r2 AS (
+           SELECT routes.id,
+              routes.trip_id,
+              routes.start_time,
+              waypoints.sequence
+             FROM routes,
+              waypoints
+            WHERE (routes.waypoint_start_id = waypoints.id)
+          )
+   SELECT r1.route_id,
+      r1.trip_id,
+      r1.sequence,
+      r1.route_name,
+      r1.stopped_time,
+      r1.distance,
+      r1.duration,
+      sum(r2.start_time) AS start_time_sequence
+     FROM (r1
+       LEFT JOIN r2 ON (((r2.sequence <= r1.sequence) AND (r2.trip_id = r1.trip_id))))
+    GROUP BY r1.trip_id, r1.route_id, r1.sequence, r1.route_name, r1.stopped_time, r1.distance, r1.duration
+    ORDER BY r1.trip_id;
+  SQL
+  create_view "route_tracks", sql_definition: <<-SQL
+      SELECT (st_union((geom)::geometry))::geography AS track,
+      st_length((st_union((geom)::geometry))::geography) AS distance
+     FROM routes;
+  SQL
   create_view "trip_tracks", sql_definition: <<-SQL
-      SELECT routes.trip_id,
-      (st_union((routes.geom)::geometry))::geography AS geom,
-      st_length((st_union((routes.geom)::geometry))::geography) AS distance
+      SELECT trip_id,
+      (st_union((geom)::geometry))::geography AS geom,
+      st_length((st_union((geom)::geometry))::geography) AS distance
      FROM routes
-    GROUP BY routes.trip_id;
+    GROUP BY trip_id;
   SQL
   create_view "waypoint_distances", sql_definition: <<-SQL
       WITH wp AS (
@@ -193,42 +247,5 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_17_001153) do
        LEFT JOIN waypoint_distances ON (((waypoints.sequence >= waypoint_distances.sequence) AND (waypoints.trip_id = waypoint_distances.trip_id))))
     GROUP BY waypoints.id
     ORDER BY waypoints.sequence;
-  SQL
-  create_view "route_sequences", sql_definition: <<-SQL
-      WITH r1 AS (
-           SELECT routes.id AS route_id,
-              routes.trip_id,
-              w1.sequence,
-              (((w1.name)::text || ' - '::text) || (w2.name)::text) AS route_name,
-              ((sum(w3.delay) || ' seconds'::text))::interval AS stopped_time,
-              st_length(routes.geom) AS distance,
-              (((st_m(st_endpoint((routes.geom)::geometry)) - st_m(st_startpoint((routes.geom)::geometry))) || ' second'::text))::interval AS duration
-             FROM routes,
-              waypoints w1,
-              waypoints w2,
-              waypoints w3
-            WHERE ((routes.waypoint_start_id = w1.id) AND (routes.waypoint_end_id = w2.id) AND (routes.trip_id = w1.trip_id) AND (routes.trip_id = w2.trip_id) AND (routes.trip_id = w3.trip_id) AND ((w3.sequence >= w1.sequence) AND (w3.sequence <= w2.sequence)))
-            GROUP BY routes.id, w1.sequence, w1.name, w2.name
-          ), r2 AS (
-           SELECT routes.id,
-              routes.trip_id,
-              routes.start_time,
-              waypoints.sequence
-             FROM routes,
-              waypoints
-            WHERE (routes.waypoint_start_id = waypoints.id)
-          )
-   SELECT r1.route_id,
-      r1.trip_id,
-      r1.sequence,
-      r1.route_name,
-      r1.stopped_time,
-      r1.distance,
-      r1.duration,
-      sum(r2.start_time) AS start_time_sequence
-     FROM (r1
-       LEFT JOIN r2 ON (((r2.sequence <= r1.sequence) AND (r2.trip_id = r1.trip_id))))
-    GROUP BY r1.trip_id, r1.route_id, r1.sequence, r1.route_name, r1.stopped_time, r1.distance, r1.duration
-    ORDER BY r1.trip_id;
   SQL
 end
