@@ -56,7 +56,7 @@
 
 server 'trip.tessi.com.br', user: 'yoder', roles: %w[app db web]
 append :linked_files, '.env.production'
-append :linked_files, 'config/master.key'
+# append :linked_files, 'config/master.key'
 
 namespace :deploy do
   desc 'Run yarn install'
