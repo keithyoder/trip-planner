@@ -7,6 +7,7 @@ Rails.application.routes.draw do
 
   root 'welcome#index'
   get 'routes/new'
+  get 'dashboard', to: 'dashboard#index'
   resources :trips do
     resources :waypoints
     resources :routes
