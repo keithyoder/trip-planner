@@ -15,10 +15,14 @@ export default class extends Controller {
     this.map = L.map(this.containerTarget).setView([lat, lon], 14);
 
     // Add tile layer
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(this.map);
+
+    L.tileLayer(
+      'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png?api_key=50e54c7f-f220-44f9-875c-a0ce16bc63b5',
+      {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }
+    ).addTo(this.map);
     
     // Optional: Add a marker at the center
     // L.marker([lat, lon]).addTo(this.map);
