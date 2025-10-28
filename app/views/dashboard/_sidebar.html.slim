@@ -1,0 +1,59 @@
+/ Right side pull-out sidebar
+- if latest_log
+  / Toggle button
+  #sidebar-toggle
+    i.bi.bi-chevron-left
+  
+  / Sidebar
+  #weather-sidebar
+    .sidebar-content
+      / Travelling status badge
+      #travelling-status.widget.status-widget
+        - if trip_detector.currently_travelling?
+          .badge.bg-success.w-100.py-2
+            i.bi.bi-arrow-right-circle.me-1
+            | Moving
+        - else
+          .badge.bg-secondary.w-100.py-2
+            i.bi.bi-pause-circle.me-1
+            | Stationary
+
+      / Temperature widget
+      .widget.widget-horizontal
+        .widget-icon-small
+          i.bi.bi-thermometer-half.text-danger
+        .widget-info
+          .widget-value-small
+            = latest_log.data['shtc3_temperature']&.round(1) || '--'
+            span.widget-unit-small °C
+          .widget-label-small Temperature
+
+      / Humidity widget
+      .widget.widget-horizontal
+        .widget-icon-small
+          i.bi.bi-droplet.text-primary
+        .widget-info
+          .widget-value-small
+            = latest_log.data['shtc3_humidity']&.round(1) || '--'
+            span.widget-unit-small %
+          .widget-label-small Humidity
+
+      / Dewpoint widget
+      .widget.widget-horizontal
+        .widget-icon-small
+          i.bi.bi-moisture.text-info
+        .widget-info
+          .widget-value-small
+            = latest_log.data['shtc3_dewpoint'] || '--'
+            span.widget-unit-small °C
+          .widget-label-small Dewpoint
+
+      / Pressure widget
+      .widget.widget-horizontal
+        .widget-icon-small
+          i.bi.bi-speedometer.text-info
+        .widget-info
+          .widget-value-small
+            = latest_log.data['bmp581_pressure']&.round(1) || '--'
+            span.widget-unit-small hPa
+          .widget-label-small Pressure
