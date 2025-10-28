@@ -2,8 +2,8 @@
 
 / Full screen map container
 #dashboard-container style="height: 100vh; width: 100vw; position: relative; overflow: hidden;"
-  / Map takes full screen
-  #map style="height: 100%; width: 100%;"
+  / Map takes full screen - marked as permanent so Turbo doesn't touch it
+  #map style="height: 100%; width: 100%;" data-turbo-permanent="true"
   
   / Top header overlay
   .dashboard-header
@@ -68,16 +68,25 @@
 
 / Map initialization
 - if @latest_log && @latest_log.data['gps_latitude']
-  script
-    |
-      document.addEventListener('DOMContentLoaded', function() {
-        var map = L.map('map', {
+  javascript:
+    (function() {
+      // Check if map already exists
+      if (window.dashboardMap) {
+        return;
+      }
+      
+      function initMap() {
+        var mapElement = document.getElementById('map');
+        if (!mapElement) return;
+        
+        // Initialize map
+        window.dashboardMap = L.map('map', {
           zoomControl: false
         }).setView([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], 15);
         
         L.control.zoom({
           position: 'bottomright'
-        }).addTo(map);
+        }).addTo(window.dashboardMap);
         
         L.tileLayer(
           'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png?api_key=50e54c7f-f220-44f9-875c-a0ce16bc63b5',
@@ -85,7 +94,7 @@
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           }
-        ).addTo(map);
+        ).addTo(window.dashboardMap);
         
         var customIcon = L.icon({
           iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
@@ -98,21 +107,48 @@
         });
         
         // Current location marker
-        var marker = L.marker([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], {icon: customIcon}).addTo(map);
+        window.currentMarker = L.marker(
+          [#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], 
+          {icon: customIcon}
+        ).addTo(window.dashboardMap);
         
-        marker.bindPopup(`
+        window.currentMarker.bindPopup(`
           <strong>Current Location</strong><br>
           Temp: #{@latest_log.data['shtc3_temperature']&.round(1)}°C<br>
           Speed: #{(@latest_log.data['gps_speed'].to_f * 3.6).round(1)} km/h
         `);
         
-        // Today's trip routes (passed from server)
+        // Trip routes layer
+        window.tripRoutesLayer = L.layerGroup().addTo(window.dashboardMap);
+        
+        // Load today's trip routes
+        loadTripRoutes();
+        
+        // Sidebar toggle functionality
+        var toggle = document.getElementById('sidebar-toggle');
+        var sidebar = document.getElementById('weather-sidebar');
+        
+        if (toggle && sidebar) {
+          toggle.addEventListener('click', function() {
+            sidebar.classList.toggle('open');
+            toggle.classList.toggle('open');
+          });
+        }
+      }
+      
+      function loadTripRoutes() {
         var tripData = #{raw @todays_trips.map(&:to_geojson).to_json};
         
-        var tripRoutesLayer = L.layerGroup().addTo(map);
+        // Clear existing routes
+        if (window.tripRoutesLayer) {
+          window.tripRoutesLayer.clearLayers();
+        }
+        
         var allBounds = [];
         
         tripData.forEach(function(feature) {
+          if (!feature.geometry || !feature.geometry.coordinates) return;
+          
           var coords = feature.geometry.coordinates.map(coord => [coord[1], coord[0]]);
           
           // Create polyline for trip
@@ -121,15 +157,15 @@
             weight: 4,
             opacity: 0.7,
             smoothFactor: 1
-          }).addTo(tripRoutesLayer);
+          }).addTo(window.tripRoutesLayer);
           
           // Add popup with trip info
           polyline.bindPopup(`
-            <strong>${feature.properties.name}</strong><br>
-            Distance: ${feature.properties.distance_km} km<br>
-            Duration: ${feature.properties.duration_minutes} min<br>
-            Max Speed: ${feature.properties.max_speed_kmh} km/h<br>
-            Avg Speed: ${feature.properties.avg_speed_kmh} km/h
+            <strong>${feature.properties.name || 'Trip'}</strong><br>
+            Distance: ${feature.properties.distance_km || 0} km<br>
+            Duration: ${feature.properties.duration_minutes || 0} min<br>
+            Max Speed: ${feature.properties.max_speed_kmh || 0} km/h<br>
+            Avg Speed: ${feature.properties.avg_speed_kmh || 0} km/h
           `);
           
           // Collect bounds
@@ -137,20 +173,36 @@
         });
         
         // Fit map to show all trips and current location
-        if (allBounds.length > 0) {
-          allBounds.push([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}]);
-          map.fitBounds(allBounds, { padding: [50, 50] });
+        if (allBounds.length > 0 && window.dashboardMap) {
+        //  allBounds.push([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}]);
+        //  window.dashboardMap.fitBounds(allBounds, { padding: [50, 50] });
         }
-        
-        // Sidebar toggle functionality
-        var toggle = document.getElementById('sidebar-toggle');
-        var sidebar = document.getElementById('weather-sidebar');
-        
-        toggle.addEventListener('click', function() {
-          sidebar.classList.toggle('open');
-          toggle.classList.toggle('open');
-        });
+      }
+      
+      // Initialize on load
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMap);
+      } else {
+        initMap();
+      }
+      
+      // Handle Turbo navigation
+      document.addEventListener('turbo:load', function() {
+        if (!window.dashboardMap) {
+          initMap();
+        }
       });
+      
+      // Cleanup on navigation away
+      document.addEventListener('turbo:before-cache', function() {
+        if (window.dashboardMap) {
+          window.dashboardMap.remove();
+          window.dashboardMap = null;
+          window.tripRoutesLayer = null;
+          window.currentMarker = null;
+        }
+      });
+    })();
 
 meta name="turbo-refresh-method" content="morph"
 meta name="turbo-refresh-scroll" content="preserve"
