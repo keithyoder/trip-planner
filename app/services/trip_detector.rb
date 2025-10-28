@@ -256,6 +256,10 @@ class TripDetector
     @currently_travelling
   end
 
+  def self.instance
+    @instance ||= new
+  end
+
   private
 
   def to_radians(degrees)

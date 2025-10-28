@@ -1,122 +1,328 @@
 = turbo_stream_from "dashboard"
 
-.container-fluid.py-4
-  .row.mb-4
-    .col-12
-      h1.display-5.fw-bold
-        i.bi.bi-speedometer2.me-2
-        | Live Dashboard
-      - if @latest_log
-        p.text-muted.mb-0
-          | Last update: #{time_ago_in_words(@latest_log.timestamp)} ago
-      - else
-        p.text-muted.mb-0 No data available
+/ Full screen map container
+#dashboard-container style="height: 100vh; width: 100vw; position: relative; overflow: hidden;"
+  / Map takes full screen
+  #map style="height: 100%; width: 100%;"
+  
+  / Top header overlay
+  .dashboard-header
+    h1.display-6.fw-bold.mb-0
+      i.bi.bi-speedometer2.me-2
+      | Live Dashboard
+    - if @latest_log
+      p.mb-0.small
+        | Last update: #{time_ago_in_words(@latest_log.timestamp)} ago
+    - else
+      p.mb-0.small No data available
 
+  / Right side weather overlays
   - if @latest_log
-    .row.g-4
-      / Map column
-      .col-lg-8
-        .card.shadow-sm.h-100
-          .card-header.bg-white
-            h5.mb-0
-              i.bi.bi-geo-alt.me-2
-              | Current Location
-              - if @is_travelling
-                span.badge.bg-success.ms-2
-                  i.bi.bi-arrow-right-circle.me-1
-                  | Moving
-              - else
-                span.badge.bg-secondary.ms-2
-                  i.bi.bi-pause-circle.me-1
-                  | Stationary
-          .card-body.p-0
-            #map style="height: 500px;"
+    #dashboard-widgets
+      / Travelling status badge
+      #travelling-status.widget.status-widget
+        - if @trip_detector.currently_travelling?
+          .badge.bg-success.w-100.py-2
+            i.bi.bi-arrow-right-circle.me-1
+            | Moving
+        - else
+          .badge.bg-secondary.w-100.py-2
+            i.bi.bi-pause-circle.me-1
+            | Stationary
 
-      / Weather data column
-      .col-lg-4
-        / Temperature card
-        .card.shadow-sm.mb-3
-          .card-body.text-center
-            i.bi.bi-thermometer-half.text-danger style="font-size: 3rem;"
-            h2.mt-2.mb-0
-              = @latest_log.data['shtc3_temperature']&.round(1) || '--'
-              span.fs-4.text-muted °C
-            p.text-muted.mb-0 Temperature
+      / Temperature widget
+      .widget
+        .widget-icon
+          i.bi.bi-thermometer-half.text-danger
+        .widget-value
+          = @latest_log.data['shtc3_temperature']&.round(1) || '--'
+          span.widget-unit °C
+        .widget-label Temperature
 
-        / Humidity card
-        .card.shadow-sm.mb-3
-          .card-body.text-center
-            i.bi.bi-droplet.text-primary style="font-size: 3rem;"
-            h2.mt-2.mb-0
-              = @latest_log.data['shtc3_humidity']&.round(1) || '--'
-              span.fs-4.text-muted %
-            p.text-muted.mb-0 Humidity
+      / Humidity widget
+      .widget
+        .widget-icon
+          i.bi.bi-droplet.text-primary
+        .widget-value
+          = @latest_log.data['shtc3_humidity']&.round(1) || '--'
+          span.widget-unit %
+        .widget-label Humidity
 
-        / Pressure card
-        .card.shadow-sm.mb-3
-          .card-body.text-center
-            i.bi.bi-speedometer.text-info style="font-size: 3rem;"
-            h2.mt-2.mb-0
-              = @latest_log.data['bmp581_pressure']&.round(1) || '--'
-              span.fs-4.text-muted hPa
-            p.text-muted.mb-0 Pressure
+      / Pressure widget
+      .widget
+        .widget-icon
+          i.bi.bi-speedometer.text-info
+        .widget-value
+          = @latest_log.data['bmp581_pressure']&.round(1) || '--'
+          span.widget-unit hPa
+        .widget-label Pressure
 
-        / Speed card (if available)
-        - if @latest_log.data['gps_speed']
-          .card.shadow-sm.mb-3
-            .card-body.text-center
-              i.bi.bi-speedometer2.text-success style="font-size: 3rem;"
-              h2.mt-2.mb-0
-                = (@latest_log.data['gps_speed'].to_f * 3.6).round(1)
-                span.fs-4.text-muted km/h
-              p.text-muted.mb-0 Speed
+      / Odometer widget
+      .widget.odometer-widget
+        .widget-label.mb-2.small DISTANCE TODAY
+        .odometer-container
+          - total_km = (@trip_detector.trip_summary[:today_distance_km]&.round(1)) || 0
+          - digits = format('%07.1f', total_km).chars
+          - digits.each do |digit|
+            - if digit == '.'
+              .odometer-separator .
+            - else
+              .odometer-digit = digit
+        .widget-label.mt-2.small KILOMETERS
 
-        / GPS Info card
-        - if @latest_log.data['gps_latitude']
-          .card.shadow-sm
-            .card-body
-              h6.card-title GPS Information
-              table.table.table-sm.mb-0
-                tbody
-                  tr
-                    td.text-muted Latitude
-                    td.text-end = @latest_log.data['gps_latitude']&.round(6)
-                  tr
-                    td.text-muted Longitude
-                    td.text-end = @latest_log.data['gps_longitude']&.round(6)
-                  - if @latest_log.data['gps_altitude']
-                    tr
-                      td.text-muted Altitude
-                      td.text-end = "#{@latest_log.data['gps_altitude']&.round(1)} m"
-                  - if @latest_log.data['gps_satellites']
-                    tr
-                      td.text-muted Satellites
-                      td.text-end = @latest_log.data['gps_satellites']
+      / Speed widget (if available)
+      - if @latest_log.data['gps_speed']
+        .widget
+          .widget-icon
+            i.bi.bi-speedometer2.text-success
+          .widget-value
+            = (@latest_log.data['gps_speed'].to_f * 3.6).round(1)
+            span.widget-unit km/h
+          .widget-label Speed
+
+      / GPS Info widget (expandable)
+      - if @latest_log.data['gps_latitude']
+        .widget.gps-widget
+          .widget-label
+            i.bi.bi-geo-alt.me-1
+            | GPS Info
+          .gps-details
+            .gps-row
+              span.gps-label Lat:
+              span.gps-value = @latest_log.data['gps_latitude']&.round(6)
+            .gps-row
+              span.gps-label Lon:
+              span.gps-value = @latest_log.data['gps_longitude']&.round(6)
+            - if @latest_log.data['gps_altitude']
+              .gps-row
+                span.gps-label Alt:
+                span.gps-value = "#{@latest_log.data['gps_altitude']&.round(1)} m"
+            - if @latest_log.data['gps_satellites']
+              .gps-row
+                span.gps-label Sats:
+                span.gps-value = @latest_log.data['gps_satellites']
 
   - else
-    .row
-      .col-12
-        .card.shadow-sm.text-center.py-5
-          .card-body
-            i.bi.bi-exclamation-circle.text-muted style="font-size: 4rem;"
-            h3.mt-3.mb-2 No Data Available
-            p.text-muted.mb-0 Waiting for telemetry data...
+    .dashboard-header
+      h3.mb-2 No Data Available
+      p.mb-0 Waiting for telemetry data...
 
+/ Styles
+css:
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  #dashboard-container {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  
+  .dashboard-header {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    max-width: 300px;
+  }
+  
+  #dashboard-widgets {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 1000;
+    max-width: 200px;
+  }
+  
+  .widget {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .widget:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+  
+  .widget-icon {
+    font-size: 2rem;
+    margin-bottom: 5px;
+  }
+  
+  .widget-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+    line-height: 1;
+  }
+  
+  .widget-unit {
+    font-size: 1rem;
+    color: #666;
+    font-weight: normal;
+  }
+  
+  .widget-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 5px;
+  }
+  
+  .status-widget {
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  /* Odometer styles */
+  .odometer-widget {
+    padding: 10px;
+  }
+  
+  .odometer-container {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+    padding: 8px;
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    border-radius: 6px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  }
+  
+  .odometer-digit {
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    color: #ffffff;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 22px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.1);
+    text-shadow: 0 0 3px rgba(255,255,255,0.3);
+    border: 1px solid #333;
+  }
+  
+  .odometer-separator {
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 0 2px;
+    display: flex;
+    align-items: center;
+    text-shadow: 0 0 3px rgba(255,255,255,0.3);
+  }
+  
+  /* GPS widget */
+  .gps-widget {
+    text-align: left;
+  }
+  
+  .gps-details {
+    margin-top: 8px;
+    font-size: 0.8rem;
+  }
+  
+  .gps-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .gps-row:last-child {
+    border-bottom: none;
+  }
+  
+  .gps-label {
+    color: #666;
+    font-weight: 600;
+  }
+  
+  .gps-value {
+    color: #333;
+    font-family: 'Courier New', monospace;
+  }
+  
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .dashboard-header {
+      top: 10px;
+      left: 10px;
+      padding: 10px 15px;
+      max-width: 250px;
+    }
+    
+    #dashboard-widgets {
+      top: 10px;
+      right: 10px;
+      max-width: 160px;
+      gap: 8px;
+    }
+    
+    .widget {
+      padding: 10px;
+    }
+    
+    .widget-icon {
+      font-size: 1.5rem;
+    }
+    
+    .widget-value {
+      font-size: 1.4rem;
+    }
+    
+    .widget-label {
+      font-size: 0.65rem;
+    }
+    
+    .odometer-digit {
+      font-size: 1rem;
+      width: 18px;
+      height: 26px;
+    }
+  }
+
+/ Map initialization
 - if @latest_log && @latest_log.data['gps_latitude']
   script
     |
       document.addEventListener('DOMContentLoaded', function() {
-        var map = L.map('map').setView([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], 15);
+        var map = L.map('map', {
+          zoomControl: false  // Remove default zoom control
+        }).setView([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], 15);
+        
+        // Add zoom control to bottom right
+        L.control.zoom({
+          position: 'bottomright'
+        }).addTo(map);
         
         L.tileLayer(
-        'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png?api_key=50e54c7f-f220-44f9-875c-a0ce16bc63b5',
-        {
+          'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png?api_key=50e54c7f-f220-44f9-875c-a0ce16bc63b5',
+          {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }
+          }
         ).addTo(map);
         
-        // Create custom icon
         var customIcon = L.icon({
           iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
           iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -128,9 +334,25 @@
         });
         
         var marker = L.marker([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], {icon: customIcon}).addTo(map);
-                
-        setTimeout(function() { location.reload(); }, 30000);
+        
+        marker.bindPopup(`
+          <strong>Current Location</strong><br>
+          Temp: #{@latest_log.data['shtc3_temperature']&.round(1)}°C<br>
+          Speed: #{(@latest_log.data['gps_speed'].to_f * 3.6).round(1)} km/h
+        `);
       });
 
 meta name="turbo-refresh-method" content="morph"
 meta name="turbo-refresh-scroll" content="preserve"
+
+
+= turbo_stream_from "dashboard"
+
+/ Full screen map container
+#dashboard-container style="height: 100vh; width: 100vw; position: relative; overflow: hidden;"
+  / Map takes full screen
+  #map style="height: 100%; width: 100%;"
+  
+  / Top left header overlay
+  .dashboard-header
+    h1.display-6.fw-bold.mb-0
