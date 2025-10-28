@@ -256,6 +256,44 @@ class TripDetector
     @currently_travelling
   end
 
+  def save_trip(trip_hash)
+    coordinates = trip_hash[:points].map do |log|
+      lon = log.data['gps_longitude']&.to_f
+      lat = log.data['gps_latitude']&.to_f
+      [lon, lat] if lon && lat
+    end.compact
+
+    linestring_wkt = TripLog.build_linestring(coordinates)
+
+    TripLog.upsert(
+      {
+        start_time: trip_hash[:start_time],
+        end_time: trip_hash[:end_time],
+        max_speed: trip_hash[:max_speed_ms],
+        avg_speed: trip_hash[:avg_speed_ms],
+        geom: linestring_wkt,
+        data: {
+          trip_id: trip_hash[:trip_id]
+        },
+        created_at: Time.current,
+        updated_at: Time.current
+      },
+      unique_by: :start_time # Use start_time as the unique key
+    )
+
+    # Return the trip log
+    TripLog.find_by(start_time: trip_hash[:start_time])
+  end
+
+  def save_trips(trips)
+    trips.map { |trip| save_trip(trip) }
+  end
+
+  def detect_and_save_trips(**options)
+    trips = detect_trips(**options)
+    save_trips(trips)
+  end
+
   def self.instance
     @instance ||= new
   end

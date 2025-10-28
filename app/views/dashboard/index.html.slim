@@ -23,7 +23,7 @@
       .widget.odometer-widget
         .widget-label.mb-2.small DISTANCE TODAY
         .odometer-container
-          - total_km = (@trip_detector.trip_summary[:total_distance_km]&.round(1)) || 0
+          - total_km = (@today_distance_meters/1000).round(1) || 0
           - digits = format('%07.1f', total_km).chars
           - digits.each do |digit|
             - if digit == '.'
@@ -97,6 +97,7 @@
           shadowSize: [41, 41]
         });
         
+        // Current location marker
         var marker = L.marker([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], {icon: customIcon}).addTo(map);
         
         marker.bindPopup(`
@@ -104,6 +105,42 @@
           Temp: #{@latest_log.data['shtc3_temperature']&.round(1)}°C<br>
           Speed: #{(@latest_log.data['gps_speed'].to_f * 3.6).round(1)} km/h
         `);
+        
+        // Today's trip routes (passed from server)
+        var tripData = #{raw @todays_trips.map(&:to_geojson).to_json};
+        
+        var tripRoutesLayer = L.layerGroup().addTo(map);
+        var allBounds = [];
+        
+        tripData.forEach(function(feature) {
+          var coords = feature.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+          
+          // Create polyline for trip
+          var polyline = L.polyline(coords, {
+            color: '#3388ff',
+            weight: 4,
+            opacity: 0.7,
+            smoothFactor: 1
+          }).addTo(tripRoutesLayer);
+          
+          // Add popup with trip info
+          polyline.bindPopup(`
+            <strong>${feature.properties.name}</strong><br>
+            Distance: ${feature.properties.distance_km} km<br>
+            Duration: ${feature.properties.duration_minutes} min<br>
+            Max Speed: ${feature.properties.max_speed_kmh} km/h<br>
+            Avg Speed: ${feature.properties.avg_speed_kmh} km/h
+          `);
+          
+          // Collect bounds
+          coords.forEach(coord => allBounds.push(coord));
+        });
+        
+        // Fit map to show all trips and current location
+        if (allBounds.length > 0) {
+          allBounds.push([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}]);
+          map.fitBounds(allBounds, { padding: [50, 50] });
+        }
         
         // Sidebar toggle functionality
         var toggle = document.getElementById('sidebar-toggle');
@@ -113,8 +150,6 @@
           sidebar.classList.toggle('open');
           toggle.classList.toggle('open');
         });
-
-        setTimeout(function() { location.reload(); }, 30000);
       });
 
 meta name="turbo-refresh-method" content="morph"

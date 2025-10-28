@@ -8,6 +8,13 @@ Rails.application.routes.draw do
   root 'welcome#index'
   get 'routes/new'
   get 'dashboard', to: 'dashboard#index'
+
+  resources :trip_logs, only: %i[index show] do
+    collection do
+      get :today
+    end
+  end
+
   resources :trips do
     resources :waypoints
     resources :routes
