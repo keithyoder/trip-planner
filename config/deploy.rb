@@ -1,11 +1,11 @@
 # config valid for current version and patch releases of Capistrano
-lock "~> 3.19.2"
+lock '~> 3.19.2'
 
-set :application, "trip-planner"
-set :repo_url, "https://github.com/keithyoder/trip-planner.git"
+set :application, 'trip-planner'
+set :repo_url, 'https://github.com/keithyoder/trip-planner.git'
 
 # Default branch is :master
-ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
+set :branch, ENV['BRANCH'] || 'main'
 
 # Default deploy_to directory is /var/www/my_app_name
 # set :deploy_to, "/var/www/my_app_name"
