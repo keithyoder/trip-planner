@@ -27,11 +27,12 @@
 
     / Speed widget - only show if currently moving
     - if latest_log.data['gps_speed'] && trip_detector.currently_travelling?
-      .widget
+      .widget.speed-widget
         .widget-icon
           i.bi.bi-speedometer2.text-success
         .widget-value
-          = (latest_log.data['gps_speed'].to_f * 3.6).round(1)
+          span.speed-value
+            = (latest_log.data['gps_speed'].to_f * 3.6).round(1)
           span.widget-unit km/h
         .widget-label Speed
 

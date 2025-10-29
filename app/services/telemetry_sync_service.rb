@@ -47,6 +47,53 @@ class TelemetrySyncService
     end
   end
 
+  def broadcast_dashboard_update(log)
+    return unless log.data['gps_latitude'].present?
+
+    detector = TripDetector.new
+    detector.detect_trips(
+      start_date: Time.zone.now.beginning_of_day,
+      end_date: Time.zone.now,
+      use_cache: true
+    )
+
+    today_distance = TripLog.today.sum(&:distance)
+
+    # Prepare data payload
+    data = {
+      travelling: detector.currently_travelling?,
+      distance_km: (today_distance / 1000.0).round(1),
+      speed_kmh: (log.data['gps_speed'].to_f * 3.6).round(1),
+      gps: {
+        lat: log.data['gps_latitude']&.to_f,
+        lon: log.data['gps_longitude']&.to_f,
+        altitude: log.data['gps_altitude']&.to_f,
+        satellites: log.data['gps_satellites']&.to_i
+      },
+      temperature: log.data['shtc3_temperature']&.round(1),
+      weather: {
+        temperature: log.data['shtc3_temperature']&.round(1),
+        humidity: log.data['shtc3_humidity']&.round(1),
+        pressure: log.data['bmp581_pressure']&.round(1)
+      },
+      timestamp: log.timestamp.iso8601
+    }
+
+    # Broadcast custom action with data
+    Turbo::StreamsChannel.broadcast_action_to(
+      'dashboard',
+      action: 'update_dashboard',
+      target: 'dashboard-widgets-left',
+      data: data.to_json
+    )
+
+    puts " [✓] Broadcasted to dashboard: #{log.mongo_id}"
+  rescue StandardError => e
+    Rails.logger.error "Broadcast error: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+    puts " [✗] Broadcast error: #{e.message}"
+  end
+
   private
 
   def setup_connection
@@ -135,6 +182,9 @@ class TelemetrySyncService
     if log.save
       Rails.logger.info "Saved TelemetryLog #{log.id}"
       puts " [✓] Saved: #{mongo_id} at #{timestamp}"
+
+      # Broadcast to dashboard after successful save
+      broadcast_dashboard_update(log)
     else
       Rails.logger.error "Failed to save: #{log.errors.full_messages.join(', ')}"
       raise ActiveRecord::RecordInvalid, log
