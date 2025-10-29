@@ -4,6 +4,7 @@ class TelemetryLog < ApplicationRecord
 
   # Scopes
   scope :recent, -> { order(timestamp: :desc) }
+  scope :with_gps, -> { where("data->>'gps_latitude' IS NOT NULL AND data->>'gps_longitude' IS NOT NULL") }
   scope :today, -> { where('timestamp >= ?', Time.zone.now.beginning_of_day) }
   scope :between, ->(start_time, end_time) { where(timestamp: start_time..end_time) }
 
@@ -40,5 +41,32 @@ class TelemetryLog < ApplicationRecord
 
   def self.min_field(field)
     minimum("(data->>'#{field}')::float")
+  end
+
+  def coordinates
+    return nil unless gps_data?
+
+    {
+      latitude: data['gps_latitude']&.to_f,
+      longitude: data['gps_longitude']&.to_f,
+      altitude: data['gps_altitude']&.to_f,
+      timestamp: timestamp
+    }
+  end
+
+  def gps_data?
+    data['gps_latitude'].present? && data['gps_longitude'].present?
+  end
+
+  def self.current_location
+    log = with_gps.recent.first
+    log&.coordinates
+  end
+
+  def self.current_timezone
+    location = current_location
+    Boundary.containing_point(
+      location[:latitude], location[:longitude]
+    ).where.not(timezone: nil).order(level: :desc).pluck(:timezone).first
   end
 end

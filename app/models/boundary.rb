@@ -3,8 +3,12 @@
 class Boundary < ActiveRecord::Base
   has_and_belongs_to_many :waypoints
 
-  scope :waypoint, ->(waypoint, level) {
+  scope :waypoint, lambda { |waypoint, level|
     where("ST_Within(ST_GeomFromText('#{waypoint.lonlat}', 4326), geom::geometry) AND level = #{level}")
+  }
+
+  scope :containing_point, lambda { |lat, lon|
+    where('ST_Within(ST_SetSRID(ST_MakePoint(?, ?), 4326), geom::geometry)', lon, lat)
   }
 
   def self.load_geojson(file_name)

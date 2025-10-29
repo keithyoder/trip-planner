@@ -11,7 +11,7 @@ class TripLog < ApplicationRecord
   validate :end_time_after_start_time
 
   scope :recent, -> { order(start_time: :desc) }
-  scope :today, -> { where('start_time >= ?', Time.zone.now.beginning_of_day) }
+  scope :today, -> { where('start_time >= ?', Time.find_zone(TelemetryLog.current_timezone).now.beginning_of_day) }
   scope :on_date, ->(date) { where('start_time >= ? AND start_time < ?', date.beginning_of_day, date.end_of_day) }
   scope :between, ->(start_date, end_date) { where(start_time: start_date..end_date) }
   scope :unmatched, -> { where(trip_id: nil) }
