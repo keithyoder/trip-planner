@@ -2,6 +2,7 @@
 
 require 'bunny'
 require 'json'
+require 'cgi'
 
 class TelemetrySyncService
   def self.start
@@ -79,12 +80,17 @@ class TelemetrySyncService
       timestamp: log.timestamp.iso8601
     }
 
-    # Broadcast custom action with data
-    Turbo::StreamsChannel.broadcast_action_to(
+    # Build the Turbo Stream HTML manually
+    turbo_stream = <<~HTML
+      <turbo-stream action="update_dashboard" target="dashboard-widgets-left">
+        <template data="#{CGI.escape_html(data.to_json)}"></template>
+      </turbo-stream>
+    HTML
+
+    # Broadcast raw HTML
+    ActionCable.server.broadcast(
       'dashboard',
-      action: 'update_dashboard',
-      target: 'dashboard-widgets-left',
-      data: data.to_json
+      turbo_stream
     )
 
     puts " [✓] Broadcasted to dashboard: #{log.mongo_id}"
