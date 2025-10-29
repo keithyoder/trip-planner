@@ -2,20 +2,25 @@ import { StreamActions } from "@hotwired/turbo"
 
 // Register custom Turbo Stream action
 StreamActions.update_dashboard = function() {
-  const dataAttr = this.getAttribute("data")
-  console.log("Raw data attribute:", dataAttr)
+  // Find the script tag with our data
+  const scriptTag = this.templateContent.querySelector('script[data-dashboard-update]')
   
-  if (!dataAttr) {
-    console.error("No data attribute found on turbo-stream element")
+  console.log("Looking for dashboard data...")
+  console.log("Template content:", this.templateContent)
+  console.log("Script tag found:", scriptTag)
+  
+  if (!scriptTag) {
+    console.error("No script tag with dashboard data found")
     return
   }
   
   try {
-    const data = JSON.parse(dataAttr)
+    const data = JSON.parse(scriptTag.textContent)
+    console.log("Parsed dashboard data:", data)
     updateDashboardWidgets(data)
   } catch (e) {
     console.error("Failed to parse dashboard data:", e)
-    console.error("Data was:", dataAttr)
+    console.error("Script content was:", scriptTag.textContent)
   }
 }
 

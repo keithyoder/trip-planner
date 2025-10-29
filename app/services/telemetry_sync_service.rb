@@ -87,17 +87,18 @@ class TelemetrySyncService
 
     puts " [→] Data prepared: travelling=#{data[:travelling]}, distance=#{data[:distance_km]}km"
 
-    # Build the Turbo Stream HTML manually - use to_json and escape properly
-    json_data = data.to_json.gsub('"', '&quot;')
-
+    # Put JSON inside a script tag in the template
     turbo_stream = <<~HTML
-      <turbo-stream action="update_dashboard" target="dashboard-widgets-left" data="#{json_data}">
-        <template></template>
+      <turbo-stream action="update_dashboard" target="dashboard-widgets-left">
+        <template>
+          <script type="application/json" data-dashboard-update>
+            #{data.to_json}
+          </script>
+        </template>
       </turbo-stream>
     HTML
 
     puts ' [→] Broadcasting to channel: dashboard'
-    puts " [→] Turbo stream HTML: #{turbo_stream[0..200]}..."
 
     # Broadcast raw HTML
     ActionCable.server.broadcast(
