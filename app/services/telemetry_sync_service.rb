@@ -26,22 +26,22 @@ class TelemetrySyncService
       rescue Interrupt
         @running = false
         shutdown
-        puts "\n [*] TelemetrySyncService stopped by user"
+        Rails.logger.info  "\n [*] TelemetrySyncService stopped by user"
       rescue Bunny::TCPConnectionFailed => e
         Rails.logger.error "Connection failed: #{e.message}"
-        puts " [✗] Connection failed: #{e.message}"
+        Rails.logger.info  " [✗] Connection failed: #{e.message}"
         shutdown
         if @running
-          puts ' [*] Retrying in 5 seconds...'
+          Rails.logger.info ' [*] Retrying in 5 seconds...'
           sleep 5
         end
       rescue StandardError => e
         Rails.logger.error "TelemetrySyncService error: #{e.class} - #{e.message}"
         Rails.logger.error e.backtrace.join("\n")
-        puts " [✗] Error: #{e.message}"
+        Rails.logger.info  " [✗] Error: #{e.message}"
         shutdown
         if @running
-          puts ' [*] Retrying in 5 seconds...'
+          Rails.logger.info ' [*] Retrying in 5 seconds...'
           sleep 5
         end
       end
@@ -93,17 +93,16 @@ class TelemetrySyncService
       turbo_stream
     )
 
-    puts " [✓] Broadcasted to dashboard: #{log.mongo_id}"
+    Rails.logger(" [✓] Broadcasted to dashboard: #{log.mongo_id}")
   rescue StandardError => e
     Rails.logger.error "Broadcast error: #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
-    puts " [✗] Broadcast error: #{e.message}"
   end
 
   private
 
   def setup_connection
-    puts ' [*] Connecting to RabbitMQ...'
+    Rails.logger.info  ' [*] Connecting to RabbitMQ...'
 
     config = {
       host: ENV.fetch('RABBITMQ_HOST', 'localhost'),
@@ -113,7 +112,7 @@ class TelemetrySyncService
       password: ENV.fetch('RABBITMQ_PASSWORD')
     }
 
-    puts " [*] Config: #{config[:user]}@#{config[:host]}:#{config[:port]}/#{config[:vhost]}"
+    Rails.logger.info " [*] Config: #{config[:user]}@#{config[:host]}:#{config[:port]}/#{config[:vhost]}"
 
     @connection = Bunny.new(
       config.merge(
@@ -125,31 +124,31 @@ class TelemetrySyncService
     )
 
     @connection.start
-    puts ' [✓] Connected to RabbitMQ'
+    Rails.logger.info ' [✓] Connected to RabbitMQ'
 
     @channel = @connection.create_channel
-    puts ' [✓] Channel created'
+    Rails.logger.info ' [✓] Channel created'
 
     @channel.prefetch(1)
 
     @queue = @channel.queue('telemetry_sync', durable: true)
-    puts " [✓] Queue declared: #{@queue.name} (#{@queue.message_count} messages)"
+    Rails.logger.info " [✓] Queue declared: #{@queue.name} (#{@queue.message_count} messages)"
 
     Rails.logger.info 'TelemetrySyncService connected successfully'
   end
 
   def consume_messages
-    puts ' [*] Waiting for messages. Press Ctrl+C to exit'
+    Rails.logger.info ' [*] Waiting for messages. Press Ctrl+C to exit'
 
     @queue.subscribe(block: true, manual_ack: true) do |delivery_info, properties, body|
-      puts ' [→] Received message'
+      Rails.logger.info ' [→] Received message'
       process_message(body)
       @channel.ack(delivery_info.delivery_tag)
-      puts ' [✓] Message processed'
+      Rails.logger.info  ' [✓] Message processed'
     rescue StandardError => e
       Rails.logger.error "Message processing error: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      puts " [✗] Processing error: #{e.message}"
+      Rails.logger.info  " [✗] Processing error: #{e.message}"
 
       # Reject and requeue
       @channel.nack(delivery_info.delivery_tag, false, true)
@@ -187,7 +186,7 @@ class TelemetrySyncService
 
     if log.save
       Rails.logger.info "Saved TelemetryLog #{log.id}"
-      puts " [✓] Saved: #{mongo_id} at #{timestamp}"
+      Rails.logger.info " [✓] Saved: #{mongo_id} at #{timestamp}"
 
       # Broadcast to dashboard after successful save
       broadcast_dashboard_update(log)
@@ -221,7 +220,7 @@ class TelemetrySyncService
   end
 
   def shutdown
-    puts ' [*] Shutting down...'
+    Rails.logger.info ' [*] Shutting down...'
 
     begin
       @channel&.close if @channel&.open?
@@ -235,6 +234,6 @@ class TelemetrySyncService
       Rails.logger.error "Error closing connection: #{e.message}"
     end
 
-    puts ' [✓] Shutdown complete'
+    Rails.logger.info ' [✓] Shutdown complete'
   end
 end
