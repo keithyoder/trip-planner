@@ -1,0 +1,58 @@
+/ Left side widgets
+- if latest_log
+  #dashboard-widgets-left
+    / Travelling status badge
+    #travelling-status.widget.status-widget
+      - if trip_detector.currently_travelling?
+        .badge.bg-success.w-100.py-2
+          i.bi.bi-arrow-right-circle.me-1
+          | Moving
+      - else
+        .badge.bg-secondary.w-100.py-2
+          i.bi.bi-pause-circle.me-1
+          | Stationary
+
+    / Odometer widget
+    .widget.odometer-widget
+      .widget-label.mb-2.small DISTANCE TODAY
+      .odometer-container
+        - total_km = (today_distance_meters/1000).round(1) || 0
+        - digits = format('%07.1f', total_km).chars
+        - digits.each do |digit|
+          - if digit == '.'
+            .odometer-separator .
+          - else
+            .odometer-digit = digit
+      .widget-label.mt-2.small KILOMETERS
+
+    / Speed widget - only show if currently moving
+    - if latest_log.data['gps_speed'] && trip_detector.currently_travelling?
+      .widget
+        .widget-icon
+          i.bi.bi-speedometer2.text-success
+        .widget-value
+          = (latest_log.data['gps_speed'].to_f * 3.6).round(1)
+          span.widget-unit km/h
+        .widget-label Speed
+
+    / GPS Info widget
+    - if latest_log.data['gps_latitude']
+      .widget.gps-widget
+        .widget-label
+          i.bi.bi-geo-alt.me-1
+          | GPS Info
+        .gps-details
+          .gps-row
+            span.gps-label Lat:
+            span.gps-value = latest_log.data['gps_latitude']&.round(6)
+          .gps-row
+            span.gps-label Lon:
+            span.gps-value = latest_log.data['gps_longitude']&.round(6)
+          - if latest_log.data['gps_altitude']
+            .gps-row
+              span.gps-label Alt:
+              span.gps-value = "#{latest_log.data['gps_altitude']&.round(1)} m"
+          - if latest_log.data['gps_satellites']
+            .gps-row
+              span.gps-label Sats:
+              span.gps-value = latest_log.data['gps_satellites']

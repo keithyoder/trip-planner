@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class DashboardController < ApplicationController
+  layout 'welcome'
+
   def index
     @latest_log = TelemetryLog.order(timestamp: :desc).first
     @trip_detector = TripDetector.new

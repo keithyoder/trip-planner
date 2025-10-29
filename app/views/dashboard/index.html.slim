@@ -5,65 +5,21 @@
   / Map takes full screen - marked as permanent so Turbo doesn't touch it
   #map style="height: 100%; width: 100%;" data-turbo-permanent="true"
   
-  / Top header overlay
+  / Top left header overlay
   .dashboard-header
     h1.display-6.fw-bold.mb-0
       i.bi.bi-speedometer2.me-2
-      | Live Dashboard
+      | Live Telemetry
     - if @latest_log
       p.mb-0.small
         | Last update: #{time_ago_in_words(@latest_log.timestamp)} ago
     - else
       p.mb-0.small No data available
 
-  / Left side widgets
-  - if @latest_log
-    #dashboard-widgets-left
-      / Odometer widget
-      .widget.odometer-widget
-        .widget-label.mb-2.small DISTANCE TODAY
-        .odometer-container
-          - total_km = (@today_distance_meters/1000).round(1) || 0
-          - digits = format('%07.1f', total_km).chars
-          - digits.each do |digit|
-            - if digit == '.'
-              .odometer-separator .
-            - else
-              .odometer-digit = digit
-        .widget-label.mt-2.small KILOMETERS
+  / Left side widgets partial
+  = render 'left_widgets', latest_log: @latest_log, trip_detector: @trip_detector, today_distance_meters: @today_distance_meters
 
-      / Speed widget (if available)
-      - if @latest_log.data['gps_speed']
-        .widget
-          .widget-icon
-            i.bi.bi-speedometer2.text-success
-          .widget-value
-            = (@latest_log.data['gps_speed'].to_f * 3.6).round(1)
-            span.widget-unit km/h
-          .widget-label Speed
-
-      / GPS Info widget
-      - if @latest_log.data['gps_latitude']
-        .widget.gps-widget
-          .widget-label
-            i.bi.bi-geo-alt.me-1
-            | GPS Info
-          .gps-details
-            .gps-row
-              span.gps-label Lat:
-              span.gps-value = @latest_log.data['gps_latitude']&.round(6)
-            .gps-row
-              span.gps-label Lon:
-              span.gps-value = @latest_log.data['gps_longitude']&.round(6)
-            - if @latest_log.data['gps_altitude']
-              .gps-row
-                span.gps-label Alt:
-                span.gps-value = "#{@latest_log.data['gps_altitude']&.round(1)} m"
-            - if @latest_log.data['gps_satellites']
-              .gps-row
-                span.gps-label Sats:
-                span.gps-value = @latest_log.data['gps_satellites']
-
+  / Right side weather sidebar
   = render 'sidebar', latest_log: @latest_log, trip_detector: @trip_detector
 
 / Map initialization

@@ -7,17 +7,6 @@
   / Sidebar
   #weather-sidebar
     .sidebar-content
-      / Travelling status badge
-      #travelling-status.widget.status-widget
-        - if trip_detector.currently_travelling?
-          .badge.bg-success.w-100.py-2
-            i.bi.bi-arrow-right-circle.me-1
-            | Moving
-        - else
-          .badge.bg-secondary.w-100.py-2
-            i.bi.bi-pause-circle.me-1
-            | Stationary
-
       / Temperature widget
       .widget.widget-horizontal
         .widget-icon-small
