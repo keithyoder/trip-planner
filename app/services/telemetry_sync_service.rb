@@ -93,7 +93,7 @@ class TelemetrySyncService
       turbo_stream
     )
 
-    Rails.logger(" [✓] Broadcasted to dashboard: #{log.mongo_id}")
+    Rails.logger.info " [✓] Broadcasted to dashboard: #{log.mongo_id}"
   rescue StandardError => e
     Rails.logger.error "Broadcast error: #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
