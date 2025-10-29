@@ -2,12 +2,31 @@ import { StreamActions } from "@hotwired/turbo"
 
 // Register custom Turbo Stream action
 StreamActions.update_dashboard = function() {
-  const data = JSON.parse(this.getAttribute("data"))
-  updateDashboardWidgets(data)
+  const dataAttr = this.getAttribute("data")
+  console.log("Raw data attribute:", dataAttr)
+  
+  if (!dataAttr) {
+    console.error("No data attribute found on turbo-stream element")
+    return
+  }
+  
+  try {
+    const data = JSON.parse(dataAttr)
+    updateDashboardWidgets(data)
+  } catch (e) {
+    console.error("Failed to parse dashboard data:", e)
+    console.error("Data was:", dataAttr)
+  }
 }
 
 function updateDashboardWidgets(data) {
   console.log("Updating dashboard with data:", data)
+  
+  // Guard clause - return if data is null or undefined
+  if (!data) {
+    console.error("Dashboard data is null or undefined")
+    return
+  }
   
   // Update travelling status
   updateTravellingStatus(data.travelling)
@@ -19,13 +38,19 @@ function updateDashboardWidgets(data) {
   updateSpeedWidget(data.speed_kmh, data.travelling)
   
   // Update GPS info
-  updateGPSInfo(data.gps)
+  if (data.gps) {
+    updateGPSInfo(data.gps)
+  }
   
   // Update map marker position
-  updateMapMarker(data.gps, data.temperature, data.speed_kmh)
+  if (data.gps) {
+    updateMapMarker(data.gps, data.temperature, data.speed_kmh)
+  }
   
   // Update weather sidebar
-  updateWeatherSidebar(data.weather)
+  if (data.weather) {
+    updateWeatherSidebar(data.weather)
+  }
 }
 
 function updateTravellingStatus(travelling) {

@@ -49,7 +49,11 @@ class TelemetrySyncService
   end
 
   def broadcast_dashboard_update(log)
+    puts " [→] Attempting broadcast for #{log.mongo_id}"
+
     return unless log.data['gps_latitude'].present?
+
+    puts ' [→] GPS data present, preparing broadcast...'
 
     detector = TripDetector.new
     detector.detect_trips(
@@ -58,7 +62,8 @@ class TelemetrySyncService
       use_cache: true
     )
 
-    today_distance = TripLog.today.sum(&:distance)
+    # Fix: Load all records first, then sum the calculated distances
+    today_distance = TripLog.today.to_a.sum(&:distance)
 
     # Prepare data payload
     data = {
@@ -80,12 +85,19 @@ class TelemetrySyncService
       timestamp: log.timestamp.iso8601
     }
 
-    # Build the Turbo Stream HTML manually
+    puts " [→] Data prepared: travelling=#{data[:travelling]}, distance=#{data[:distance_km]}km"
+
+    # Build the Turbo Stream HTML manually - use to_json and escape properly
+    json_data = data.to_json.gsub('"', '&quot;')
+
     turbo_stream = <<~HTML
-      <turbo-stream action="update_dashboard" target="dashboard-widgets-left">
-        <template data="#{CGI.escape_html(data.to_json)}"></template>
+      <turbo-stream action="update_dashboard" target="dashboard-widgets-left" data="#{json_data}">
+        <template></template>
       </turbo-stream>
     HTML
+
+    puts ' [→] Broadcasting to channel: dashboard'
+    puts " [→] Turbo stream HTML: #{turbo_stream[0..200]}..."
 
     # Broadcast raw HTML
     ActionCable.server.broadcast(
@@ -97,12 +109,14 @@ class TelemetrySyncService
   rescue StandardError => e
     Rails.logger.error "Broadcast error: #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
+    puts " [✗] Broadcast error: #{e.message}"
+    puts e.backtrace.first(5).join("\n")
   end
 
   private
 
   def setup_connection
-    Rails.logger.info  ' [*] Connecting to RabbitMQ...'
+    Rails.logger.info ' [*] Connecting to RabbitMQ...'
 
     config = {
       host: ENV.fetch('RABBITMQ_HOST', 'localhost'),
