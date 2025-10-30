@@ -205,5 +205,24 @@ consumer.subscriptions.create("DashboardChannel", {
         textNode.textContent = weather.pressure || '--'
       }
     }
+  },
+
+  rotateCarIcon(heading) {
+    if (!window.currentMarker) return;
+    
+    // Store current heading
+    window.currentHeading = heading;
+    
+    // Get the marker icon element
+    const icon = window.currentMarker._icon;
+    if (!icon) return;
+    
+    // Find the SVG container
+    const svgContainer = icon.querySelector('div');
+    if (!svgContainer) return;
+    
+    // Apply rotation
+    svgContainer.style.transform = `rotate(${heading}deg)`;
+    svgContainer.style.transition = 'transform 0.3s ease';
   }
 })
