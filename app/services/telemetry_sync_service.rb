@@ -112,7 +112,7 @@ class TelemetrySyncService
       temperature: log.data['shtc3_temperature']&.round(1),
       humidity: log.data['shtc3_humidity']&.round(1),
       pressure: log.data['bmp581_pressure']&.round(1),
-      dewpoint: log.data['bmp581_dewpoint']&.round(1)
+      dewpoint: log.data['shtc3_dewpoint']&.round(1)
     }
   end
 

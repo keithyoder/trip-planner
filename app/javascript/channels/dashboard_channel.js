@@ -217,12 +217,12 @@ consumer.subscriptions.create("DashboardChannel", {
     const icon = window.currentMarker._icon;
     if (!icon) return;
     
-    // Find the SVG container
-    const svgContainer = icon.querySelector('div');
-    if (!svgContainer) return;
+    // Find the car icon container
+    const carContainer = icon.querySelector('.car-icon-container');
+    if (!carContainer) return;
     
     // Apply rotation
-    svgContainer.style.transform = `rotate(${heading}deg)`;
-    svgContainer.style.transition = 'transform 0.3s ease';
+    carContainer.style.transform = `rotate(${heading}deg)`;
+    carContainer.style.transition = 'transform 0.3s ease';
   }
 })

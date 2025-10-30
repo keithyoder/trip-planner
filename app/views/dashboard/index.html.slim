@@ -49,29 +49,17 @@
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           }
         ).addTo(window.dashboardMap);
-        
-        // Create custom car icon
-        var carIcon = L.divIcon({
-          html: `
-            <div style="transform: rotate(0deg); transition: transform 0.3s ease;">
-              <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                <g transform="translate(20, 20)">
-                  <!-- Car body -->
-                  <ellipse cx="0" cy="0" rx="8" ry="14" fill="#2563eb" stroke="#1e40af" stroke-width="2"/>
-                  <!-- Car windshield -->
-                  <ellipse cx="0" cy="-6" rx="6" ry="6" fill="#93c5fd" stroke="#1e40af" stroke-width="1"/>
-                  <!-- Direction indicator (front) -->
-                  <circle cx="0" cy="-14" r="2" fill="#fbbf24"/>
-                </g>
-              </svg>
-            </div>
-          `,
-          className: 'car-marker',
-          iconSize: [40, 40],
-          iconAnchor: [20, 20]
-        });
-        
+                
         // Current location marker (car)
+        const carIcon = L.divIcon({
+          html: '<div class="car-icon-container"><img src="#{asset_path('car-icon.svg')}" alt="car" /></div>',
+          className: 'car-marker',
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+          popupAnchor: [0, -16]
+        });
+
+        // Create marker with custom icon
         window.currentMarker = L.marker(
           [#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], 
           {icon: carIcon, rotationAngle: 0}
