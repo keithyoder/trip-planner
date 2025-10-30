@@ -96,11 +96,13 @@ class TelemetrySyncService
     (gps_speed.to_f * 3.6).round(1)
   end
 
-  def extract_gps_data(log)
+  def extract_gps_data(log) # rubocop:disable Metrics/AbcSize
     {
       lat: log.data['gps_latitude']&.to_f,
       lon: log.data['gps_longitude']&.to_f,
       altitude: log.data['gps_altitude']&.to_f,
+      heading: log.data['gps_heading']&.to_f,
+      climb: log.data['gps_climb']&.to_f,
       satellites: log.data['gps_satellites']&.to_i
     }
   end

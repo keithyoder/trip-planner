@@ -263,6 +263,22 @@ body {
   font-family: 'Courier New', monospace;
 }
 
+/* Car marker styling */
+.car-marker {
+  cursor: pointer;
+}
+
+.car-marker div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.car-marker svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .dashboard-header {

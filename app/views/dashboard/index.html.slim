@@ -36,7 +36,7 @@
         // Initialize map
         window.dashboardMap = L.map('map', {
           zoomControl: false
-        }).setView([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], 15);
+        }).setView([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], 17);
         
         L.control.zoom({
           position: 'bottomright'
@@ -50,20 +50,31 @@
           }
         ).addTo(window.dashboardMap);
         
-        var customIcon = L.icon({
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41]
+        // Create custom car icon
+        var carIcon = L.divIcon({
+          html: `
+            <div style="transform: rotate(0deg); transition: transform 0.3s ease;">
+              <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(20, 20)">
+                  <!-- Car body -->
+                  <ellipse cx="0" cy="0" rx="8" ry="14" fill="#2563eb" stroke="#1e40af" stroke-width="2"/>
+                  <!-- Car windshield -->
+                  <ellipse cx="0" cy="-6" rx="6" ry="6" fill="#93c5fd" stroke="#1e40af" stroke-width="1"/>
+                  <!-- Direction indicator (front) -->
+                  <circle cx="0" cy="-14" r="2" fill="#fbbf24"/>
+                </g>
+              </svg>
+            </div>
+          `,
+          className: 'car-marker',
+          iconSize: [40, 40],
+          iconAnchor: [20, 20]
         });
         
-        // Current location marker
+        // Current location marker (car)
         window.currentMarker = L.marker(
           [#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], 
-          {icon: customIcon}
+          {icon: carIcon, rotationAngle: 0}
         ).addTo(window.dashboardMap);
         
         window.currentMarker.bindPopup(`
@@ -71,6 +82,9 @@
           Temp: #{@latest_log.data['shtc3_temperature']&.round(1)}°C<br>
           Speed: #{(@latest_log.data['gps_speed'].to_f * 3.6).round(1)} km/h
         `);
+        
+        // Store current heading
+        window.currentHeading = 0;
         
         // Trip routes layer
         window.tripRoutesLayer = L.layerGroup().addTo(window.dashboardMap);
@@ -125,12 +139,6 @@
           // Collect bounds
           coords.forEach(coord => allBounds.push(coord));
         });
-        
-        // Fit map to show all trips and current location
-        if (allBounds.length > 0 && window.dashboardMap) {
-        //  allBounds.push([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}]);
-        //  window.dashboardMap.fitBounds(allBounds, { padding: [50, 50] });
-        }
       }
       
       // Initialize on load

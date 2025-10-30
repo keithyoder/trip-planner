@@ -147,18 +147,30 @@ consumer.subscriptions.create("DashboardChannel", {
     if (!window.currentMarker || !gps || !gps.lat || !gps.lon) return
     
     try {
-      // Update marker position
-      window.currentMarker.setLatLng([gps.lat, gps.lon])
+      const oldPos = window.currentMarker.getLatLng();
+      const newPos = [gps.lat, gps.lon];
       
-      // Rebind popup with updated content
+      // Calculate heading/bearing if position changed
+      if (oldPos.lat !== newPos[0] || oldPos.lng !== newPos[1]) {
+                // Update marker position
+        window.currentMarker.setLatLng(newPos);
+        
+        // Rotate the car icon
+        this.rotateCarIcon(gps.heading);
+        
+        // Optionally pan map to new location when moving
+        if (speedKmh > 1) {
+          window.dashboardMap.panTo(newPos, {animate: true, duration: 0.5});
+        }
+      }
+      
+      // Update popup content
       window.currentMarker.bindPopup(`
         <strong>Current Location</strong><br>
         Temp: ${temperature || '--'}°C<br>
-        Speed: ${speedKmh || 0} km/h
-      `)
-      
-      // Optionally pan map to new location (uncomment if desired)
-      window.dashboardMap.panTo([gps.lat, gps.lon])
+        Speed: ${speedKmh || 0} km/h<br>
+        Heading: ${Math.round(window.currentHeading || 0)}°
+      `);
     } catch (error) {
       console.error("Error updating map marker:", error)
     }
