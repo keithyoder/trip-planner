@@ -158,7 +158,7 @@ consumer.subscriptions.create("DashboardChannel", {
       `)
       
       // Optionally pan map to new location (uncomment if desired)
-      // window.dashboardMap.panTo([gps.lat, gps.lon])
+      window.dashboardMap.panTo([gps.lat, gps.lon])
     } catch (error) {
       console.error("Error updating map marker:", error)
     }
