@@ -102,8 +102,8 @@ class TelemetrySyncService
 
     # Broadcast raw HTML
     ActionCable.server.broadcast(
-      'dashboard',
-      turbo_stream
+      'dashboard_updates',
+      data
     )
 
     Rails.logger.info " [✓] Broadcasted to dashboard: #{log.mongo_id}"
