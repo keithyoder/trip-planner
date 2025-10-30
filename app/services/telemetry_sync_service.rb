@@ -2,9 +2,13 @@
 
 require 'bunny'
 require 'json'
-require 'cgi'
 
 class TelemetrySyncService
+  RETRY_DELAY = 5
+  HEARTBEAT = 60
+  PREFETCH_COUNT = 1
+  TRIP_DETECTION_CACHE_SECONDS = 30
+
   def self.start
     new.start
   end
@@ -14,9 +18,11 @@ class TelemetrySyncService
     @channel = nil
     @queue = nil
     @running = false
+    @trip_detector = nil
+    @last_trip_detection = nil
   end
 
-  def start
+  def start # rubocop:disable Metrics/MethodLength
     @running = true
 
     while @running
@@ -24,231 +30,224 @@ class TelemetrySyncService
         setup_connection
         consume_messages
       rescue Interrupt
-        @running = false
-        shutdown
-        Rails.logger.info  "\n [*] TelemetrySyncService stopped by user"
+        handle_shutdown('stopped by user')
       rescue Bunny::TCPConnectionFailed => e
-        Rails.logger.error "Connection failed: #{e.message}"
-        Rails.logger.info  " [✗] Connection failed: #{e.message}"
-        shutdown
-        if @running
-          Rails.logger.info ' [*] Retrying in 5 seconds...'
-          sleep 5
-        end
+        handle_error('Connection failed', e)
       rescue StandardError => e
-        Rails.logger.error "TelemetrySyncService error: #{e.class} - #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
-        Rails.logger.info  " [✗] Error: #{e.message}"
-        shutdown
-        if @running
-          Rails.logger.info ' [*] Retrying in 5 seconds...'
-          sleep 5
-        end
+        handle_error('Unexpected error', e)
       end
     end
   end
 
   def broadcast_dashboard_update(log)
-    puts " [→] Attempting broadcast for #{log.mongo_id}"
+    return unless valid_gps_data?(log)
 
-    return unless log.data['gps_latitude'].present?
+    data = build_dashboard_data(log)
 
-    puts ' [→] GPS data present, preparing broadcast...'
+    ActionCable.server.broadcast('dashboard_updates', data)
 
-    detector = TripDetector.new
-    detector.detect_trips(
-      start_date: Time.zone.now.beginning_of_day,
-      end_date: Time.zone.now,
-      use_cache: true
-    )
-
-    # Fix: Load all records first, then sum the calculated distances
-    today_distance = TripLog.today.to_a.sum(&:distance)
-
-    # Prepare data payload
-    data = {
-      travelling: detector.currently_travelling?,
-      distance_km: (today_distance / 1000.0).round(1),
-      speed_kmh: (log.data['gps_speed'].to_f * 3.6).round(1),
-      gps: {
-        lat: log.data['gps_latitude']&.to_f,
-        lon: log.data['gps_longitude']&.to_f,
-        altitude: log.data['gps_altitude']&.to_f,
-        satellites: log.data['gps_satellites']&.to_i
-      },
-      temperature: log.data['shtc3_temperature']&.round(1),
-      weather: {
-        temperature: log.data['shtc3_temperature']&.round(1),
-        humidity: log.data['shtc3_humidity']&.round(1),
-        pressure: log.data['bmp581_pressure']&.round(1)
-      },
-      timestamp: log.timestamp.iso8601
-    }
-
-    puts " [→] Data prepared: travelling=#{data[:travelling]}, distance=#{data[:distance_km]}km"
-
-    # Put JSON inside a script tag in the template
-    turbo_stream = <<~HTML
-      <turbo-stream action="update_dashboard" target="dashboard-widgets-left">
-        <template>
-          <script type="application/json" data-dashboard-update>
-            #{data.to_json}
-          </script>
-        </template>
-      </turbo-stream>
-    HTML
-
-    puts ' [→] Broadcasting to channel: dashboard'
-
-    # Broadcast raw HTML
-    ActionCable.server.broadcast(
-      'dashboard_updates',
-      data
-    )
-
-    Rails.logger.info " [✓] Broadcasted to dashboard: #{log.mongo_id}"
+    Rails.logger.info "[✓] Broadcasted to dashboard: #{log.mongo_id}"
   rescue StandardError => e
-    Rails.logger.error "Broadcast error: #{e.message}"
-    Rails.logger.error e.backtrace.join("\n")
-    puts " [✗] Broadcast error: #{e.message}"
-    puts e.backtrace.first(5).join("\n")
+    log_error('Broadcast error', e)
   end
 
   private
 
-  def setup_connection
-    Rails.logger.info ' [*] Connecting to RabbitMQ...'
+  def valid_gps_data?(log)
+    log.data['gps_latitude'].present?
+  end
 
-    config = {
+  def build_dashboard_data(log)
+    {
+      travelling: currently_travelling?,
+      distance_km: calculate_today_distance,
+      speed_kmh: calculate_speed(log.data['gps_speed']),
+      gps: extract_gps_data(log),
+      temperature: log.data['shtc3_temperature']&.round(1),
+      weather: extract_weather_data(log),
+      timestamp: log.timestamp.iso8601
+    }
+  end
+
+  def currently_travelling?
+    # Cache trip detector to avoid repeated calculations
+    if @last_trip_detection.nil? || @last_trip_detection < TRIP_DETECTION_CACHE_SECONDS.seconds.ago
+      @trip_detector ||= TripDetector.new
+      @trip_detector.detect_trips(
+        start_date: Time.zone.now.beginning_of_day,
+        end_date: Time.zone.now,
+        use_cache: true
+      )
+      @last_trip_detection = Time.zone.now
+    end
+
+    @trip_detector.currently_travelling?
+  end
+
+  def calculate_today_distance
+    # Calculate distance from loaded records
+    distance_meters = TripLog.today.to_a.sum(&:distance)
+    (distance_meters / 1000.0).round(1)
+  end
+
+  def calculate_speed(gps_speed)
+    return 0 unless gps_speed
+
+    (gps_speed.to_f * 3.6).round(1)
+  end
+
+  def extract_gps_data(log)
+    {
+      lat: log.data['gps_latitude']&.to_f,
+      lon: log.data['gps_longitude']&.to_f,
+      altitude: log.data['gps_altitude']&.to_f,
+      satellites: log.data['gps_satellites']&.to_i
+    }
+  end
+
+  def extract_weather_data(log)
+    {
+      temperature: log.data['shtc3_temperature']&.round(1),
+      humidity: log.data['shtc3_humidity']&.round(1),
+      pressure: log.data['bmp581_pressure']&.round(1),
+      dewpoint: log.data['bmp581_dewpoint']&.round(1)
+    }
+  end
+
+  def setup_connection
+    Rails.logger.info '[*] Connecting to RabbitMQ...'
+
+    config = rabbitmq_config
+
+    @connection = Bunny.new(config.merge(connection_options))
+    @connection.start
+
+    @channel = @connection.create_channel
+    @channel.prefetch(PREFETCH_COUNT)
+
+    @queue = @channel.queue('telemetry_sync', durable: true)
+
+    Rails.logger.info "[✓] Connected: #{@queue.message_count} messages waiting"
+  end
+
+  def rabbitmq_config
+    {
       host: ENV.fetch('RABBITMQ_HOST', 'localhost'),
       port: ENV.fetch('RABBITMQ_PORT', 5672).to_i,
       vhost: ENV.fetch('RABBITMQ_VHOST', 'trip_sync'),
       user: ENV.fetch('RABBITMQ_USER', 'sync_user'),
       password: ENV.fetch('RABBITMQ_PASSWORD')
     }
+  end
 
-    Rails.logger.info " [*] Config: #{config[:user]}@#{config[:host]}:#{config[:port]}/#{config[:vhost]}"
-
-    @connection = Bunny.new(
-      config.merge(
-        heartbeat: 60,
-        network_recovery_interval: 5,
-        recovery_attempts: 10,
-        automatically_recover: true
-      )
-    )
-
-    @connection.start
-    Rails.logger.info ' [✓] Connected to RabbitMQ'
-
-    @channel = @connection.create_channel
-    Rails.logger.info ' [✓] Channel created'
-
-    @channel.prefetch(1)
-
-    @queue = @channel.queue('telemetry_sync', durable: true)
-    Rails.logger.info " [✓] Queue declared: #{@queue.name} (#{@queue.message_count} messages)"
-
-    Rails.logger.info 'TelemetrySyncService connected successfully'
+  def connection_options
+    {
+      heartbeat: HEARTBEAT,
+      network_recovery_interval: RETRY_DELAY,
+      recovery_attempts: 10,
+      automatically_recover: true
+    }
   end
 
   def consume_messages
-    Rails.logger.info ' [*] Waiting for messages. Press Ctrl+C to exit'
+    Rails.logger.info '[*] Waiting for messages. Press Ctrl+C to exit'
 
-    @queue.subscribe(block: true, manual_ack: true) do |delivery_info, properties, body|
-      Rails.logger.info ' [→] Received message'
-      process_message(body)
-      @channel.ack(delivery_info.delivery_tag)
-      Rails.logger.info  ' [✓] Message processed'
-    rescue StandardError => e
-      Rails.logger.error "Message processing error: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      Rails.logger.info  " [✗] Processing error: #{e.message}"
-
-      # Reject and requeue
-      @channel.nack(delivery_info.delivery_tag, false, true)
+    @queue.subscribe(block: true, manual_ack: true) do |delivery_info, _properties, body|
+      process_message_with_ack(delivery_info, body)
     end
+  end
+
+  def process_message_with_ack(delivery_info, body)
+    process_message(body)
+    @channel.ack(delivery_info.delivery_tag)
+    Rails.logger.info '[✓] Message processed'
+  rescue StandardError => e
+    log_error('Message processing error', e)
+    @channel.nack(delivery_info.delivery_tag, false, true)
   end
 
   def process_message(body)
     message = JSON.parse(body)
-    collection = message['collection']
-    document = message['document']
 
-    Rails.logger.info "Processing: #{collection}"
-
-    case collection
+    case message['collection']
     when 'logs'
-      process_log(document)
+      process_log(message['document'])
     else
-      Rails.logger.warn "Unknown collection: #{collection}"
+      Rails.logger.warn "Unknown collection: #{message['collection']}"
     end
   end
 
   def process_log(document)
-    mongo_id = document['_id'].to_s
-    timestamp = parse_timestamp(document['timestamp'])
-    data = document.except('_id', 'timestamp')
+    log = upsert_telemetry_log(document)
+    broadcast_dashboard_update(log)
+  end
 
+  def upsert_telemetry_log(document) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     attributes = {
-      mongo_id: mongo_id,
-      timestamp: timestamp,
-      data: data
+      mongo_id: document['_id'].to_s,
+      timestamp: parse_timestamp(document['timestamp']),
+      data: document.except('_id', 'timestamp')
     }
 
     log = TelemetryLog.find_or_initialize_by(mongo_id: attributes[:mongo_id])
     log.assign_attributes(attributes)
 
     if log.save
-      Rails.logger.info "Saved TelemetryLog #{log.id}"
-      Rails.logger.info " [✓] Saved: #{mongo_id} at #{timestamp}"
-
-      # Broadcast to dashboard after successful save
-      broadcast_dashboard_update(log)
+      Rails.logger.info "[✓] Saved: #{log.mongo_id}"
+      log
     else
       Rails.logger.error "Failed to save: #{log.errors.full_messages.join(', ')}"
       raise ActiveRecord::RecordInvalid, log
     end
   end
 
-  def parse_timestamp(ts)
-    case ts
-    when String
-      Time.zone.parse(ts)
-    when Numeric
-      Time.zone.at(ts)
-    when Hash
-      # Handle MongoDB extended JSON format: {"$date" => "2025-10-26T23:37:19Z"}
-      if ts['$date']
-        Time.zone.parse(ts['$date'])
-      else
-        Rails.logger.error "Unknown timestamp hash format: #{ts.inspect}"
-        Time.zone.now
-      end
-    else
-      Rails.logger.warn "Unknown timestamp type: #{ts.class}"
-      Time.zone.now
-    end
+  def parse_timestamp(timestamp)
+    Time.zone.parse(timestamp)
   rescue StandardError => e
-    Rails.logger.error "Error parsing timestamp #{ts.inspect}: #{e.message}"
+    Rails.logger.error "Error parsing timestamp #{timestamp.inspect}: #{e.message}"
     Time.zone.now
   end
 
+  def handle_shutdown(reason)
+    @running = false
+    shutdown
+    Rails.logger.info "[*] TelemetrySyncService #{reason}"
+  end
+
+  def handle_error(message, error)
+    log_error(message, error)
+    shutdown
+    retry_connection if @running
+  end
+
+  def retry_connection
+    Rails.logger.info "[*] Retrying in #{RETRY_DELAY} seconds..."
+    sleep RETRY_DELAY
+  end
+
+  def log_error(message, error)
+    Rails.logger.error "#{message}: #{error.class} - #{error.message}"
+    Rails.logger.error error.backtrace.join("\n") if error.backtrace
+  end
+
   def shutdown
-    Rails.logger.info ' [*] Shutting down...'
+    Rails.logger.info '[*] Shutting down...'
 
-    begin
-      @channel&.close if @channel&.open?
-    rescue StandardError => e
-      Rails.logger.error "Error closing channel: #{e.message}"
-    end
+    close_channel
+    close_connection
 
-    begin
-      @connection&.close if @connection&.open?
-    rescue StandardError => e
-      Rails.logger.error "Error closing connection: #{e.message}"
-    end
+    Rails.logger.info '[✓] Shutdown complete'
+  end
 
-    Rails.logger.info ' [✓] Shutdown complete'
+  def close_channel
+    @channel&.close if @channel&.open?
+  rescue StandardError => e
+    Rails.logger.error "Error closing channel: #{e.message}"
+  end
+
+  def close_connection
+    @connection&.close if @connection&.open?
+  rescue StandardError => e
+    Rails.logger.error "Error closing connection: #{e.message}"
   end
 end
