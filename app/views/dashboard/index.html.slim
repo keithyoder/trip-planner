@@ -23,6 +23,19 @@
 / Map initialization
 - if @latest_log && @latest_log.data['gps_latitude']
   javascript:
+    let wasHidden = false;
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        // Mark that the page was hidden
+        wasHidden = true;
+      } else if (wasHidden) {
+        // Page is visible again after being hidden - reload to catch up on missed updates
+        console.log('Dashboard was backgrounded, reloading to sync data...');
+        window.location.reload();
+      }
+    });
+
     (function() {
       // Check if map already exists
       if (window.dashboardMap) {
