@@ -3,7 +3,6 @@ import consumer from "./consumer"
 consumer.subscriptions.create("DashboardChannel", {
   connected() {
     console.log("Connected to dashboard channel")
-    this.currentTripPoints = []
   },
 
   disconnected() {
@@ -14,7 +13,7 @@ consumer.subscriptions.create("DashboardChannel", {
     // Handle incoming data
     this.updateDashboardWidgets(data)
     if (data.gps && data.travelling) {
-      this.currentTripPoints.push([data.gps.lat, data.gps.lon])
+      window.currentTripPoints.push([data.gps.lat, data.gps.lon])
       this.updateTripPolyline()
     }
   },
@@ -238,8 +237,8 @@ consumer.subscriptions.create("DashboardChannel", {
     }
     
     // Draw new polyline with all points
-    if (this.currentTripPoints.length > 1) {
-      window.currentTripPolyline = L.polyline(this.currentTripPoints, {
+    if (window.currentTripPoints.length > 1) {
+      window.currentTripPolyline = L.polyline(window.currentTripPoints, {
         color: '#3498db',
         weight: 4,
         opacity: 0.7
