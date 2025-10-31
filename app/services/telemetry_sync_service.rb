@@ -87,6 +87,7 @@ class TelemetrySyncService
   def calculate_today_distance
     # Calculate distance from loaded records
     distance_meters = TripLog.today.to_a.sum(&:distance)
+    distance_meters += @trip_detector.current_trip[:total_distance] if @trip_detector&.current_trip
     (distance_meters / 1000.0).round(1)
   end
 

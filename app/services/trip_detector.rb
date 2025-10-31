@@ -224,9 +224,9 @@ class TripDetector
   end
 
   def current_trip_points
-    return [] unless @current_trip
+    return [] unless current_trip
 
-    @current_trip[:points].map do |log|
+    current_trip[:points].map do |log|
       lon = log.data['gps_longitude']&.to_f
       lat = log.data['gps_latitude']&.to_f
       [lat, lon] if lon && lat
