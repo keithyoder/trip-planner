@@ -1,6 +1,8 @@
 # app/services/trip_detector.rb
 
 class TripDetector
+  attr_reader :current_trip
+
   EARTH_RADIUS_METERS = 6_371_000
 
   def initialize
@@ -81,12 +83,12 @@ class TripDetector
 
     # Initialize from cache if available
     if use_cache && @current_incomplete_trip.present?
-      current_trip = @current_incomplete_trip
+      @current_trip = @current_incomplete_trip
       last_log = current_trip[:points].last
       last_log_time = current_trip[:end_time]
       stopped_since = current_trip[:stopped_since]
     else
-      current_trip = nil
+      @current_trip = nil
       last_log = nil
       last_log_time = nil
       stopped_since = nil
@@ -128,7 +130,7 @@ class TripDetector
             next_trip_id += 1
           end
 
-          current_trip = nil
+          @current_trip = nil
           stopped_since = nil
         end
       end
@@ -147,7 +149,7 @@ class TripDetector
 
         if current_trip.nil?
           # Start new trip
-          current_trip = {
+          @current_trip = {
             start_time: timestamp,
             start_lat: lat,
             start_lon: lon,
@@ -183,7 +185,7 @@ class TripDetector
             next_trip_id += 1
           end
 
-          current_trip = nil
+          @current_trip = nil
           stopped_since = nil
         end
       end
