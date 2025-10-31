@@ -3,6 +3,7 @@ import consumer from "./consumer"
 consumer.subscriptions.create("DashboardChannel", {
   connected() {
     console.log("Connected to dashboard channel")
+    this.currentTripPoints = []
   },
 
   disconnected() {
@@ -12,6 +13,10 @@ consumer.subscriptions.create("DashboardChannel", {
   received(data) {
     // Handle incoming data
     this.updateDashboardWidgets(data)
+    if (data.gps && data.travelling) {
+      this.currentTripPoints.push([data.gps.lat, data.gps.lon])
+      this.updateTripPolyline()
+    }
   },
 
   updateDashboardWidgets(data) {
@@ -224,5 +229,28 @@ consumer.subscriptions.create("DashboardChannel", {
     // Apply rotation
     carContainer.style.transform = `rotate(${heading}deg)`;
     carContainer.style.transition = 'transform 0.3s ease';
+  },
+
+  updateTripPolyline() {
+    // Remove old polyline if exists
+    if (window.currentTripPolyline) {
+      window.dashboardMap.removeLayer(window.currentTripPolyline)
+    }
+    
+    // Draw new polyline with all points
+    if (this.currentTripPoints.length > 1) {
+      window.currentTripPolyline = L.polyline(this.currentTripPoints, {
+        color: '#3498db',
+        weight: 4,
+        opacity: 0.7
+      }).addTo(window.dashboardMap)
+    }
+  },
+
+  clearTripPolyline() {
+    if (window.currentTripPolyline) {
+      window.dashboardMap.removeLayer(window.currentTripPolyline)
+      window.currentTripPolyline = null
+    }
   }
 })

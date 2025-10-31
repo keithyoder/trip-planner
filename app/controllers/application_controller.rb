@@ -11,7 +11,7 @@ class ApplicationController < ActionController::Base
   end
 
   # Optional: Custom unauthorized redirect
-  def after_sign_in_path_for(resource)
+  def after_sign_in_path_for(_resource)
     trips_path # or wherever you want users to go after login
   end
 end
