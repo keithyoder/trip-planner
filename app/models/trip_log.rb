@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class TripLog < ApplicationRecord
-  has_many :telemetry_logs, dependent: :nullify
+  # has_many :telemetry_logs, dependent: :nullify
   belongs_to :trip, optional: true
 
   validates :start_time, presence: true, uniqueness: true

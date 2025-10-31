@@ -201,8 +201,9 @@ class TripDetector
     if current_trip
       current_trip[:stopped_since] = stopped_since
       @current_incomplete_trip = current_trip
+      trip_duration = current_trip[:end_time] - current_trip[:start_time]
       @currently_travelling = current_trip[:total_distance] > min_trip_distance \
-        && current_trip[:trip_duration_seconds] > min_trip_duration
+        && trip_duration > min_trip_duration
     else
       @current_incomplete_trip = nil
       @currently_travelling = false

@@ -24,7 +24,7 @@
 - if @latest_log && @latest_log.data['gps_latitude']
   javascript:
     let wasHidden = false;
-    window.currentTripPoints = []
+    window.currentTripPoints = #{@trip_detector.current_trip_points.to_json};
 
     document.addEventListener('visibilitychange', function() {
       if (document.hidden) {

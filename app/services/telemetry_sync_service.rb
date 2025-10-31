@@ -20,6 +20,7 @@ class TelemetrySyncService
     @running = false
     @trip_detector = nil
     @last_trip_detection = nil
+    @was_travelling = false
   end
 
   def start # rubocop:disable Metrics/MethodLength
@@ -43,6 +44,9 @@ class TelemetrySyncService
     return unless valid_gps_data?(log)
 
     data = build_dashboard_data(log)
+
+    # Detect and save trip when it completes
+    check_and_save_trip(data[:travelling])
 
     ActionCable.server.broadcast('dashboard_updates', data)
 
@@ -115,6 +119,33 @@ class TelemetrySyncService
       pressure: log.data['bmp581_pressure']&.round(1),
       dewpoint: log.data['shtc3_dewpoint']&.round(1)
     }
+  end
+
+  def check_and_save_trip(is_currently_travelling)
+    # Detect trip completion (was travelling, now stopped)
+    if @was_travelling && !is_currently_travelling
+      Rails.logger.info '[*] Trip completed, saving to database...'
+      save_completed_trip
+    end
+    @was_travelling = is_currently_travelling
+  end
+
+  def save_completed_trip # rubocop:disable Metrics/MethodLength
+    return unless @trip_detector
+
+    saved_trips = @trip_detector.detect_and_save_trips(
+      start_date: Time.zone.now.beginning_of_day,
+      end_date: Time.zone.now,
+      use_cache: true
+    )
+
+    if saved_trips.any?
+      Rails.logger.info "[✓] Saved #{saved_trips.length} trip(s)"
+    else
+      Rails.logger.warn '[!] No trips saved (may not meet minimum requirements)'
+    end
+  rescue StandardError => e
+    log_error('Error saving trip', e)
   end
 
   def setup_connection
