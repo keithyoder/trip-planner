@@ -38,9 +38,10 @@ class TripDetector
 
   # Detect trips for today
   def todays_trips(use_cache: true)
+    today = Time.find_zone(TelemetryLog.current_timezone).now
     detect_trips(
-      start_date: Time.zone.now.beginning_of_day,
-      end_date: Time.zone.now.end_of_day,
+      start_date: today.beginning_of_day,
+      end_date: today.end_of_day,
       use_cache: use_cache
     )
   end

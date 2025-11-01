@@ -4,9 +4,11 @@ namespace :trip_logs do # rubocop:disable Metrics/BlockLength
   desc "Detect and save today's trips"
   task detect_today: :environment do
     detector = TripDetector.new
+    today = Time.find_zone(TelemetryLog.current_timezone).now
+
     trips = detector.detect_and_save_trips(
-      start_date: Time.zone.now.beginning_of_day,
-      end_date: Time.zone.now.end_of_day,
+      start_date: today.beginning_of_day,
+      end_date: today.end_of_day,
       use_cache: false
     )
 
@@ -18,8 +20,10 @@ namespace :trip_logs do # rubocop:disable Metrics/BlockLength
 
   desc 'Detect and save trips for a date range (safe to re-run)'
   task :detect_range, %i[start_date end_date] => :environment do |t, args|
-    start_date = Time.zone.parse(args[:start_date] || 1.day.ago.to_s)
-    end_date = Time.zone.parse(args[:end_date] || Time.zone.now.to_s)
+    timezone = TelemetryLog.current_timezone
+
+    start_date = Time.find_zone(timezone).parse(args[:start_date] || 1.day.ago.to_s)
+    end_date = Time.find_zone(timezone).parse(args[:end_date] || Time.zone.now.to_s)
 
     detector = TripDetector.new
     trips = detector.detect_and_save_trips(

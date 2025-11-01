@@ -73,16 +73,17 @@ class TelemetrySyncService
     }
   end
 
-  def currently_travelling?
+  def currently_travelling? # rubocop:disable Metrics/MethodLength
     # Cache trip detector to avoid repeated calculations
     if @last_trip_detection.nil? || @last_trip_detection < TRIP_DETECTION_CACHE_SECONDS.seconds.ago
       @trip_detector ||= TripDetector.new
+      today = Time.find_zone(TelemetryLog.current_timezone).now
       @trip_detector.detect_trips(
-        start_date: Time.zone.now.beginning_of_day,
-        end_date: Time.zone.now,
+        start_date: today.beginning_of_day,
+        end_date: today,
         use_cache: true
       )
-      @last_trip_detection = Time.zone.now
+      @last_trip_detection = today
     end
 
     @trip_detector.currently_travelling?
@@ -133,9 +134,10 @@ class TelemetrySyncService
   def save_completed_trip # rubocop:disable Metrics/MethodLength
     return unless @trip_detector
 
+    today = Time.find_zone(TelemetryLog.current_timezone).now
     saved_trips = @trip_detector.detect_and_save_trips(
-      start_date: Time.zone.now.beginning_of_day,
-      end_date: Time.zone.now,
+      start_date: today.beginning_of_day,
+      end_date: today.now,
       use_cache: true
     )
 
