@@ -6,7 +6,7 @@ class DashboardController < ApplicationController
   def index
     @latest_log = TelemetryLog.order(timestamp: :desc).first
     @trip_detector = TripDetector.new
-    @trip_detector.todays_trips(use_cache: false)
+    @trip_detector.todays_trips(use_cache: true)
 
     # Get today's trips
     @todays_trips = TripLog.today.recent
