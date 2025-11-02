@@ -33,8 +33,13 @@ consumer.subscriptions.create("DashboardChannel", {
     // Update odometer
     this.updateOdometer(data.distance_km || 0)
     
-    // Update speed widget (show/hide based on travelling status)
-    this.updateSpeedWidget(data.speed_kmh, data.travelling)
+    // Update heading indicator using pre-calculated direction
+    if (data.direction) {
+      this.updateHeadingIndicator(data.direction, data.travelling, data.speed_kmh)
+    }
+    
+    // Update speed circle (show/hide based on travelling status)
+    this.updateSpeedCircle(data.speed_kmh, data.travelling)
     
     // Update GPS info
     if (data.gps) {
@@ -76,45 +81,57 @@ consumer.subscriptions.create("DashboardChannel", {
     }).join('')
   },
 
-  updateSpeedWidget(speedKmh, travelling) {
-    const container = document.getElementById('dashboard-widgets-left')
-    if (!container) return
+  updateHeadingIndicator(direction, travelling, speedKmh) {
+    let headingIndicator = document.getElementById('heading-indicator')
+    const speedRounded = Math.round(speedKmh)
     
-    // Find existing speed widget
-    let speedWidget = container.querySelector('.widget.speed-widget')
-    
-    if (travelling && speedKmh > 0) {
-      // Show/update speed widget
-      if (!speedWidget) {
-        // Create speed widget
-        speedWidget = document.createElement('div')
-        speedWidget.className = 'widget speed-widget'
-        speedWidget.innerHTML = `
-          <div class="widget-icon">
-            <i class="bi bi-speedometer2 text-success"></i>
-          </div>
-          <div class="widget-value">
-            <span class="speed-value">${speedKmh}</span>
-            <span class="widget-unit">km/h</span>
-          </div>
-          <div class="widget-label">Speed</div>
+    if (travelling && speedRounded > 1 && direction) {
+      // Show/update heading indicator
+      if (!headingIndicator) {
+        // Create heading indicator
+        headingIndicator = document.createElement('div')
+        headingIndicator.id = 'heading-indicator'
+        headingIndicator.innerHTML = `
+          <div class="heading-direction">${direction}</div>
         `
-        // Insert after odometer widget
-        const odometer = container.querySelector('.odometer-widget')
-        if (odometer && odometer.nextSibling) {
-          container.insertBefore(speedWidget, odometer.nextSibling)
-        } else if (odometer) {
-          container.appendChild(speedWidget)
-        }
+        document.getElementById('dashboard-container').appendChild(headingIndicator)
       } else {
-        // Update existing speed value
-        const speedValue = speedWidget.querySelector('.speed-value')
-        if (speedValue) speedValue.textContent = speedKmh
+        // Update existing direction
+        const directionElement = headingIndicator.querySelector('.heading-direction')
+        if (directionElement) directionElement.textContent = direction
       }
     } else {
-      // Remove speed widget when not travelling
-      if (speedWidget) {
-        speedWidget.remove()
+      // Remove heading indicator when not travelling or speed too low
+      if (headingIndicator) {
+        headingIndicator.remove()
+      }
+    }
+  },
+
+  updateSpeedCircle(speedKmh, travelling) {
+    let speedCircle = document.getElementById('speed-circle')
+    const speedRounded = Math.round(speedKmh)
+    
+    if (travelling && speedRounded > 1) {
+      // Show/update speed circle
+      if (!speedCircle) {
+        // Create speed circle
+        speedCircle = document.createElement('div')
+        speedCircle.id = 'speed-circle'
+        speedCircle.innerHTML = `
+          <div class="speed-circle-value">${speedRounded}</div>
+          <div class="speed-circle-unit">km/h</div>
+        `
+        document.getElementById('dashboard-container').appendChild(speedCircle)
+      } else {
+        // Update existing speed value
+        const speedValue = speedCircle.querySelector('.speed-circle-value')
+        if (speedValue) speedValue.textContent = speedRounded
+      }
+    } else {
+      // Remove speed circle when not travelling or speed too low
+      if (speedCircle) {
+        speedCircle.remove()
       }
     }
   },
@@ -151,20 +168,20 @@ consumer.subscriptions.create("DashboardChannel", {
     if (!window.currentMarker || !gps || !gps.lat || !gps.lon) return
     
     try {
-      const oldPos = window.currentMarker.getLatLng();
-      const newPos = [gps.lat, gps.lon];
+      const oldPos = window.currentMarker.getLatLng()
+      const newPos = [gps.lat, gps.lon]
       
       // Calculate heading/bearing if position changed
       if (oldPos.lat !== newPos[0] || oldPos.lng !== newPos[1]) {
-                // Update marker position
-        window.currentMarker.setLatLng(newPos);
+        // Update marker position
+        window.currentMarker.setLatLng(newPos)
         
         // Rotate the car icon
-        this.rotateCarIcon(gps.heading);
+        this.rotateCarIcon(gps.heading)
         
         // Optionally pan map to new location when moving
         if (speedKmh > 1) {
-          window.dashboardMap.panTo(newPos, {animate: true, duration: 0.5});
+          window.dashboardMap.panTo(newPos, {animate: true, duration: 0.5})
         }
       }
       
@@ -174,7 +191,7 @@ consumer.subscriptions.create("DashboardChannel", {
         Temp: ${temperature || '--'}°C<br>
         Speed: ${speedKmh || 0} km/h<br>
         Heading: ${Math.round(window.currentHeading || 0)}°
-      `);
+      `)
     } catch (error) {
       console.error("Error updating map marker:", error)
     }
@@ -212,22 +229,22 @@ consumer.subscriptions.create("DashboardChannel", {
   },
 
   rotateCarIcon(heading) {
-    if (!window.currentMarker) return;
+    if (!window.currentMarker) return
     
     // Store current heading
-    window.currentHeading = heading;
+    window.currentHeading = heading
     
     // Get the marker icon element
-    const icon = window.currentMarker._icon;
-    if (!icon) return;
+    const icon = window.currentMarker._icon
+    if (!icon) return
     
     // Find the car icon container
-    const carContainer = icon.querySelector('.car-icon-container');
-    if (!carContainer) return;
+    const carContainer = icon.querySelector('.car-icon-container')
+    if (!carContainer) return
     
     // Apply rotation
-    carContainer.style.transform = `rotate(${heading}deg)`;
-    carContainer.style.transition = 'transform 0.3s ease';
+    carContainer.style.transform = `rotate(${heading}deg)`
+    carContainer.style.transition = 'transform 0.3s ease'
   },
 
   updateTripPolyline() {

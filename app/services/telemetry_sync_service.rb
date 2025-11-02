@@ -14,7 +14,7 @@ require_relative 'telemetry_rabbitmq_consumer'
 # * Upserts telemetry logs to the local PostgreSQL database
 # * Detects trip status and calculates real-time statistics
 # * Broadcasts dashboard updates to connected clients for recent logs (<10 seconds old)
-# * Automatically saves completed trips to the database
+# * Automatically detects and saves completed trips to the database
 #
 # == Configuration
 #
@@ -40,6 +40,7 @@ require_relative 'telemetry_rabbitmq_consumer'
 #       "gps_latitude": 40.7128,
 #       "gps_longitude": -74.0060,
 #       "gps_speed": 15.5,
+#       "gps_heading": 45.0,
 #       "shtc3_temperature": 22.5,
 #       ...
 #     }
@@ -50,22 +51,43 @@ require_relative 'telemetry_rabbitmq_consumer'
 # The service broadcasts real-time updates to the 'dashboard_updates' ActionCable channel
 # with the following data structure:
 #   {
-#     travelling: true/false,
+#     travelling: true,
 #     distance_km: 12.5,
 #     speed_kmh: 55.8,
-#     gps: { lat: 40.7128, lon: -74.0060, altitude: 10.0, ... },
+#     gps: {
+#       lat: 40.7128,
+#       lon: -74.0060,
+#       altitude: 10.0,
+#       heading: 45.0,
+#       direction: "NE",
+#       climb: 0.5,
+#       satellites: 12
+#     },
 #     temperature: 22.5,
-#     weather: { temperature: 22.5, humidity: 65.0, pressure: 1013.2, ... },
+#     weather: {
+#       temperature: 22.5,
+#       humidity: 65.0,
+#       pressure: 1013.2,
+#       dewpoint: 15.3
+#     },
 #     timestamp: "2025-11-01T12:00:00Z"
 #   }
 #
+# The direction field is calculated from the heading using cardinal directions:
+# N (0°), NE (45°), E (90°), SE (135°), S (180°), SW (225°), W (270°), NW (315°)
+#
 # == Performance Considerations
 #
-# * Trip detection results are cached for 30 seconds to reduce computation
-# * Only broadcasts updates for recent logs to avoid unnecessary network traffic
-# * Automatically detects and saves completed trips
-#
-class TelemetrySyncService
+# * Trip detection results are cached for 5 seconds to reduce computation
+# * Only broadcasts updates for recent logs (<10 seconds old) to avoid unnecessary network traffic
+# * Automatically detects and saves completed trips by comparing detected vs saved trip counts
+# * Uses DashboardDataBuilder concern for consistent data formatting across the application
+
+require 'dashboard_data_builder'
+
+class TelemetrySyncService # rubocop:disable Metrics/ClassLength
+  include DashboardDataBuilder
+
   TRIP_DETECTION_CACHE_SECONDS = 5
 
   def self.start
@@ -137,7 +159,15 @@ class TelemetrySyncService
     return unless recent_log?(log)
     return unless valid_gps_data?(log)
 
-    data = build_dashboard_data(log)
+    # Ensure trip detector is initialized
+    ensure_trip_detector_initialized
+
+    # Use the concern's build_dashboard_data method
+    data = build_dashboard_data(
+      log,
+      trip_detector: @trip_detector,
+      today_distance_meters: calculate_today_distance_meters
+    )
 
     # Detect and save trip when it completes
     check_and_save_trip(data[:travelling])
@@ -157,70 +187,28 @@ class TelemetrySyncService
     log.data['gps_latitude'].present?
   end
 
-  def build_dashboard_data(log)
-    {
-      travelling: currently_travelling?,
-      distance_km: calculate_today_distance,
-      speed_kmh: calculate_speed(log.data['gps_speed']),
-      gps: extract_gps_data(log),
-      temperature: log.data['shtc3_temperature']&.round(1),
-      weather: extract_weather_data(log),
-      timestamp: log.timestamp.iso8601
-    }
-  end
-
-  def currently_travelling? # rubocop:disable Metrics/MethodLength
-    # Cache trip detector to avoid repeated calculations
+  def ensure_trip_detector_initialized
     now = Time.current
-    if @last_trip_detection.nil? || (now - @last_trip_detection) >= TRIP_DETECTION_CACHE_SECONDS
-      @trip_detector ||= TripDetector.new
-      today = Time.find_zone(TelemetryLog.current_timezone).now
-      @trip_detector.detect_trips(
-        start_date: today.beginning_of_day,
-        end_date: today,
-        use_cache: true
-      )
-      @last_trip_detection = now
+    return if @last_trip_detection && (now - @last_trip_detection) < TRIP_DETECTION_CACHE_SECONDS
 
-      travelling = @trip_detector.currently_travelling?
-      Rails.logger.debug "[TripDetector] Currently travelling: #{travelling}"
-      travelling
-    else
-      @trip_detector.currently_travelling?
-    end
+    @trip_detector ||= TripDetector.new
+    today = Time.find_zone(TelemetryLog.current_timezone).now
+    @trip_detector.detect_trips(
+      start_date: today.beginning_of_day,
+      end_date: today,
+      use_cache: true
+    )
+    @last_trip_detection = now
+
+    travelling = @trip_detector.currently_travelling?
+    Rails.logger.debug "[TripDetector] Currently travelling: #{travelling}"
   end
 
-  def calculate_today_distance
+  def calculate_today_distance_meters
     # Calculate distance from loaded records
     distance_meters = TripLog.today.to_a.sum(&:distance)
     distance_meters += @trip_detector.current_trip[:total_distance] if @trip_detector&.current_trip
-    (distance_meters / 1000.0).round(1)
-  end
-
-  def calculate_speed(gps_speed)
-    return 0 unless gps_speed
-
-    (gps_speed.to_f * 3.6).round(1)
-  end
-
-  def extract_gps_data(log) # rubocop:disable Metrics/AbcSize
-    {
-      lat: log.data['gps_latitude']&.to_f,
-      lon: log.data['gps_longitude']&.to_f,
-      altitude: log.data['gps_altitude']&.to_f,
-      heading: log.data['gps_heading']&.to_f,
-      climb: log.data['gps_climb']&.to_f,
-      satellites: log.data['gps_satellites']&.to_i
-    }
-  end
-
-  def extract_weather_data(log)
-    {
-      temperature: log.data['shtc3_temperature']&.round(1),
-      humidity: log.data['shtc3_humidity']&.round(1),
-      pressure: log.data['bmp581_pressure']&.round(1),
-      dewpoint: log.data['shtc3_dewpoint']&.round(1)
-    }
+    distance_meters
   end
 
   def check_and_save_trip(is_currently_travelling)

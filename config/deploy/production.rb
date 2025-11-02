@@ -78,6 +78,19 @@ namespace :deploy do
   end
 end
 
+namespace :telemetry_sync do
+  desc 'Restart telemetry-sync service'
+  task :restart do
+    on roles(:app) do
+      execute :sudo, :systemctl, :restart, 'telemetry-sync.service'
+      info 'Telemetry sync service restarted'
+    end
+  end
+end
+
 # Run in this order
 before 'deploy:assets:precompile', 'deploy:yarn_install'
 after 'deploy:yarn_install', 'deploy:build_css'
+
+# Automatically restart after publishing
+after 'deploy:publishing', 'telemetry_sync:restart'

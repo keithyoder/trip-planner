@@ -1,19 +1,14 @@
-/ Right side pull-out sidebar
-- if latest_log
-  / Toggle button
-  #sidebar-toggle
-    i.bi.bi-chevron-left
-  
-  / Sidebar
-  #weather-sidebar
-    .sidebar-content
+/ Right side weather sidebar
+#weather-sidebar
+  .sidebar-content
+    - if initial_dashboard_data && initial_dashboard_data[:weather]
       / Temperature widget
       .widget.widget-horizontal
         .widget-icon-small
           i.bi.bi-thermometer-half.text-danger
         .widget-info
           .widget-value-small
-            = latest_log.data['shtc3_temperature']&.round(1) || '--'
+            = initial_dashboard_data[:weather][:temperature] || '--'
             span.widget-unit-small °C
           .widget-label-small Temperature
 
@@ -23,19 +18,9 @@
           i.bi.bi-droplet.text-primary
         .widget-info
           .widget-value-small
-            = latest_log.data['shtc3_humidity']&.round(1) || '--'
+            = initial_dashboard_data[:weather][:humidity] || '--'
             span.widget-unit-small %
           .widget-label-small Humidity
-
-      / Dewpoint widget
-      .widget.widget-horizontal
-        .widget-icon-small
-          i.bi.bi-moisture.text-info
-        .widget-info
-          .widget-value-small
-            = latest_log.data['shtc3_dewpoint'] || '--'
-            span.widget-unit-small °C
-          .widget-label-small Dewpoint
 
       / Pressure widget
       .widget.widget-horizontal
@@ -43,6 +28,20 @@
           i.bi.bi-speedometer.text-info
         .widget-info
           .widget-value-small
-            = latest_log.data['bmp581_pressure']&.round(1) || '--'
+            = initial_dashboard_data[:weather][:pressure] || '--'
             span.widget-unit-small hPa
           .widget-label-small Pressure
+
+      / Dewpoint widget
+      - if initial_dashboard_data[:weather][:dewpoint]
+        .widget.widget-horizontal
+          .widget-icon-small
+            i.bi.bi-moisture.text-secondary
+          .widget-info
+            .widget-value-small
+              = initial_dashboard_data[:weather][:dewpoint]
+              span.widget-unit-small °C
+            .widget-label-small Dewpoint
+
+#sidebar-toggle
+  i.bi.bi-chevron-left

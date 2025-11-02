@@ -26,7 +26,7 @@ body {
 /* Left Side Widgets - positioned at bottom left */
 #dashboard-widgets-left {
   position: absolute;
-  bottom: 20px;  /* Changed from top to bottom */
+  bottom: 20px;
   left: 20px;
   display: flex;
   flex-direction: column;
@@ -97,6 +97,80 @@ body {
 
 #sidebar-toggle.open i {
   transform: rotate(180deg);
+}
+
+/* Heading Indicator - CarPlay style (top right, above speed circle) */
+#heading-indicator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  min-width: 50px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  padding: 0 12px;
+  border: 2px solid #007AFF;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#heading-indicator:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.heading-direction {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.5px;
+}
+
+/* Speed Circle - CarPlay style (top right, below heading) */
+#speed-circle {
+  position: absolute;
+  top: 62px;
+  right: 20px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border: 3px solid #007AFF;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#speed-circle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.speed-circle-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  line-height: 1;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.speed-circle-unit {
+  font-size: 0.65rem;
+  color: #666;
+  font-weight: 500;
+  margin-top: 2px;
+  text-transform: lowercase;
 }
 
 /* Widget Styles */
@@ -287,6 +361,7 @@ body {
 @media (max-width: 768px) {
   .dashboard-header {
     top: 10px;
+    left: 10px;
     padding: 10px 15px;
     max-width: 250px;
   }
@@ -296,6 +371,36 @@ body {
     left: 10px;
     max-width: 160px;
     gap: 8px;
+  }
+  
+  #heading-indicator {
+    top: 10px;
+    right: 10px;
+    min-width: 45px;
+    height: 28px;
+    border-radius: 14px;
+    border-width: 2px;
+    padding: 0 10px;
+  }
+  
+  .heading-direction {
+    font-size: 0.8rem;
+  }
+  
+  #speed-circle {
+    top: 48px;
+    right: 10px;
+    width: 65px;
+    height: 65px;
+    border-width: 2px;
+  }
+  
+  .speed-circle-value {
+    font-size: 1.6rem;
+  }
+  
+  .speed-circle-unit {
+    font-size: 0.55rem;
   }
   
   #weather-sidebar {

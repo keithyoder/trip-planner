@@ -8,20 +8,20 @@
     h1.display-6.fw-bold.mb-0
       i.bi.bi-speedometer2.me-2
       | Live Telemetry
-    - if @latest_log
+    - if @initial_dashboard_data
       p.mb-0.small
-        | Last update: #{time_ago_in_words(@latest_log.timestamp)} ago
+        | Last update: #{time_ago_in_words(Time.parse(@initial_dashboard_data[:timestamp]))} ago
     - else
       p.mb-0.small No data available
 
   / Left side widgets partial
-  = render 'left_widgets', latest_log: @latest_log, trip_detector: @trip_detector, today_distance_meters: @today_distance_meters
+  = render 'left_widgets', initial_dashboard_data: @initial_dashboard_data
 
   / Right side weather sidebar
-  = render 'sidebar', latest_log: @latest_log, trip_detector: @trip_detector
+  = render 'sidebar', initial_dashboard_data: @initial_dashboard_data
 
 / Map initialization
-- if @latest_log && @latest_log.data['gps_latitude']
+- if @initial_dashboard_data && @initial_dashboard_data[:gps]
   javascript:
     let wasHidden = false;
     window.currentTripPoints = #{@trip_detector.current_trip_points.to_json};
@@ -47,10 +47,12 @@
         var mapElement = document.getElementById('map');
         if (!mapElement) return;
         
+        var initialGPS = #{raw @initial_dashboard_data[:gps].to_json};
+        
         // Initialize map
         window.dashboardMap = L.map('map', {
           zoomControl: false
-        }).setView([#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], 17);
+        }).setView([initialGPS.lat, initialGPS.lon], 17);
         
         L.control.zoom({
           position: 'bottomright'
@@ -75,18 +77,18 @@
 
         // Create marker with custom icon
         window.currentMarker = L.marker(
-          [#{@latest_log.data['gps_latitude']}, #{@latest_log.data['gps_longitude']}], 
+          [initialGPS.lat, initialGPS.lon], 
           {icon: carIcon, rotationAngle: 0}
         ).addTo(window.dashboardMap);
         
         window.currentMarker.bindPopup(`
           <strong>Current Location</strong><br>
-          Temp: #{@latest_log.data['shtc3_temperature']&.round(1)}°C<br>
-          Speed: #{(@latest_log.data['gps_speed'].to_f * 3.6).round(1)} km/h
+          Temp: #{@initial_dashboard_data[:temperature]}°C<br>
+          Speed: #{@initial_dashboard_data[:speed_kmh]} km/h
         `);
         
         // Store current heading
-        window.currentHeading = 0;
+        window.currentHeading = initialGPS.heading || 0;
         
         // Trip routes layer
         window.tripRoutesLayer = L.layerGroup().addTo(window.dashboardMap);
@@ -104,6 +106,9 @@
             toggle.classList.toggle('open');
           });
         }
+
+        // Trigger initial dashboard update with current data
+        triggerInitialDashboardUpdate();
       }
       
       function loadTripRoutes() {
@@ -141,6 +146,23 @@
           // Collect bounds
           coords.forEach(coord => allBounds.push(coord));
         });
+      }
+
+      function triggerInitialDashboardUpdate() {
+        // Use pre-built data packet from controller
+        const initialData = #{raw @initial_dashboard_data.to_json};
+
+        // Find the dashboard channel subscription and trigger update
+        const subscription = consumer.subscriptions.subscriptions.find(
+          sub => sub.identifier === JSON.stringify({channel: "DashboardChannel"})
+        );
+        
+        if (subscription) {
+          console.log('Triggering initial dashboard update with data:', initialData);
+          subscription.updateDashboardWidgets(initialData);
+        } else {
+          console.warn('Dashboard channel subscription not found yet, will update on first broadcast');
+        }
       }
       
       // Initialize on load
