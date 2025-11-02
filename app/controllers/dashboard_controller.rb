@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
+require 'dashboard_data_builder'
+
 class DashboardController < ApplicationController
   include DashboardDataBuilder
 
   layout 'welcome'
 
   def index
-    @latest_log = TelemetryLog.order(timestamp: :desc).first
     @trip_detector = TripDetector.new
     @trip_detector.todays_trips(use_cache: false)
 
@@ -20,7 +21,7 @@ class DashboardController < ApplicationController
     return unless @latest_log
 
     @initial_dashboard_data = build_dashboard_data(
-      @latest_log,
+      TelemetryLog.order(timestamp: :desc).first,
       trip_detector: @trip_detector,
       today_distance_meters: @today_distance_meters
     )
