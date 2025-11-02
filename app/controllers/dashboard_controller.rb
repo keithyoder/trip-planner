@@ -8,6 +8,8 @@ class DashboardController < ApplicationController
   layout 'welcome'
 
   def index
+    latest_log = TelemetryLog.order(timestamp: :desc).first
+
     @trip_detector = TripDetector.new
     @trip_detector.todays_trips(use_cache: false)
 
@@ -21,7 +23,7 @@ class DashboardController < ApplicationController
     return unless @latest_log
 
     @initial_dashboard_data = build_dashboard_data(
-      TelemetryLog.order(timestamp: :desc).first,
+      latest_log,
       trip_detector: @trip_detector,
       today_distance_meters: @today_distance_meters
     )
