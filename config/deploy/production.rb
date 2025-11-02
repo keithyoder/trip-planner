@@ -95,4 +95,4 @@ before 'deploy:assets:precompile', 'deploy:yarn_install'
 after 'deploy:yarn_install', 'deploy:build_css'
 
 # Automatically restart after publishing
-after 'deploy:publishing', 'telemetry_sync:restart'
+# after 'deploy:publishing', 'telemetry_sync:restart'
