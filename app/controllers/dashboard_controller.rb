@@ -20,7 +20,7 @@ class DashboardController < ApplicationController
     @today_distance_meters = TripLog.today.sum(&:distance)
 
     # Build initial dashboard data packet
-    return unless @latest_log
+    return unless latest_log
 
     @initial_dashboard_data = build_dashboard_data(
       latest_log,
