@@ -54,6 +54,8 @@
 #     # password: "please use keys"
 #   }
 
+set :pty, true
+
 server 'trip.tessi.com.br', user: 'yoder', roles: %w[app db web]
 append :linked_files, '.env.production'
 # append :linked_files, 'config/master.key'
