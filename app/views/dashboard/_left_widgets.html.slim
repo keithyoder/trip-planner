@@ -19,12 +19,14 @@
       .odometer-digit 0
     .widget-label.mt-2.small KILOMETERS
 
-  / GPS Info widget
-  .widget.gps-widget
-    .widget-label
-      i.bi.bi-geo-alt.me-1
-      | GPS Info
-    .gps-details
+  / GPS Info widget - Collapsible
+  .widget.gps-widget.collapsible
+    .widget-header.clickable data-toggle="gps-collapse"
+      .widget-label
+        i.bi.bi-geo-alt.me-1
+        | GPS Info
+      i.bi.bi-chevron-down.collapse-icon
+    .gps-details.collapsed
       .gps-row
         span.gps-label Lat:
         span.gps-value --
@@ -51,3 +53,4 @@
 / - updateGPSInfo(gps)
 / - updateHeadingIndicator(direction, travelling, speedKmh)
 / - updateSpeedCircle(speedKmh, travelling)
+/ - initGPSCollapse() - Sets up the collapse functionality

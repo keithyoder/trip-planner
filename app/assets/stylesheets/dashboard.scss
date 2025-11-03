@@ -357,6 +357,123 @@ body {
   display: block;
 }
 
+/* Collapsible GPS Widget Styles */
+
+.gps-widget.collapsible {
+  transition: all 0.3s ease;
+}
+
+.gps-widget .widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.gps-widget .widget-header.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.gps-widget .widget-header.clickable:hover {
+  opacity: 0.8;
+}
+
+.gps-widget .collapse-icon {
+  transition: transform 0.3s ease;
+  font-size: 0.875rem;
+}
+
+.gps-widget .collapse-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.gps-widget .gps-details {
+  max-height: 500px;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+  opacity: 1;
+}
+
+.gps-widget .gps-details.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+.gps-widget .gps-details.expanded {
+  max-height: 500px;
+  opacity: 1;
+  margin-top: 0.5rem;
+}
+
+/* GPS rows styling */
+.gps-widget .gps-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+.gps-widget .gps-label {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.gps-widget .gps-value {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+}
+
+/* Animation for smooth expansion */
+@keyframes slideDown {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 500px;
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    max-height: 500px;
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+/* Optional: Add a subtle border when expanded */
+.gps-widget .gps-details.expanded {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.5rem;
+}
+
+/* Accessibility: Show focus state */
+.gps-widget .widget-header.clickable:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .gps-widget .gps-row {
+    font-size: 0.8rem;
+  }
+  
+  .gps-widget .widget-header {
+    padding: 0.4rem 0;
+  }
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .dashboard-header {

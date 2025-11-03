@@ -114,7 +114,7 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
     // Update odometer
     this.updateOdometer(data.distance_km || 0)
     
-    // Update heading indicator using pre-calculated direction
+    // Update heading indicator using pre-calculated direction from GPS
     if (data.gps && data.gps.direction) {
       this.updateHeadingIndicator(data.gps.direction, data.travelling, data.speed_kmh)
     }
@@ -176,10 +176,13 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
     let headingIndicator = document.getElementById('heading-indicator')
     const speedRounded = Math.round(speedKmh)
     
+    console.log(`🧭 Heading: ${direction}, Travelling: ${travelling}, Speed: ${speedRounded} km/h`)
+    
     if (travelling && speedRounded > 1 && direction) {
       // Show/update heading indicator
       if (!headingIndicator) {
         // Create heading indicator
+        console.log(`✨ Creating heading indicator: ${direction}`)
         headingIndicator = document.createElement('div')
         headingIndicator.id = 'heading-indicator'
         headingIndicator.innerHTML = `
@@ -188,12 +191,14 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
         document.getElementById('dashboard-container').appendChild(headingIndicator)
       } else {
         // Update existing direction
+        console.log(`🔄 Updating heading indicator: ${direction}`)
         const directionElement = headingIndicator.querySelector('.heading-direction')
         if (directionElement) directionElement.textContent = direction
       }
     } else {
       // Remove heading indicator when not travelling or speed too low
       if (headingIndicator) {
+        console.log(`🚫 Removing heading indicator (travelling: ${travelling}, speed: ${speedRounded})`)
         headingIndicator.remove()
       }
     }
@@ -432,6 +437,57 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
         opacity: 0.7
       }).addTo(window.dashboardMap)
     }
+  },
+
+  initGPSCollapse() {
+    // Initialize GPS widget collapse functionality
+    const header = document.querySelector('.gps-widget .widget-header.clickable')
+    if (!header) return
+    
+    console.log('🎛️ Initializing GPS collapse functionality')
+    
+    header.addEventListener('click', () => {
+      this.toggleGPSCollapse()
+    })
+    
+    // Add keyboard support (Enter/Space)
+    header.setAttribute('tabindex', '0')
+    header.setAttribute('role', 'button')
+    header.setAttribute('aria-expanded', 'false')
+    header.setAttribute('aria-label', 'Toggle GPS information')
+    
+    header.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        this.toggleGPSCollapse()
+      }
+    })
+  },
+
+  toggleGPSCollapse() {
+    const details = document.querySelector('.gps-widget .gps-details')
+    const icon = document.querySelector('.gps-widget .collapse-icon')
+    const header = document.querySelector('.gps-widget .widget-header.clickable')
+    
+    if (!details || !icon) return
+    
+    const isCollapsed = details.classList.contains('collapsed')
+    
+    if (isCollapsed) {
+      // Expand
+      details.classList.remove('collapsed')
+      details.classList.add('expanded')
+      icon.classList.add('expanded')
+      if (header) header.setAttribute('aria-expanded', 'true')
+      console.log('📍 GPS info expanded')
+    } else {
+      // Collapse
+      details.classList.remove('expanded')
+      details.classList.add('collapsed')
+      icon.classList.remove('expanded')
+      if (header) header.setAttribute('aria-expanded', 'false')
+      console.log('📍 GPS info collapsed')
+    }
   }
 })
 
@@ -442,6 +498,11 @@ console.log("📺 Dashboard channel created and stored globally")
 // Initialize dashboard when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   console.log("🚀 DOMContentLoaded - Starting dashboard initialization")
+  
+  // Initialize GPS collapse functionality
+  if (window.dashboardChannel) {
+    window.dashboardChannel.initGPSCollapse()
+  }
   
   // Wait a brief moment for ActionCable to fully initialize
   setTimeout(() => {
