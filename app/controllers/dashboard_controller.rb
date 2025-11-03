@@ -31,6 +31,7 @@ class DashboardController < ApplicationController
         end
 
         trip_detector = TripDetector.instance
+        trip_detector.todays_trips
         today_distance = calculate_today_distance_meters(trip_detector)
 
         data = build_dashboard_data(

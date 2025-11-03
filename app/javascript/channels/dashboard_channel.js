@@ -91,6 +91,8 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
     console.log("📡 Received data via ActionCable:", data)
     // Handle incoming real-time data
     this.updateDashboardWidgets(data)
+    
+    // For real-time updates, append to current trip points if travelling
     if (data.gps && data.travelling) {
       window.currentTripPoints.push([data.gps.lat, data.gps.lon])
       this.updateTripPolyline()
@@ -113,8 +115,8 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
     this.updateOdometer(data.distance_km || 0)
     
     // Update heading indicator using pre-calculated direction
-    if (data.direction) {
-      this.updateHeadingIndicator(data.direction, data.travelling, data.speed_kmh)
+    if (data.gps && data.gps.direction) {
+      this.updateHeadingIndicator(data.gps.direction, data.travelling, data.speed_kmh)
     }
     
     // Update speed circle (show/hide based on travelling status)
@@ -138,6 +140,11 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
     // Plot today's trips on map
     if (data.todays_trips) {
       this.plotTodaysTrips(data.todays_trips)
+    }
+    
+    // Update current trip polyline (clear and redraw with current points)
+    if (data.trip_points) {
+      this.updateCurrentTripPolyline(data.trip_points)
     }
   },
 
@@ -405,6 +412,26 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
     })
     
     console.log(`✅ Plotted ${trips.length} trip route(s) on map`)
+  },
+
+  updateCurrentTripPolyline(trip_points) {
+    // Clear and redraw current trip polyline with provided points
+    if (!window.dashboardMap) return
+    
+    // Remove old current trip polyline
+    this.clearTripPolyline()
+    
+    // Draw new polyline if we have points
+    if (trip_points && trip_points.length > 1) {
+      console.log(`🔄 Redrawing current trip polyline with ${trip_points.length} points`)
+      
+      window.currentTripPoints = trip_points
+      window.currentTripPolyline = L.polyline(trip_points, {
+        color: '#3498db',  // Different color from saved trips
+        weight: 4,
+        opacity: 0.7
+      }).addTo(window.dashboardMap)
+    }
   }
 })
 
