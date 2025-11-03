@@ -1,47 +1,48 @@
 / Right side weather sidebar
 #weather-sidebar
   .sidebar-content
-    - if initial_dashboard_data && initial_dashboard_data[:weather]
-      / Temperature widget
-      .widget.widget-horizontal
-        .widget-icon-small
-          i.bi.bi-thermometer-half.text-danger
-        .widget-info
-          .widget-value-small
-            = initial_dashboard_data[:weather][:temperature] || '--'
-            span.widget-unit-small °C
-          .widget-label-small Temperature
+    / Temperature widget
+    .widget.widget-horizontal
+      .widget-icon-small
+        i.bi.bi-thermometer-half.text-danger
+      .widget-info
+        .widget-value-small
+          | --
+          span.widget-unit-small °C
+        .widget-label-small Temperature
 
-      / Humidity widget
-      .widget.widget-horizontal
-        .widget-icon-small
-          i.bi.bi-droplet.text-primary
-        .widget-info
-          .widget-value-small
-            = initial_dashboard_data[:weather][:humidity] || '--'
-            span.widget-unit-small %
-          .widget-label-small Humidity
+    / Humidity widget
+    .widget.widget-horizontal
+      .widget-icon-small
+        i.bi.bi-droplet.text-primary
+      .widget-info
+        .widget-value-small
+          | --
+          span.widget-unit-small %
+        .widget-label-small Humidity
 
-      / Pressure widget
-      .widget.widget-horizontal
-        .widget-icon-small
-          i.bi.bi-speedometer.text-info
-        .widget-info
-          .widget-value-small
-            = initial_dashboard_data[:weather][:pressure] || '--'
-            span.widget-unit-small hPa
-          .widget-label-small Pressure
+    / Pressure widget
+    .widget.widget-horizontal
+      .widget-icon-small
+        i.bi.bi-speedometer.text-info
+      .widget-info
+        .widget-value-small
+          | --
+          span.widget-unit-small hPa
+        .widget-label-small Pressure
 
-      / Dewpoint widget
-      - if initial_dashboard_data[:weather][:dewpoint]
-        .widget.widget-horizontal
-          .widget-icon-small
-            i.bi.bi-moisture.text-secondary
-          .widget-info
-            .widget-value-small
-              = initial_dashboard_data[:weather][:dewpoint]
-              span.widget-unit-small °C
-            .widget-label-small Dewpoint
+    / Dewpoint widget
+    .widget.widget-horizontal
+      .widget-icon-small
+        i.bi.bi-moisture.text-secondary
+      .widget-info
+        .widget-value-small
+          | --
+          span.widget-unit-small °C
+        .widget-label-small Dewpoint
 
 #sidebar-toggle
   i.bi.bi-chevron-left
+
+/ Note: All weather values will be populated by JavaScript when data loads
+/ JavaScript method that updates these elements: updateWeatherSidebar(weather)

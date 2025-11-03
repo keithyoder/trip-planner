@@ -1,59 +1,53 @@
 / Left side widgets
-- if initial_dashboard_data
-  #dashboard-widgets-left
-    / Travelling status badge
-    #travelling-status.widget.status-widget
-      - if initial_dashboard_data[:travelling]
-        .badge.bg-success.w-100.py-2
-          i.bi.bi-arrow-right-circle.me-1
-          | Moving
-      - else
-        .badge.bg-secondary.w-100.py-2
-          i.bi.bi-pause-circle.me-1
-          | Stationary
+#dashboard-widgets-left
+  / Travelling status badge
+  #travelling-status.widget.status-widget
+    .badge.bg-secondary.w-100.py-2
+      i.bi.bi-pause-circle.me-1
+      | Stationary
 
-    / Odometer widget
-    .widget.odometer-widget
-      .widget-label.mb-2.small DISTANCE TODAY
-      .odometer-container
-        - total_km = initial_dashboard_data[:distance_km]
-        - digits = format('%07.1f', total_km).chars
-        - digits.each do |digit|
-          - if digit == '.'
-            .odometer-separator .
-          - else
-            .odometer-digit = digit
-      .widget-label.mt-2.small KILOMETERS
+  / Odometer widget
+  .widget.odometer-widget
+    .widget-label.mb-2.small DISTANCE TODAY
+    .odometer-container
+      .odometer-digit 0
+      .odometer-digit 0
+      .odometer-digit 0
+      .odometer-digit 0
+      .odometer-digit 0
+      .odometer-separator .
+      .odometer-digit 0
+    .widget-label.mt-2.small KILOMETERS
 
-    / GPS Info widget
-    - if initial_dashboard_data[:gps]
-      .widget.gps-widget
-        .widget-label
-          i.bi.bi-geo-alt.me-1
-          | GPS Info
-        .gps-details
-          .gps-row
-            span.gps-label Lat:
-            span.gps-value = initial_dashboard_data[:gps][:lat]&.round(6)
-          .gps-row
-            span.gps-label Lon:
-            span.gps-value = initial_dashboard_data[:gps][:lon]&.round(6)
-          - if initial_dashboard_data[:gps][:altitude]
-            .gps-row
-              span.gps-label Alt:
-              span.gps-value = "#{initial_dashboard_data[:gps][:altitude]&.round(1)} m"
-          - if initial_dashboard_data[:gps][:satellites]
-            .gps-row
-              span.gps-label Sats:
-              span.gps-value = initial_dashboard_data[:gps][:satellites]
+  / GPS Info widget
+  .widget.gps-widget
+    .widget-label
+      i.bi.bi-geo-alt.me-1
+      | GPS Info
+    .gps-details
+      .gps-row
+        span.gps-label Lat:
+        span.gps-value --
+      .gps-row
+        span.gps-label Lon:
+        span.gps-value --
+      .gps-row
+        span.gps-label Alt:
+        span.gps-value -- m
+      .gps-row
+        span.gps-label Sats:
+        span.gps-value --
 
-  / Heading indicator - top right corner (CarPlay style)
-  - if initial_dashboard_data[:gps][:direction] && initial_dashboard_data[:travelling] && initial_dashboard_data[:speed_kmh] > 1
-    #heading-indicator
-      .heading-direction = initial_dashboard_data[:gps][:direction]
+/ Heading indicator - top right corner (CarPlay style)
+/ Will be created dynamically by JavaScript when travelling
 
-  / Speed circle - top right corner (CarPlay style)
-  - if initial_dashboard_data[:speed_kmh] && initial_dashboard_data[:travelling] && initial_dashboard_data[:speed_kmh].round > 1
-    #speed-circle
-      .speed-circle-value = initial_dashboard_data[:speed_kmh].round
-      .speed-circle-unit km/h
+/ Speed circle - top right corner (CarPlay style)
+/ Will be created dynamically by JavaScript when travelling
+
+/ Note: All values will be populated by JavaScript when data loads
+/ JavaScript methods that update these elements:
+/ - updateTravellingStatus(travelling)
+/ - updateOdometer(distanceKm)
+/ - updateGPSInfo(gps)
+/ - updateHeadingIndicator(direction, travelling, speedKmh)
+/ - updateSpeedCircle(speedKmh, travelling)

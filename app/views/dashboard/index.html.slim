@@ -8,65 +8,99 @@
     h1.display-6.fw-bold.mb-0
       i.bi.bi-speedometer2.me-2
       | Live Telemetry
-    - if @initial_dashboard_data
-      p.mb-0.small
-        | Last update: #{time_ago_in_words(Time.parse(@initial_dashboard_data[:timestamp]))} ago
-    - else
-      p.mb-0.small No data available
+    p.mb-0.small
+      span#last-update-text Loading...
 
-  / Left side widgets partial
-  = render 'left_widgets', initial_dashboard_data: @initial_dashboard_data
+  / Left side widgets partial (no initial data)
+  = render 'left_widgets'
 
-  / Right side weather sidebar
-  = render 'sidebar', initial_dashboard_data: @initial_dashboard_data
+  / Right side weather sidebar (no initial data)
+  = render 'sidebar'
 
 / Map initialization
-- if @initial_dashboard_data && @initial_dashboard_data[:gps]
-  javascript:
-    let wasHidden = false;
-    window.currentTripPoints = #{@trip_detector.current_trip_points.to_json};
+javascript:
+  let wasHidden = false;
+  window.currentTripPoints = [];
 
-    document.addEventListener('visibilitychange', function() {
-      if (document.hidden) {
-        // Mark that the page was hidden
-        wasHidden = true;
-      } else if (wasHidden) {
-        // Page is visible again after being hidden - reload to catch up on missed updates
-        console.log('Dashboard was backgrounded, reloading to sync data...');
-        window.location.reload();
-      }
-    });
-
-    (function() {
-      // Check if map already exists
-      if (window.dashboardMap) {
-        return;
-      }
-      
-      function initMap() {
-        var mapElement = document.getElementById('map');
-        if (!mapElement) return;
-        
-        var initialGPS = #{raw @initial_dashboard_data[:gps].to_json};
-        
-        // Initialize map
-        window.dashboardMap = L.map('map', {
-          zoomControl: false
-        }).setView([initialGPS.lat, initialGPS.lon], 17);
-        
-        L.control.zoom({
-          position: 'bottomright'
-        }).addTo(window.dashboardMap);
-        
-        L.tileLayer(
-          'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png?api_key=50e54c7f-f220-44f9-875c-a0ce16bc63b5',
-          {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      // Mark that the page was hidden
+      wasHidden = true;
+    } else if (wasHidden) {
+      // Page is visible again after being hidden - fetch latest data
+      console.log('Dashboard was backgrounded, fetching latest data...');
+      wasHidden = false;
+      if (window.dashboardDataFetcher) {
+        window.dashboardDataFetcher.fetchDashboardData().then(data => {
+          if (data) {
+            window.dashboardDataFetcher.updateDashboard(data);
           }
-        ).addTo(window.dashboardMap);
-                
-        // Current location marker (car)
+        });
+      }
+    }
+  });
+
+  (function() {
+    // Check if map already exists
+    if (window.dashboardMap) {
+      return;
+    }
+    
+    function initMap() {
+      var mapElement = document.getElementById('map');
+      if (!mapElement) return;
+      
+      // Initialize map with default view (will be updated when data loads)
+      window.dashboardMap = L.map('map', {
+        zoomControl: false
+      }).setView([0, 0], 2); // Default world view
+      
+      L.control.zoom({
+        position: 'bottomright'
+      }).addTo(window.dashboardMap);
+      
+      L.tileLayer(
+        'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png?api_key=50e54c7f-f220-44f9-875c-a0ce16bc63b5',
+        {
+          maxZoom: 19,
+          attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }
+      ).addTo(window.dashboardMap);
+      
+      // Trip routes layer
+      window.tripRoutesLayer = L.layerGroup().addTo(window.dashboardMap);
+      
+      // Sidebar toggle functionality
+      var toggle = document.getElementById('sidebar-toggle');
+      var sidebar = document.getElementById('weather-sidebar');
+      
+      if (toggle && sidebar) {
+        toggle.addEventListener('click', function() {
+          sidebar.classList.toggle('open');
+          toggle.classList.toggle('open');
+        });
+      }
+
+      // Mark map as initialized
+      window.mapInitialized = true;
+      
+      // If data fetcher has already loaded data, update the map
+      if (window.initialDashboardData) {
+        updateMapWithData(window.initialDashboardData);
+      }
+    }
+    
+    // Function to update map with loaded data
+    window.updateMapWithData = function(data) {
+      if (!window.dashboardMap || !data || !data.gps) return;
+      
+      var gps = data.gps;
+      
+      // Update map view to current location
+      window.dashboardMap.setView([gps.lat, gps.lon], 17);
+      
+      // Create/update current location marker
+      if (!window.currentMarker) {
         const carIcon = L.divIcon({
           html: '<div class="car-icon-container"><img src="#{asset_path('car-icon.svg')}" alt="car" /></div>',
           className: 'car-marker',
@@ -75,120 +109,87 @@
           popupAnchor: [0, -16]
         });
 
-        // Create marker with custom icon
         window.currentMarker = L.marker(
-          [initialGPS.lat, initialGPS.lon], 
+          [gps.lat, gps.lon], 
           {icon: carIcon, rotationAngle: 0}
         ).addTo(window.dashboardMap);
         
         window.currentMarker.bindPopup(`
           <strong>Current Location</strong><br>
-          Temp: #{@initial_dashboard_data[:temperature]}°C<br>
-          Speed: #{@initial_dashboard_data[:speed_kmh]} km/h
+          Temp: ${data.temperature || '--'}°C<br>
+          Speed: ${data.speed_kmh || 0} km/h
         `);
-        
-        // Store current heading
-        window.currentHeading = initialGPS.heading || 0;
-        
-        // Trip routes layer
-        window.tripRoutesLayer = L.layerGroup().addTo(window.dashboardMap);
-        
-        // Load today's trip routes
-        loadTripRoutes();
-        
-        // Sidebar toggle functionality
-        var toggle = document.getElementById('sidebar-toggle');
-        var sidebar = document.getElementById('weather-sidebar');
-        
-        if (toggle && sidebar) {
-          toggle.addEventListener('click', function() {
-            sidebar.classList.toggle('open');
-            toggle.classList.toggle('open');
-          });
-        }
-
-        // Trigger initial dashboard update with current data
-        triggerInitialDashboardUpdate();
-      }
-      
-      function loadTripRoutes() {
-        var tripData = #{raw @todays_trips.map(&:to_geojson).to_json};
-        
-        // Clear existing routes
-        if (window.tripRoutesLayer) {
-          window.tripRoutesLayer.clearLayers();
-        }
-        
-        var allBounds = [];
-        
-        tripData.forEach(function(feature) {
-          if (!feature.geometry || !feature.geometry.coordinates) return;
-          
-          var coords = feature.geometry.coordinates.map(coord => [coord[1], coord[0]]);
-          
-          // Create polyline for trip
-          var polyline = L.polyline(coords, {
-            color: '#3388ff',
-            weight: 4,
-            opacity: 0.7,
-            smoothFactor: 1
-          }).addTo(window.tripRoutesLayer);
-          
-          // Add popup with trip info
-          polyline.bindPopup(`
-            <strong>${feature.properties.name || 'Trip'}</strong><br>
-            Distance: ${feature.properties.distance_km || 0} km<br>
-            Duration: ${feature.properties.duration_minutes || 0} min<br>
-            Max Speed: ${feature.properties.max_speed_kmh || 0} km/h<br>
-            Avg Speed: ${feature.properties.avg_speed_kmh || 0} km/h
-          `);
-          
-          // Collect bounds
-          coords.forEach(coord => allBounds.push(coord));
-        });
-      }
-
-      function triggerInitialDashboardUpdate() {
-        // Use pre-built data packet from controller
-        const initialData = #{raw @initial_dashboard_data.to_json};
-
-        // Find the dashboard channel subscription and trigger update
-        const subscription = consumer.subscriptions.subscriptions.find(
-          sub => sub.identifier === JSON.stringify({channel: "DashboardChannel"})
-        );
-        
-        if (subscription) {
-          console.log('Triggering initial dashboard update with data:', initialData);
-          subscription.updateDashboardWidgets(initialData);
-        } else {
-          console.warn('Dashboard channel subscription not found yet, will update on first broadcast');
-        }
-      }
-      
-      // Initialize on load
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initMap);
       } else {
+        window.currentMarker.setLatLng([gps.lat, gps.lon]);
+      }
+      
+      // Store current heading
+      window.currentHeading = gps.heading || 0;
+      
+      // Rotate car icon if heading available
+      if (gps.heading && window.dashboardChannel) {
+        window.dashboardChannel.rotateCarIcon(gps.heading);
+      }
+      
+      // Update trip points if available
+      if (data.trip_points && data.trip_points.length > 0) {
+        window.currentTripPoints = data.trip_points;
+        if (window.dashboardChannel) {
+          window.dashboardChannel.updateTripPolyline();
+        }
+      }
+            
+      // Update last update text
+      updateLastUpdateText(data.timestamp);
+    }
+        
+    function updateLastUpdateText(timestamp) {
+      const element = document.getElementById('last-update-text');
+      if (!element || !timestamp) return;
+      
+      const date = new Date(timestamp);
+      const now = new Date();
+      const secondsAgo = Math.floor((now - date) / 1000);
+      
+      let timeText;
+      if (secondsAgo < 60) {
+        timeText = 'Just now';
+      } else if (secondsAgo < 3600) {
+        const minutes = Math.floor(secondsAgo / 60);
+        timeText = `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+      } else {
+        const hours = Math.floor(secondsAgo / 3600);
+        timeText = `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+      }
+      
+      element.textContent = `Last update: ${timeText}`;
+    }
+    
+    // Initialize on load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initMap);
+    } else {
+      initMap();
+    }
+    
+    // Handle Turbo navigation
+    document.addEventListener('turbo:load', function() {
+      if (!window.dashboardMap) {
         initMap();
       }
-      
-      // Handle Turbo navigation
-      document.addEventListener('turbo:load', function() {
-        if (!window.dashboardMap) {
-          initMap();
-        }
-      });
-      
-      // Cleanup on navigation away
-      document.addEventListener('turbo:before-cache', function() {
-        if (window.dashboardMap) {
-          window.dashboardMap.remove();
-          window.dashboardMap = null;
-          window.tripRoutesLayer = null;
-          window.currentMarker = null;
-        }
-      });
-    })();
+    });
+    
+    // Cleanup on navigation away
+    document.addEventListener('turbo:before-cache', function() {
+      if (window.dashboardMap) {
+        window.dashboardMap.remove();
+        window.dashboardMap = null;
+        window.tripRoutesLayer = null;
+        window.currentMarker = null;
+        window.mapInitialized = false;
+      }
+    });
+  })();
 
 meta name="turbo-refresh-method" content="morph"
 meta name="turbo-refresh-scroll" content="preserve"
