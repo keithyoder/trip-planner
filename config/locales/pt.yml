@@ -1,0 +1,18 @@
+pt:
+  hello: "Hello world"
+  dashboard:
+    gps:
+      title: "GPS Status"
+      latitude: "Latitude"
+      longitude: "Longitude"
+      altitude: "Altitude"
+      satellites: "Satélites"
+      accuracy: "Precisão"
+    weather:
+      temperature: "Temperatura"
+      humidity: "Humidade"
+      dew_point: "Ponto de Orvalho"
+      pressure: "Pressão"
+    odometer:
+      distance_today: "Distância Hoje"
+      kilometers: "Quilômetros"

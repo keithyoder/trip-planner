@@ -27,6 +27,7 @@ gem 'overpass-api-ruby', git: 'https://github.com/Toucouleur66/overpass-api-ruby
 gem 'pg'
 gem 'puma', '~> 6.0'
 gem 'rails', '~> 7.1'
+gem 'rails-i18n'
 gem 'redis', '~> 4.0'
 gem 'rgeo-geojson'
 gem 'rosemary'

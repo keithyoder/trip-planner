@@ -1,0 +1,18 @@
+es:
+  hello: "Hello world"
+  dashboard:
+    gps:
+      title: "GPS Status"
+      latitude: "Latitud"
+      longitude: "Longitud"
+      altitude: "Altitud"
+      satellites: "Satélites"
+      accuracy: "Precisão"
+    weather:
+      temperature: "Temperatura"
+      humidity: "Humedad"
+      dew_point: "Punto de rocío"
+      pressure: "Presión"
+    odometer:
+      distance_today: "Distancia hoy"
+      kilometers: "Kilómetros"

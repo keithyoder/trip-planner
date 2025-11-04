@@ -7,7 +7,7 @@
 
   / Odometer widget
   .widget.odometer-widget
-    .widget-label.mb-2.small DISTANCE TODAY
+    .widget-label.mb-2.small =t('dashboard.odometer.distance_today')
     .odometer-container
       .odometer-digit 0
       .odometer-digit 0
@@ -16,27 +16,35 @@
       .odometer-digit 0
       .odometer-separator .
       .odometer-digit 0
-    .widget-label.mt-2.small KILOMETERS
+    .widget-label.mt-2.small =t('dashboard.odometer.kilometers')
 
   / GPS Info widget - Collapsible
   .widget.gps-widget.collapsible
     .widget-header.clickable data-toggle="gps-collapse"
       .widget-label
         i.bi.bi-geo-alt.me-1
-        | GPS Info
+        =t('dashboard.gps.title')
       i.bi.bi-chevron-down.collapse-icon
     .gps-details.collapsed
       .gps-row
-        span.gps-label Latitude:
+        span.gps-label
+          =t('dashboard.gps.latitude')
+          | :
         span#gps-latitude.gps-value --
       .gps-row
-        span.gps-label Longitude:
+        span.gps-label
+          =t('dashboard.gps.longitude')
+          | :
         span#gps-longitude.gps-value --
       .gps-row
-        span.gps-label Altitude:
+        span.gps-label
+          =t('dashboard.gps.altitude')
+          | :
         span#gps-altitude.gps-value --
       .gps-row
-        span.gps-label Satellites:
+        span.gps-label
+          =t('dashboard.gps.satellites')
+          | :
         span#gps-satellites.gps-value --
 
 / Heading indicator - top right corner (CarPlay style)

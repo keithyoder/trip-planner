@@ -31,3 +31,19 @@
 
 en:
   hello: "Hello world"
+  dashboard:
+    gps:
+      title: "GPS Status"
+      latitude: "Latitude"
+      longitude: "Longitude"
+      altitude: "Altitude"
+      satellites: "Satellites"
+      accuracy: "Accuracy"
+    weather:
+      temperature: "Temperature"
+      humidity: "Humidity"
+      dew_point: "Dew Point"
+      pressure: "Pressure"
+    odometer:
+      distance_today: "Distance Today"
+      kilometers: "Kilometers"
