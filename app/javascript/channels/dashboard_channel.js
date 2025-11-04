@@ -266,34 +266,51 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
     }
   },
 
-  updateGPSInfo(gps) {
-    if (!gps) return
+updateGPSInfo(gps) {
+    if (!gps) {
+      console.warn('⚠️ No GPS data provided to updateGPSInfo')
+      return
+    }
+    
+    console.log('📍 Updating GPS info:', gps)
     
     // Update latitude
-    const latElement = document.querySelector('.gps-details .gps-row:nth-child(1) .gps-value')
-    if (latElement && gps.lat) {
+    const latElement = document.getElementById('gps-latitude')
+    if (latElement && gps.lat !== undefined && gps.lat !== null) {
       latElement.textContent = gps.lat.toFixed(6)
+      console.log(`✅ Updated latitude: ${gps.lat.toFixed(6)}`)
+    } else if (!latElement) {
+      console.warn('⚠️ Latitude element (#gps-latitude) not found')
     }
     
     // Update longitude
-    const lonElement = document.querySelector('.gps-details .gps-row:nth-child(2) .gps-value')
-    if (lonElement && gps.lon) {
+    const lonElement = document.getElementById('gps-longitude')
+    if (lonElement && gps.lon !== undefined && gps.lon !== null) {
       lonElement.textContent = gps.lon.toFixed(6)
+      console.log(`✅ Updated longitude: ${gps.lon.toFixed(6)}`)
+    } else if (!lonElement) {
+      console.warn('⚠️ Longitude element (#gps-longitude) not found')
     }
     
-    // Update altitude if element exists
-    const altElement = document.querySelector('.gps-details .gps-row:nth-child(3) .gps-value')
-    if (altElement && gps.altitude) {
+    // Update altitude
+    const altElement = document.getElementById('gps-altitude')
+    if (altElement && gps.altitude !== undefined && gps.altitude !== null) {
       altElement.textContent = `${gps.altitude.toFixed(1)} m`
+      console.log(`✅ Updated altitude: ${gps.altitude.toFixed(1)} m`)
+    } else if (!altElement) {
+      console.warn('⚠️ Altitude element (#gps-altitude) not found')
     }
     
-    // Update satellites if element exists
-    const satsElement = document.querySelector('.gps-details .gps-row:nth-child(4) .gps-value')
-    if (satsElement && gps.satellites) {
+    // Update satellites
+    const satsElement = document.getElementById('gps-satellites')
+    if (satsElement && gps.satellites !== undefined && gps.satellites !== null) {
       satsElement.textContent = gps.satellites
+      console.log(`✅ Updated satellites: ${gps.satellites}`)
+    } else if (!satsElement) {
+      console.warn('⚠️ Satellites element (#gps-satellites) not found')
     }
   },
-
+  
   updateMapMarker(gps, temperature, speedKmh) {
     if (!window.currentMarker || !gps || !gps.lat || !gps.lon) return
     
