@@ -200,9 +200,14 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
     let headingIndicator = document.getElementById('heading-indicator')
     const speedRounded = Math.round(speedKmh)
     
-    console.log(`🧭 Heading: ${direction}, Travelling: ${travelling}, Speed: ${speedRounded} km/h`)
+    // Check if data is stale (no updates in last 5 minutes)
+    const isStale = window.lastTelemetryUpdate && 
+                    (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
     
-    if (travelling && speedRounded > 1 && direction) {
+    console.log(`🧭 Heading: ${direction}, Travelling: ${travelling}, Speed: ${speedRounded} km/h, Stale: ${isStale}`)
+    
+    // Show heading indicator unless Not Connected (stale data)
+    if (!isStale && direction) {
       // Show/update heading indicator
       if (!headingIndicator) {
         // Create heading indicator
@@ -220,9 +225,9 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
         if (directionElement) directionElement.textContent = direction
       }
     } else {
-      // Remove heading indicator when not travelling or speed too low
+      // Remove heading indicator when Not Connected (stale data)
       if (headingIndicator) {
-        console.log(`🚫 Removing heading indicator (travelling: ${travelling}, speed: ${speedRounded})`)
+        console.log(`🚫 Removing heading indicator (stale: ${isStale})`)
         headingIndicator.remove()
       }
     }
@@ -232,7 +237,12 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
     let speedCircle = document.getElementById('speed-circle')
     const speedRounded = Math.round(speedKmh)
     
-    if (travelling && speedRounded > 1) {
+    // Check if data is stale (no updates in last 5 minutes)
+    const isStale = window.lastTelemetryUpdate && 
+                    (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
+    
+    // Show speed circle unless Not Connected (stale data)
+    if (!isStale) {
       // Show/update speed circle
       if (!speedCircle) {
         // Create speed circle
@@ -249,7 +259,7 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
         if (speedValue) speedValue.textContent = speedRounded
       }
     } else {
-      // Remove speed circle when not travelling or speed too low
+      // Remove speed circle when Not Connected (stale data)
       if (speedCircle) {
         speedCircle.remove()
       }
