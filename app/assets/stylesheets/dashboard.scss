@@ -427,6 +427,69 @@ body {
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
 }
 
+/* Travelling Status Badge Styles */
+#travelling-status {
+  position: relative;
+  width: 100%;
+  z-index: 10;
+}
+
+#travelling-status .badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#travelling-status .badge i {
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
+}
+
+/* State-specific colors with better contrast */
+#travelling-status .badge.bg-success {
+  background-color: #28a745 !important;
+  color: white !important;
+}
+
+#travelling-status .badge.bg-secondary {
+  background-color: #6c757d !important;
+  color: white !important;
+}
+
+#travelling-status .badge.bg-warning {
+  background-color: #ffc107 !important;
+  color: #212529 !important;
+}
+
+/* Optional: Add subtle animation when status changes */
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+#travelling-status .badge.bg-warning {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #travelling-status .badge {
+    font-size: 0.9rem;
+    padding: 0.5rem !important;
+  }
+  
+  #travelling-status .badge i {
+    font-size: 1rem;
+  }
+}
+
 /* Animation for smooth expansion */
 @keyframes slideDown {
   from {

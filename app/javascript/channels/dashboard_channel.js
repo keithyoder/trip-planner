@@ -39,6 +39,12 @@ class DashboardDataFetcher {
       // Store data globally for map initialization
       window.initialDashboardData = data
       
+      // Set last update time from the data's timestamp
+      if (data.timestamp) {
+        window.lastTelemetryUpdate = new Date(data.timestamp).getTime()
+        console.log(`⏰ Set last update time to: ${data.timestamp}`)
+      }
+      
       console.log("🔄 Updating dashboard with initial data")
       this.updateDashboard(data)
       this.isInitialized = true
@@ -81,16 +87,26 @@ window.dashboardDataFetcher = new DashboardDataFetcher()
 const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
   connected() {
     console.log("✅ Connected to dashboard channel")
+    // Reset connection status when connected
+    this.updateConnectionStatus(true)
+    // Start monitoring for stale data
+    this.startConnectionMonitor()
   },
 
   disconnected() {
     console.log("❌ Disconnected from dashboard channel")
+    this.updateConnectionStatus(false)
+    this.stopConnectionMonitor()
   },
 
   received(data) {
     console.log("📡 Received data via ActionCable:", data)
     // Handle incoming real-time data
     this.updateDashboardWidgets(data)
+    
+    // Update last received timestamp
+    window.lastTelemetryUpdate = Date.now()
+    this.updateConnectionStatus(true)
     
     // For real-time updates, append to current trip points if travelling
     if (data.gps && data.travelling) {
@@ -152,9 +168,17 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
     const statusElement = document.getElementById('travelling-status')
     if (!statusElement) return
     
-    statusElement.innerHTML = travelling
-      ? '<div class="badge bg-success w-100 py-2"><i class="bi bi-arrow-right-circle me-1"></i>Moving</div>'
-      : '<div class="badge bg-secondary w-100 py-2"><i class="bi bi-pause-circle me-1"></i>Stationary</div>'
+    // Check if data is stale (no updates in last 5 minutes)
+    const isStale = window.lastTelemetryUpdate && 
+                    (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
+    
+    if (isStale) {
+      statusElement.innerHTML = '<div class="badge bg-warning text-dark w-100 py-2"><i class="bi bi-exclamation-triangle me-1"></i>Not Connected</div>'
+    } else if (travelling) {
+      statusElement.innerHTML = '<div class="badge bg-success w-100 py-2"><i class="bi bi-arrow-right-circle me-1"></i>Moving</div>'
+    } else {
+      statusElement.innerHTML = '<div class="badge bg-secondary w-100 py-2"><i class="bi bi-pause-circle me-1"></i>Stationary</div>'
+    }
   },
 
   updateOdometer(distanceKm) {
@@ -284,9 +308,9 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
       // Update popup content
       window.currentMarker.bindPopup(`
         <strong>Current Location</strong><br>
-        Temp: ${temperature || '--'}°C<br>
+        Temp: ${temperature || '--'}Â°C<br>
         Speed: ${speedKmh || 0} km/h<br>
-        Heading: ${Math.round(window.currentHeading || 0)}°
+        Heading: ${Math.round(window.currentHeading || 0)}Â°
       `)
     } catch (error) {
       console.error("Error updating map marker:", error)
@@ -487,6 +511,37 @@ const dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
       icon.classList.remove('expanded')
       if (header) header.setAttribute('aria-expanded', 'false')
       console.log('📍 GPS info collapsed')
+    }
+  },
+
+  startConnectionMonitor() {
+    // Check connection status every 10 seconds
+    this.connectionMonitorInterval = setInterval(() => {
+      this.updateConnectionStatus(true)
+    }, 10000)
+  },
+
+  stopConnectionMonitor() {
+    if (this.connectionMonitorInterval) {
+      clearInterval(this.connectionMonitorInterval)
+      this.connectionMonitorInterval = null
+    }
+  },
+
+  updateConnectionStatus(checkStale) {
+    if (!checkStale) {
+      // Disconnected
+      this.updateTravellingStatus(false)
+      return
+    }
+    
+    // Check if we have recent data
+    const isStale = window.lastTelemetryUpdate && 
+                    (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
+    
+    if (isStale) {
+      // Trigger update to show "Not Connected"
+      this.updateTravellingStatus(false)
     }
   }
 })
