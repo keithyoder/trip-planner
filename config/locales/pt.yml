@@ -16,3 +16,8 @@ pt:
     odometer:
       distance_today: "Distância Hoje"
       kilometers: "Quilômetros"
+  trips:
+    index:
+      my_trips: "Minhas Viagens"
+      plan_and_manage: "Planeje e gerencie suas aventuras"
+      new_trip: "Nova Viagem"

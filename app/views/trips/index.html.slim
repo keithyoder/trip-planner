@@ -10,11 +10,11 @@
         div
           h1.display-5.fw-bold.mb-1
             i.bi.bi-suitcase-lg.me-2
-            | My Trips
-          p.text-muted.mb-0 Plan and manage your adventures
+            = t('trips.index.my_trips')
+          p.text-muted.mb-0 =t('trips.index.plan_and_manage')
         = link_to new_trip_path, class: "btn btn-primary btn-lg" do
           i.bi.bi-plus-circle.me-2
-          | New Trip
+          = t('trips.index.new_trip')
   
   - if @trips.any?
     .row.row-cols-1.row-cols-md-2.row-cols-lg-3.g-4

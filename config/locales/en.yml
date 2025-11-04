@@ -47,3 +47,8 @@ en:
     odometer:
       distance_today: "Distance Today"
       kilometers: "Kilometers"
+  trips:
+    index:
+      my_trips: "My Trips"
+      plan_and_manage: "Plan and manage your adventures"
+      new_trip: "New Trip"
