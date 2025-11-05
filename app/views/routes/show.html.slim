@@ -13,15 +13,15 @@
           h1.display-5.fw-bold.mb-1
             i.fa.fa-route.me-2
             = "#{@route.waypoint_start.name} → #{@route.waypoint_end.name}"
-          p.text-muted.mb-0 = @route.route_sequence.date.strftime("%A, %B %d, %Y")
+          p.text-muted.mb-0 = l(@route.route_sequence.date, format: :long)
         
         .btn-group role="group"
           = link_to edit_trip_route_path(@route.trip, @route), class: "btn btn-outline-primary" do
             i.bi.bi-pencil-square.me-2
-            | Edit
+            = t('routes.show.edit')
           = link_to trip_path(@route.trip), class: "btn btn-outline-secondary" do
             i.bi.bi-arrow-left.me-2
-            | Back to Trip
+            = t('routes.show.back_to_trip')
   
   / Solar information banner
   .row.mb-4
@@ -33,31 +33,31 @@
               .d-flex.align-items-center.justify-content-center.gap-2
                 i.bi.bi-moon-stars.text-info
                 div.text-start
-                  small.text-white-50.d-block Dawn
+                  small.text-white-50.d-block = t('routes.show.dawn')
                   strong.d-block = @route.waypoint_start.solar_position(@route.route_sequence.date).dawn.strftime("%H:%M")
             .col-6.col-md.border-end.border-secondary
               .d-flex.align-items-center.justify-content-center.gap-2
                 i.bi.bi-sunrise.text-warning
                 div.text-start
-                  small.text-white-50.d-block Sunrise
+                  small.text-white-50.d-block = t('routes.show.sunrise')
                   strong.d-block = @route.waypoint_start.solar_position(@route.route_sequence.date).sunrise.strftime("%H:%M")
             .col-6.col-md.border-end.border-secondary
               .d-flex.align-items-center.justify-content-center.gap-2
                 i.bi.bi-sunset.text-orange
                 div.text-start
-                  small.text-white-50.d-block Sunset
+                  small.text-white-50.d-block = t('routes.show.sunset')
                   strong.d-block = @route.waypoint_end.solar_position(@route.route_sequence.date).sunset.strftime("%H:%M")
             .col-6.col-md.border-end.border-secondary
               .d-flex.align-items-center.justify-content-center.gap-2
                 i.bi.bi-moon.text-primary
                 div.text-start
-                  small.text-white-50.d-block Dusk
+                  small.text-white-50.d-block = t('routes.show.dusk')
                   strong.d-block = @route.waypoint_end.solar_position(@route.route_sequence.date).dusk.strftime("%H:%M")
             .col-12.col-md
               .d-flex.align-items-center.justify-content-center.gap-2
                 i.bi.bi-sun.text-warning
                 div.text-start
-                  small.text-white-50.d-block Day Length
+                  small.text-white-50.d-block = t('routes.show.day_length')
                   strong.d-block = humanize(@route.waypoint_start.solar_position(@route.route_sequence.date).day_length)
   
   / Route statistics
@@ -66,29 +66,29 @@
       .card.shadow-sm.h-100
         .card-body.text-center
           i.bi.bi-sign-turn-right.text-primary.fs-1.mb-2
-          h6.text-muted.mb-1 Distance
+          h6.text-muted.mb-1 = t('routes.show.distance')
           h4.mb-0 = @route.route_sequence.distance&.km.to_s
     
     .col-sm-6.col-lg-3
       .card.shadow-sm.h-100
         .card-body.text-center
           i.bi.bi-clock.text-success.fs-1.mb-2
-          h6.text-muted.mb-1 Driving Time
-          h4.mb-0 = @route.route_sequence.driving_duration.inspect
+          h6.text-muted.mb-1 = t('routes.show.driving_time')
+          h4.mb-0 = format_duration(@route.route_sequence.driving_duration)
     
     .col-sm-6.col-lg-3
       .card.shadow-sm.h-100
         .card-body.text-center
           i.bi.bi-pause-circle.text-warning.fs-1.mb-2
-          h6.text-muted.mb-1 Stopped Time
-          h4.mb-0 = @route.route_sequence.stopped_time.inspect
+          h6.text-muted.mb-1 = t('routes.show.stopped_time')
+          h4.mb-0 = format_duration(@route.route_sequence.stopped_time)
     
     .col-sm-6.col-lg-3
       .card.shadow-sm.h-100
         .card-body.text-center
           i.bi.bi-hourglass-split.text-info.fs-1.mb-2
-          h6.text-muted.mb-1 Total Time
-          h4.mb-0 = @route.route_sequence.total_duration.inspect
+          h6.text-muted.mb-1 = t('routes.show.total_time')
+          h4.mb-0 = format_duration(@route.route_sequence.total_duration)
   
   / Map and directions side by side
   .row.g-4.mb-4
@@ -98,7 +98,7 @@
         .card-header.bg-white.border-bottom
           h5.card-title.mb-0
             i.bi.bi-map.me-2
-            | Route Map
+            = t('routes.show.route_map')
         .card-body.p-0
           div[data-controller="routes"]
             #routescontainer.w-100[
@@ -115,15 +115,15 @@
         .card-header.bg-white.border-bottom
           h5.card-title.mb-0
             i.bi.bi-list-ol.me-2
-            | Turn-by-Turn Directions
+            = t('routes.show.turn_by_turn_directions')
         .card-body.p-0[style="max-height: 60vh; overflow-y: auto;"]
           table.table.table-sm.table-hover.mb-0
             thead.sticky-top.bg-white
               tr 
-                th.border-0 Directions
-                th.border-0.text-end Distance 
-                th.border-0.text-end Speed
-                th.border-0.text-end Time
+                th.border-0 = t('routes.show.directions')
+                th.border-0.text-end = t('routes.show.distance')
+                th.border-0.text-end = t('routes.show.speed')
+                th.border-0.text-end = t('routes.show.time')
             tbody
               - @route.waypoints.each do |waypoint|
                 tr.table-success
@@ -150,6 +150,6 @@
         .card-header.bg-white.border-bottom
           h5.card-title.mb-0
             i.bi.bi-graph-up.me-2
-            | Elevation Profile
+            = t('routes.show.elevation_profile')
         .card-body
-          = line_chart(@route.elevations.map {|e| [e.distance.km.to_f, e.elevation] }, points: false, library: { scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' } } } })
+          = line_chart(@route.elevations.map {|e| [e.distance.km.to_f, e.elevation] }, points: false, library: { scales: { x: { title: { display: true, text: t('routes.show.distance_km') } }, y: { title: { display: true, text: t('routes.show.elevation_m') } } } })

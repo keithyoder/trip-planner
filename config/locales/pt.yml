@@ -1,8 +1,45 @@
 pt:
-  hello: "Hello world"
+  hello: "Olá mundo"
+  date:
+    formats:
+      long: "%d de %B de %Y"  # 05 de novembro de 2025
+      short: "%d de %b"        # 05 de nov
+    month_names: [~, janeiro, fevereiro, março, abril, maio, junho, julho, agosto, setembro, outubro, novembro, dezembro]
+    abbr_month_names: [~, jan, fev, mar, abr, mai, jun, jul, ago, set, out, nov, dez]
+    day_names: [domingo, segunda-feira, terça-feira, quarta-feira, quinta-feira, sexta-feira, sábado]
+    abbr_day_names: [dom, seg, ter, qua, qui, sex, sáb]
+  time:
+    formats:
+      long: "%d de %B de %Y %H:%M"
+      short: "%d de %b %H:%M"
+    am: "am"
+    pm: "pm"  
+  datetime:
+    distance_in_words:
+      about_x_hours:
+        one: "aproximadamente 1 hora"
+        other: "aproximadamente %{count} horas"
+      about_x_minutes:
+        one: "aproximadamente 1 minuto"
+        other: "aproximadamente %{count} minutos"
+      x_hours:
+        one: "1 hora"
+        other: "%{count} horas"
+      x_minutes:
+        one: "1 minuto"
+        other: "%{count} minutos"
+  common:
+    and: "e"
+    not_available: "N/D"
+    hour:
+      one: "hora"
+      other: "horas"
+    minute:
+      one: "minuto"
+      other: "minutos"
   dashboard:
     gps:
-      title: "GPS Status"
+      title: "Status do GPS"
       latitude: "Latitude"
       longitude: "Longitude"
       altitude: "Altitude"
@@ -10,14 +47,60 @@ pt:
       accuracy: "Precisão"
     weather:
       temperature: "Temperatura"
-      humidity: "Humidade"
-      dew_point: "Ponto de Orvalho"
+      humidity: "Umidade"
+      dew_point: "Ponto de orvalho"
       pressure: "Pressão"
     odometer:
-      distance_today: "Distância Hoje"
+      distance_today: "Distância hoje"
       kilometers: "Quilômetros"
   trips:
     index:
       my_trips: "Minhas Viagens"
-      plan_and_manage: "Planeje e gerencie suas aventuras"
+      plan_and_manage: "Planeje e gerencie suas aventuras."
       new_trip: "Nova Viagem"
+      start_date: "Data de início"
+      distance: "Distância"
+      not_set: "Não definido"
+      not_available: "N/D"
+      duration: "Duração:"
+      day:
+        one: "dia"
+        other: "dias"
+      view: "Visualizar"
+      delete_confirm: "Excluir esta viagem?"
+      no_trips: "Ainda não há viagens"
+      start_planning: "Comece a planejar sua primeira aventura!"
+      create_first_trip: "Crie sua primeira viagem"
+    show:
+      trip_details: "Detalhes da viagem"
+      starting_on: "Inicia em %{date}"
+      trip_routes: "Rotas da viagem"
+      back: "Voltar"
+      route_map: "Mapa da rota"
+      trip_information: "Informações da viagem"
+      trip_name: "Nome da viagem"
+      start_date: "Data de início"
+      not_set: "Não definido"
+      distance_km: "Distância (km)"
+      not_available: "N/D"
+      duration: "Duração"
+  routes:
+    show:
+      route_details: "Detalhes da rota"
+      back_to_routes: "Voltar para rotas"
+      day: "Dia"
+      route_name: "Nome da rota"
+      from: "De"
+      to: "Para"
+      weather_sun_times: "Clima e horários solares"
+      dawn: "Alvorada"
+      sunrise: "Nascer do sol"
+      sunset: "Pôr do sol"  
+      dusk: "Crepúsculo"
+      day_length: "Duração do dia"
+      distance: "Distância"
+      driving_time: "Tempo de condução"
+      stopped_time: "Tempo parado"
+      total_time: "Tempo total"
+      route_map: "Mapa da rota"
+      turn_by_turn_directions: "Direções passo a passo"

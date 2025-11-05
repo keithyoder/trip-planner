@@ -1,5 +1,42 @@
 es:
   hello: "Hello world"
+  date:
+    formats:
+      long: "%d de %B de %Y"  # 05 de noviembre de 2025
+      short: "%d de %b"        # 05 de nov
+    month_names: [~, enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre]
+    abbr_month_names: [~, ene, feb, mar, abr, may, jun, jul, ago, sep, oct, nov, dic]
+    day_names: [domingo, lunes, martes, miércoles, jueves, viernes, sábado]
+    abbr_day_names: [dom, lun, mar, mié, jue, vie, sáb]
+  time:
+    formats:
+      long: "%d de %B de %Y %H:%M"
+      short: "%d de %b %H:%M"
+    am: "am"
+    pm: "pm"
+  datetime:
+    distance_in_words:
+      about_x_hours:
+        one: "aproximadamente 1 hora"
+        other: "aproximadamente %{count} horas"
+      about_x_minutes:
+        one: "aproximadamente 1 minuto"
+        other: "aproximadamente %{count} minutos"
+      x_hours:
+        one: "1 hora"
+        other: "%{count} horas"
+      x_minutes:
+        one: "1 minuto"
+        other: "%{count} minutos"
+  common:
+    and: "y"
+    not_available: "N/D"
+    hour:
+      one: "hora"
+      other: "horas"
+    minute:
+      one: "minuto"
+      other: "minutos"
   dashboard:
     gps:
       title: "GPS Status"
@@ -20,4 +57,50 @@ es:
     index:
       my_trips: "Mis viajes"
       plan_and_manage: "Planifica y gestiona tus aventuras."
-      new_trip: "Nueva Viaje"
+      new_trip: "Nuevo Viaje"
+      start_date: "Fecha de inicio"
+      distance: "Distancia"
+      not_set: "No establecido"
+      not_available: "N/D"
+      duration: "Duración:"
+      day:
+        one: "día"
+        other: "días"
+      view: "Ver"
+      delete_confirm: "¿Eliminar este viaje?"
+      no_trips: "Aún no hay viajes"
+      start_planning: "¡Comienza a planificar tu primera aventura!"
+      create_first_trip: "Crea tu primer viaje"
+    show:
+      trip_details: "Detalles del viaje"
+      starting_on: "Comienza el %{date}"
+      trip_routes: "Rutas del viaje"
+      back: "Volver"
+      route_map: "Mapa de la ruta"
+      trip_information: "Información del viaje"
+      trip_name: "Nombre del viaje"
+      start_date: "Fecha de inicio"
+      not_set: "No establecido"
+      distance_km: "Distancia (km)"
+      not_available: "N/D"
+      duration: "Duración"
+  routes:
+    show:
+      route_details: "Detalles de la ruta"
+      back_to_routes: "Volver a rutas"
+      day: "Día"
+      route_name: "Nombre de la ruta"
+      from: "Desde"
+      to: "Hasta"
+      weather_sun_times: "Clima y horarios solares"
+      dawn: "Alba"
+      sunrise: "Amanecer"
+      sunset: "Atardecer"
+      dusk: "Crepúsculo"
+      day_length: "Duración del día"
+      distance: "Distancia"
+      driving_time: "Tiempo de conducción"
+      stopped_time: "Tiempo detenido"
+      total_time: "Tiempo total"
+      route_map: "Mapa de la ruta"
+      turn_by_turn_directions: "Indicaciones paso a paso"

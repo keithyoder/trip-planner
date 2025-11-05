@@ -10,17 +10,17 @@
       / Trip header with title and actions
       .d-flex.justify-content-between.align-items-center.mb-4
         div
-          h1.display-5.fw-bold.mb-1 = @trip.name || "Trip Details"
+          h1.display-5.fw-bold.mb-1 = @trip.name || t('trips.show.trip_details')
           - if @trip.start_on
-            p.text-muted.mb-0 = @trip.start_on.strftime("Starting on %B %d, %Y")
+            p.text-muted.mb-0 = t('trips.show.starting_on', date: l(@trip.start_on, format: :long))
         
         .btn-group role="group"
           = link_to trip_routes_path(@trip), class: "btn btn-outline-primary" do
             i.bi.bi-pencil-square.me-2
-            | Trip Routes
+            = t('trips.show.trip_routes')
           = link_to trips_path, class: "btn btn-outline-secondary" do
             i.bi.bi-arrow-left.me-2
-            | Back
+            = t('trips.show.back')
   
   .row.g-4
     / Map section - takes full width on mobile, 8 cols on larger screens
@@ -29,7 +29,7 @@
         .card-header.bg-white.border-bottom
           h5.card-title.mb-0
             i.bi.bi-map.me-2
-            | Route Map
+            = t('trips.show.route_map')
         .card-body.p-0
           div[data-controller="routes"]
             #container.w-100[
@@ -46,7 +46,7 @@
         .card-header.bg-white.border-bottom
           h5.card-title.mb-0
             i.bi.bi-info-circle.me-2
-            | Trip Information
+            = t('trips.show.trip_information')
         .card-body
           = render @trip
       

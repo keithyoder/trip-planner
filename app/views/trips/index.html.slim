@@ -11,7 +11,7 @@
           h1.display-5.fw-bold.mb-1
             i.bi.bi-suitcase-lg.me-2
             = t('trips.index.my_trips')
-          p.text-muted.mb-0 =t('trips.index.plan_and_manage')
+          p.text-muted.mb-0 = t('trips.index.plan_and_manage')
         = link_to new_trip_path, class: "btn btn-primary btn-lg" do
           i.bi.bi-plus-circle.me-2
           = t('trips.index.new_trip')
@@ -31,27 +31,27 @@
                 .col-6
                   small.text-muted.d-block
                     i.bi.bi-calendar-event.me-1
-                    | Start Date
-                  strong.d-block = trip.start_on&.strftime("%b %d, %Y") || "Not set"
+                    = t('trips.index.start_date')
+                  strong.d-block = trip.start_on&.strftime("%b %d, %Y") || t('trips.index.not_set')
                 .col-6
                   small.text-muted.d-block
                     i.bi.bi-sign-turn-right.me-1
-                    | Distance
-                  strong.d-block = trip.distance ? "#{number_with_delimiter(number_with_delimiter(trip.distance&.km&.to_i))} km" : "N/A"
+                    = t('trips.index.distance')
+                  strong.d-block = trip.distance ? "#{number_with_delimiter(trip.distance&.km&.to_i)} km" : t('trips.index.not_available')
               - if trip.duration_days
                 .mb-2
                   small.text-muted
                     i.bi.bi-hourglass-split.me-1
-                    | Duration:
-                  strong<> = "#{trip.duration_days.to_i} #{'day'.pluralize(trip.duration_days)}"
+                    = t('trips.index.duration')
+                  strong<> = "#{trip.duration_days.to_i} #{t('trips.index.day', count: trip.duration_days)}"
             .card-footer.bg-white.border-top
               .d-flex.gap-2
                 = link_to trip, class: "btn btn-sm btn-outline-primary flex-fill" do
                   i.bi.bi-eye.me-1
-                  | View
+                  = t('trips.index.view')
                 = link_to edit_trip_path(trip), class: "btn btn-sm btn-outline-secondary" do
                   i.bi.bi-pencil
-                = button_to trip, method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete this trip?" } } do
+                = button_to trip, method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: t('trips.index.delete_confirm') } } do
                   i.bi.bi-trash
   - else
     .row
@@ -59,8 +59,8 @@
         .card.shadow-sm.text-center.py-5
           .card-body
             i.bi.bi-suitcase.text-muted style="font-size: 4rem;"
-            h3.mt-3.mb-2 No trips yet
-            p.text-muted.mb-4 Start planning your first adventure!
+            h3.mt-3.mb-2 = t('trips.index.no_trips')
+            p.text-muted.mb-4 = t('trips.index.start_planning')
             = link_to new_trip_path, class: "btn btn-primary btn-lg" do
               i.bi.bi-plus-circle.me-2
-              | Create Your First Trip
+              = t('trips.index.create_first_trip')

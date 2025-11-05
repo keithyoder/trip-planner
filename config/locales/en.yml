@@ -1,36 +1,42 @@
-# Files in the config/locales directory are used for internationalization
-# and are automatically loaded by Rails. If you want to use locales other
-# than English, add the necessary files in this directory.
-#
-# To use the locales, use `I18n.t`:
-#
-#     I18n.t "hello"
-#
-# In views, this is aliased to just `t`:
-#
-#     <%= t("hello") %>
-#
-# To use a different locale, set it with `I18n.locale`:
-#
-#     I18n.locale = :es
-#
-# This would use the information in config/locales/es.yml.
-#
-# The following keys must be escaped otherwise they will not be retrieved by
-# the default I18n backend:
-#
-# true, false, on, off, yes, no
-#
-# Instead, surround them with single quotes.
-#
-# en:
-#   "true": "foo"
-#
-# To learn more, please read the Rails Internationalization guide
-# available at https://guides.rubyonrails.org/i18n.html.
-
 en:
   hello: "Hello world"
+  date:
+    formats:
+      long: "%B %d, %Y"  # November 05, 2025
+      short: "%b %d"
+    month_names: [~, January, February, March, April, May, June, July, August, September, October, November, December]
+    abbr_month_names: [~, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec]
+    day_names: [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
+    abbr_day_names: [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+  time:
+    formats:
+      long: "%B %d, %Y %H:%M"
+      short: "%d %b %H:%M"
+    am: "am"
+    pm: "pm"
+  datetime:
+    distance_in_words:
+      about_x_hours:
+        one: "about 1 hour"
+        other: "about %{count} hours"
+      about_x_minutes:
+        one: "about 1 minute"
+        other: "about %{count} minutes"
+      x_hours:
+        one: "1 hour"
+        other: "%{count} hours"
+      x_minutes:
+        one: "1 minute"
+        other: "%{count} minutes"
+  common:
+    and: "and"
+    not_available: "N/A"
+    hour:
+      one: "hour"
+      other: "hours"
+    minute:
+      one: "minute"
+      other: "minutes"
   dashboard:
     gps:
       title: "GPS Status"
@@ -50,5 +56,51 @@ en:
   trips:
     index:
       my_trips: "My Trips"
-      plan_and_manage: "Plan and manage your adventures"
+      plan_and_manage: "Plan and manage your adventures."
       new_trip: "New Trip"
+      start_date: "Start Date"
+      distance: "Distance"
+      not_set: "Not set"
+      not_available: "N/A"
+      duration: "Duration:"
+      day:
+        one: "day"
+        other: "days"
+      view: "View"
+      delete_confirm: "Delete this trip?"
+      no_trips: "No trips yet"
+      start_planning: "Start planning your first adventure!"
+      create_first_trip: "Create Your First Trip"
+    show:
+      trip_details: "Trip Details"
+      starting_on: "Starting on %{date}"
+      trip_routes: "Trip Routes"
+      back: "Back"
+      route_map: "Route Map"
+      trip_information: "Trip Information"
+      trip_name: "Trip Name"
+      start_date: "Start Date"
+      not_set: "Not set"
+      distance_km: "Distance (km)"
+      not_available: "N/A"
+      duration: "Duration"
+  routes:
+    show:
+      route_details: "Route Details"
+      back_to_routes: "Back to Routes"
+      day: "Day"
+      route_name: "Route Name"
+      from: "From"
+      to: "To"
+      weather_sun_times: "Weather & Sun Times"
+      dawn: "Dawn"
+      sunrise: "Sunrise"
+      sunset: "Sunset"
+      dusk: "Dusk"
+      day_length: "Day Length"
+      distance: "Distance"
+      driving_time: "Driving Time"
+      stopped_time: "Stopped Time"
+      total_time: "Total Time"
+      route_map: "Route Map"
+      turn_by_turn_directions: "Turn-by-Turn Directions"
