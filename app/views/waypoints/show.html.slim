@@ -1,11 +1,66 @@
-p[style="color: green"]
-  = notice
-div[data-controller="maps"]
-  #mycontainer[data-maps-target="container" class="h-[25rem] w-auto"style="min-height: 800px;" data-lon="#{@waypoint.lonlat.y}" data-lat="#{@waypoint.lonlat.x}"]
-= render @waypoint
-= image_tag "https://tiles.stadiamaps.com/static/outdoors.png?api_key=765f44f6-f827-4cb3-822b-3dfa00386480&center=#{@waypoint.lonlat.y},#{@waypoint.lonlat.x}&zoom=14&size=700x500"
-div
-  = link_to "Edit this waypoint", edit_trip_waypoint_path(@trip, @waypoint)
-  |  | 
-  = link_to "Back to waypoints", trip_waypoints_path(@trip)
-  = button_to "Destroy this waypoint", [@trip, @waypoint], method: :delete
+.container-fluid.py-4
+  / Flash notice
+  - if notice
+    .alert.alert-success.alert-dismissible.fade.show role="alert"
+      = notice
+      button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+  
+  .row
+    .col-12
+      / Waypoint header with title and actions
+      .d-flex.justify-content-between.align-items-center.mb-4
+        div
+          h1.display-5.fw-bold.mb-1 = @waypoint.name || "Waypoint Details"
+          p.text-muted.mb-0
+            = @waypoint.waypoint_type.to_s.titleize
+            |  - Sequence #{@waypoint.sequence}
+        
+        .btn-group role="group"
+          = link_to edit_trip_waypoint_path(@trip, @waypoint), class: "btn btn-outline-primary" do
+            i.bi.bi-pencil-square.me-2
+            | Edit
+          = link_to trip_waypoints_path(@trip), class: "btn btn-outline-secondary" do
+            i.bi.bi-arrow-left.me-2
+            | Back
+  
+  .row.g-4
+    / Map section - takes full width on mobile, 8 cols on larger screens
+    .col-lg-8
+      .card.shadow-sm.h-100
+        .card-header.bg-white.border-bottom
+          h5.card-title.mb-0
+            i.bi.bi-map.me-2
+            | Location
+        .card-body.p-0
+          div[data-controller="maps"]
+            #mycontainer[
+              data-maps-target="container" 
+              class="w-100"
+              style="min-height: 500px; height: 60vh;" 
+              data-lon="#{@waypoint.lonlat.x}" 
+              data-lat="#{@waypoint.lonlat.y}"
+              data-waypoint-type="#{@waypoint.waypoint_type}"
+              data-waypoint-name="#{@waypoint.name}"
+            ]
+    
+    / Waypoint details sidebar
+    .col-lg-4
+      .card.shadow-sm.mb-4
+        .card-header.bg-white.border-bottom
+          h5.card-title.mb-0
+            i.bi.bi-info-circle.me-2
+            | Waypoint Information
+        .card-body
+          = render @waypoint
+      
+      / Danger zone for delete action
+      .card.shadow-sm.danger-zone-card
+        .card-header.border-bottom
+          h5.card-title.mb-0.text-danger
+            i.bi.bi-exclamation-triangle.me-2
+            | Danger Zone
+        .card-body
+          p.text-muted.mb-3.small Deleting this waypoint is permanent and cannot be undone.
+          = button_to [@trip, @waypoint], method: :delete, class: "btn btn-danger w-100", form: { data: { turbo_confirm: "Are you sure you want to delete this waypoint?" } } do
+            i.bi.bi-trash.me-2
+            | Delete Waypoint

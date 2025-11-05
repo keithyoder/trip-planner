@@ -1,10 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 import L from "leaflet"
 import "leaflet-css"
+import { createWaypointIcon, getWaypointConfig } from "./waypoint_icons"
 
 // Connects to data-controller="routes"
 export default class extends Controller {
   static targets = ["container"]
+  static values = {
+    waypoints: Array
+  }
 
   connect() {
     console.log("Routes controller connected");
@@ -49,6 +53,12 @@ export default class extends Controller {
     } else {
       console.warn("No route data available");
     }
+    
+    // Display waypoints if available
+    if (this.hasWaypointsValue && this.waypointsValue.length > 0) {
+      console.log(`Displaying ${this.waypointsValue.length} waypoints`);
+      this.displayWaypoints();
+    }
   }
 
   displayRoute(routeData) {
@@ -67,6 +77,7 @@ export default class extends Controller {
         }).addTo(this.map);
         
         this.map.fitBounds(layer.getBounds());
+        this.originalBounds = layer.getBounds();
         console.log("GeoJSON route displayed");
       }
       // If it's WKT MULTILINESTRING format
@@ -97,20 +108,8 @@ export default class extends Controller {
           // Fit map to show all segments
           if (bounds.isValid()) {
             this.map.fitBounds(bounds);
-            this.originalBounds = bounds; // Save original bounds
+            this.originalBounds = bounds;
             console.log("Map fitted to route bounds");
-          }
-          
-          // Add start and end markers
-          const firstSegment = allCoords[0];
-          const lastSegment = allCoords[allCoords.length - 1];
-          if (firstSegment.length > 0 && lastSegment.length > 0) {
-            L.marker(firstSegment[0])
-              .addTo(this.map)
-              .bindPopup('Start');
-            L.marker(lastSegment[lastSegment.length - 1])
-              .addTo(this.map)
-              .bindPopup('End');
           }
         }
       }
@@ -127,11 +126,7 @@ export default class extends Controller {
           }).addTo(this.map);
           
           this.map.fitBounds(polyline.getBounds());
-          this.originalBounds = polyline.getBounds(); // Save original bounds
-          
-          // Add markers
-          L.marker(coords[0]).addTo(this.map).bindPopup('Start');
-          L.marker(coords[coords.length - 1]).addTo(this.map).bindPopup('End');
+          this.originalBounds = polyline.getBounds();
           
           console.log("LINESTRING route displayed");
         }
@@ -142,6 +137,56 @@ export default class extends Controller {
     } catch (error) {
       console.error('Error displaying route:', error);
     }
+  }
+
+  displayWaypoints() {
+    // Display waypoints with custom icons
+    this.waypointsValue.forEach((waypoint, index) => {
+      const lat = waypoint.lat;
+      const lon = waypoint.lon;
+      const type = waypoint.type;
+      const name = waypoint.name || `Waypoint ${index + 1}`;
+      const sequence = waypoint.sequence;
+      
+      // Create custom icon for waypoint type
+      const icon = createWaypointIcon(type, 36);
+      const config = getWaypointConfig(type);
+      
+      const marker = L.marker([lat, lon], { 
+        icon: icon,
+        zIndexOffset: 1000 // Place waypoints above route
+      }).addTo(this.map);
+      
+      // Build popup content
+      let popupContent = `
+        <div style="text-align: center; min-width: 150px;">
+          <div style="background-color: ${config.backgroundColor}; padding: 8px; border-radius: 5px; margin-bottom: 8px;">
+            <i class="bi ${config.icon}" style="color: ${config.color}; font-size: 1.2em;"></i>
+            <strong style="margin-left: 8px; color: ${config.color};">Seq. ${sequence}</strong>
+          </div>
+          <strong style="font-size: 1.1em;">${name}</strong><br>
+          <small class="text-muted">${config.label}</small>
+      `;
+      
+      // Add toll information if present
+      if (waypoint.toll && waypoint.toll > 0) {
+        popupContent += `<br><small><i class="bi bi-cash"></i> ${waypoint.toll_formatted}</small>`;
+      }
+      
+      // Add distance information if present
+      if (waypoint.segment_distance) {
+        popupContent += `<br><small><i class="bi bi-signpost-split"></i> ${waypoint.segment_distance}</small>`;
+      }
+      
+      popupContent += `</div>`;
+      
+      marker.bindPopup(popupContent);
+      
+      // Extend bounds to include waypoint if we have route bounds
+      if (this.originalBounds) {
+        this.originalBounds.extend([lat, lon]);
+      }
+    });
   }
 
   parseWKTMultiLineString(wkt) {
@@ -183,6 +228,7 @@ export default class extends Controller {
     try {
       const cleanWkt = wkt.replace(/^SRID=\d+;/, '');
       const coordsString = cleanWkt.match(/\(([^)]+)\)/);
+      
       if (!coordsString) return [];
       
       return coordsString[1].split(',').map(pair => {
@@ -237,7 +283,7 @@ export default class extends Controller {
 
   resetView() {
     if (this.originalBounds) {
-      this.map.fitBounds(this.originalBounds);
+      this.map.fitBounds(this.originalBounds, { padding: [50, 50] });
       console.log("View reset to original bounds");
     } else {
       console.warn("No original bounds saved");

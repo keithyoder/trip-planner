@@ -17,7 +17,7 @@ class Waypoint < ApplicationRecord
     Chile: :clp,
     Bolivia: :bob,
     Peru: :pen
-  }
+  }.freeze
 
   enum waypoint_type: {
     overnight: 1,
@@ -27,8 +27,8 @@ class Waypoint < ApplicationRecord
     toll_booth: 5,
     border_crossing: 6,
     gas_station: 7,
-    attraction: 8, 
-    routing: 9,
+    attraction: 8,
+    routing: 9
   }
 
   geocoded_by :address do |record, results|
@@ -38,7 +38,7 @@ class Waypoint < ApplicationRecord
     record.lonlat = GEO_FACTORY.point(result.longitude, result.latitude)
   end
 
-  scope :no_level, ->(level) {
+  scope :no_level, lambda { |level|
     where("id not in (SELECT waypoint_id FROM boundaries_waypoints JOIN boundaries ON boundaries_waypoints.boundary_id = boundaries.id WHERE level = #{level})")
   }
 
@@ -91,7 +91,7 @@ class Waypoint < ApplicationRecord
       name: osm_poi.name,
       lonlat: osm_poi.geom,
       osm_poi_id: osm_poi.id
-    )    
+    )
   end
 
   def self.copy_from_osm(osm_poi_id, sequence)
@@ -124,7 +124,7 @@ class Waypoint < ApplicationRecord
   end
 
   def self.find_boundary(level)
-    Waypoint.no_level(level).each do |w| 
+    Waypoint.no_level(level).each do |w|
       boundary = Boundary.select(:id).waypoint(w, level).first
       w.boundaries << boundary if boundary.present?
     end

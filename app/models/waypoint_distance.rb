@@ -7,7 +7,7 @@ class WaypointDistance < ActiveRecord::Base
   attribute :trip_distance, :distance
   attribute :segment_distance, :distance
 
-  delegate :waypoint_type, :location, :country, :currency, :to => :waypoint
+  delegate :waypoint_type, :location, :country, :currency, to: :waypoint
 
   self.primary_key = :id
 

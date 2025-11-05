@@ -1,0 +1,46 @@
+div[id=dom_id(waypoint)]
+  .row.g-3
+    .col-12
+      .d-flex.align-items-center.mb-2
+        i.bi.bi-pin-map-fill.text-primary.me-2 style="font-size: 1.2rem;"
+        div
+          small.text-muted.d-block Name
+          strong = waypoint.name
+    
+    - if waypoint.location.present?
+      .col-12
+        .d-flex.align-items-center.mb-2
+          i.bi.bi-geo-alt-fill.text-success.me-2 style="font-size: 1.2rem;"
+          div
+            small.text-muted.d-block Location
+            strong = waypoint.location
+    
+    .col-6
+      .d-flex.align-items-center.mb-2
+        i.bi.bi-list-ol.text-info.me-2 style="font-size: 1.2rem;"
+        div
+          small.text-muted.d-block Sequence
+          strong = waypoint.sequence
+    
+    .col-6
+      .d-flex.align-items-center.mb-2
+        i.bi.bi-tag-fill.text-warning.me-2 style="font-size: 1.2rem;"
+        div
+          small.text-muted.d-block Type
+          strong = waypoint.waypoint_type.to_s.titleize
+    
+    - if waypoint.respond_to?(:segment_distance) && waypoint.segment_distance.present?
+      .col-6
+        .d-flex.align-items-center.mb-2
+          i.bi.bi-signpost-split.text-secondary.me-2 style="font-size: 1.2rem;"
+          div
+            small.text-muted.d-block Segment Distance
+            strong = "#{waypoint.segment_distance.km.round(1)} km"
+    
+    - if waypoint.respond_to?(:trip_distance) && waypoint.trip_distance.present?
+      .col-6
+        .d-flex.align-items-center.mb-2
+          i.bi.bi-speedometer.text-primary.me-2 style="font-size: 1.2rem;"
+          div
+            small.text-muted.d-block Trip Distance
+            strong = "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km"

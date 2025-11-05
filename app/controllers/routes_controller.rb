@@ -3,6 +3,7 @@
 class RoutesController < ApplicationController
   before_action :set_route, only: %i[show edit update destroy calculate]
   before_action :set_trip
+  helper WaypointsHelper
 
   # GET /routes or /routes.json
   def index

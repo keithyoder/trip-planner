@@ -1,0 +1,31 @@
+/* Waypoint marker styles */
+.waypoint-icon-container {
+  background: transparent !important;
+  border: none !important;
+}
+
+.waypoint-marker {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.waypoint-marker:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
+}
+
+/* Leaflet popup customization for waypoints */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 12px;
+}
+
+/* Ensure Bootstrap icons work in Leaflet markers */
+.leaflet-marker-icon .bi {
+  line-height: 1;
+  vertical-align: middle;
+}

@@ -100,7 +100,10 @@
             i.bi.bi-map.me-2
             = t('routes.show.route_map')
         .card-body.p-0
-          div[data-controller="routes"]
+        div[
+          data-controller="routes" 
+          data-routes-waypoints-value="#{waypoints_map_data(@route.waypoints)}"
+        ]
             #routescontainer.w-100[
               data-routes-target="container" 
               style="min-height: 500px; height: 60vh;" 
@@ -111,38 +114,7 @@
     
     / Turn-by-turn directions
     .col-lg-5
-      .card.shadow-sm.h-100
-        .card-header.bg-white.border-bottom
-          h5.card-title.mb-0
-            i.bi.bi-list-ol.me-2
-            = t('routes.show.turn_by_turn_directions')
-        .card-body.p-0[style="max-height: 60vh; overflow-y: auto;"]
-          table.table.table-sm.table-hover.mb-0
-            thead.sticky-top.bg-white
-              tr 
-                th.border-0 = t('routes.show.directions')
-                th.border-0.text-end = t('routes.show.distance')
-                th.border-0.text-end = t('routes.show.speed')
-                th.border-0.text-end = t('routes.show.time')
-            tbody
-              - @route.waypoints.each do |waypoint|
-                tr.table-success
-                  td[colspan="4"]
-                    i.bi.bi-geo-alt-fill.me-2
-                    strong = waypoint.name
-                - if (segment = @route.segments&.shift)
-                  - segment['steps'].select { |step| step['distance'] > 50 }.each do |step|
-                    tr 
-                      td 
-                        small = step['instruction']
-                      td.text-end.text-nowrap
-                        small = Distance.new(step['distance']).km
-                      td.text-end.text-nowrap
-                        - if step['duration'] > 0
-                          small = "#{(step['distance'] * 3.6 / step['duration']).round} km/h"
-                      td.text-end.text-nowrap
-                        small = (Time.at(@route.start_time % 86400.0).utc + @route.geom.points[step['way_points'].last].m).strftime("%H:%M")
-  
+      =render "directions", route: @route, trip: @trip
   / Elevation profile
   .row.mb-4
     .col-12
