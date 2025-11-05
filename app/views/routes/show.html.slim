@@ -19,9 +19,9 @@
           = link_to edit_trip_route_path(@route.trip, @route), class: "btn btn-outline-primary" do
             i.bi.bi-pencil-square.me-2
             = t('routes.show.edit')
-          = link_to trip_path(@route.trip), class: "btn btn-outline-secondary" do
+          = link_to trip_routes_path(@route.trip), class: "btn btn-outline-secondary" do
             i.bi.bi-arrow-left.me-2
-            = t('routes.show.back_to_trip')
+            = t('routes.show.back_to_routes')
   
   / Solar information banner
   .row.mb-4

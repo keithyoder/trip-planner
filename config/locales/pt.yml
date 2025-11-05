@@ -37,6 +37,9 @@ pt:
     minute:
       one: "minuto"
       other: "minutos"
+  helpers:
+    links:
+      back: "Voltar"
   dashboard:
     gps:
       title: "Status do GPS"
@@ -104,3 +107,11 @@ pt:
       total_time: "Tempo total"
       route_map: "Mapa da rota"
       turn_by_turn_directions: "Direções passo a passo"
+    edit:
+      title: "Editar Rota"
+      calculate_route: "Calcular Rota"
+      calculate_confirm: "Isso recalculará a geometria, elevação e duração da rota. Continuar?"
+    form:
+      waypoint_start: "Ponto de início"
+      waypoint_end: "Ponto final"
+      submit: "Salvar Rota"

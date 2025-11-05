@@ -7,6 +7,9 @@ class RouteSequence < ActiveRecord::Base
 
   self.primary_key = :route_id
 
+  # Allow manually setting the trip to avoid N+1 queries
+  attr_writer :trip
+
   def readonly?
     true
   end
@@ -29,5 +32,10 @@ class RouteSequence < ActiveRecord::Base
 
   def date
     trip.start_on + day.days if trip.start_on.present?
+  end
+
+  # Override trip method to use manually set trip if available
+  def trip
+    @trip || super
   end
 end

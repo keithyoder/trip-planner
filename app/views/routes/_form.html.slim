@@ -1,18 +1,21 @@
 = form_with(model: [@trip, route]) do |form|
   - if route.errors.any?
-    div[style="color: red"]
-      h2
+    .alert.alert-danger role="alert"
+      h4.alert-heading
         = pluralize(route.errors.count, "error")
         |  prohibited this route from being saved:
-      ul
+      ul.mb-0
         - route.errors.each do |error|
           li
             = error.full_message
-  div
-    = form.label :waypoint_start_id, style: "display: block"
-    = form.select :waypoint_start_id, options_for_select(@trip.waypoints.order(:sequence).map { |w| ["#{w.sequence} - #{w.name}", w.id] }, route.waypoint_start), { include_blank: false }
-  div
-    = form.label :waypoint_end_id, style: "display: block"
-    = form.select :waypoint_end_id, options_for_select(@trip.waypoints.order(:sequence).map { |w| ["#{w.sequence} - #{w.name}", w.id] }, route.waypoint_end), { include_blank: false }
-  div
-    = form.submit
+
+  .mb-3
+    = form.label :waypoint_start_id, t('routes.form.waypoint_start'), class: 'form-label'
+    = form.select :waypoint_start_id, options_for_select(@trip.waypoints.order(:sequence).map { |w| ["#{w.sequence} - #{w.name}", w.id] }, route.waypoint_start_id), { include_blank: false }, class: 'form-select'
+
+  .mb-3
+    = form.label :waypoint_end_id, t('routes.form.waypoint_end'), class: 'form-label'
+    = form.select :waypoint_end_id, options_for_select(@trip.waypoints.order(:sequence).map { |w| ["#{w.sequence} - #{w.name}", w.id] }, route.waypoint_end_id), { include_blank: false }, class: 'form-select'
+
+  .d-grid
+    = form.submit t('routes.form.submit'), class: 'btn btn-primary'

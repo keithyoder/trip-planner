@@ -1,12 +1,20 @@
 # frozen_string_literal: true
 
 class RoutesController < ApplicationController
-  before_action :set_route, only: %i[show edit update destroy]
+  before_action :set_route, only: %i[show edit update destroy calculate]
   before_action :set_trip
 
   # GET /routes or /routes.json
   def index
-    @routes = @trip.route_sequences.all.order(:sequence)
+    route_sequence_columns = RouteSequence.column_names.reject { |col| col == 'geom' }
+
+    @routes = @trip.route_sequences
+                   .select(route_sequence_columns)
+                   .order(:sequence)
+
+    # Manually assign the trip to each route_sequence to avoid N+1 queries
+    # when calling route_sequence.trip or route_sequence.date
+    @routes.each { |route_sequence| route_sequence.trip = @trip }
   end
 
   # GET /routes/1 or /routes/1.json
@@ -54,6 +62,16 @@ class RoutesController < ApplicationController
 
     respond_to do |format|
       format.html { redirect_to routes_url, notice: 'route was successfully destroyed.' }
+      format.json { head :no_content }
+    end
+  end
+
+  # POST /routes/1/calculate
+  def calculate
+    CalculateRouteJob.perform_now(@route.id)
+
+    respond_to do |format|
+      format.html { redirect_to edit_trip_route_url(@trip, @route), notice: 'Route calculation has been queued.' }
       format.json { head :no_content }
     end
   end

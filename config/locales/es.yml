@@ -37,6 +37,9 @@ es:
     minute:
       one: "minuto"
       other: "minutos"
+  helpers:
+    links:
+      back: "Volver"
   dashboard:
     gps:
       title: "GPS Status"
@@ -104,3 +107,11 @@ es:
       total_time: "Tiempo total"
       route_map: "Mapa de la ruta"
       turn_by_turn_directions: "Indicaciones paso a paso"
+    edit:
+      title: "Editar Ruta"
+      calculate_route: "Calcular Ruta"
+      calculate_confirm: "Esto recalculará la geometría, elevación y duración de la ruta. ¿Continuar?"
+    form:
+      waypoint_start: "Punto de inicio"
+      waypoint_end: "Punto final"
+      submit: "Guardar Ruta"

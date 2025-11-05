@@ -16,7 +16,7 @@ h1
         - @routes.each do |route|
           tr 
             td =route.date
-            td =link_to route.route_name, trip_route_url(route.trip, route.route_id)
+            td =link_to route.route_name, trip_route_url(@trip, route.route_id)
             td ="#{route.distance&.km&.round&.to_i} km"
             td =route.driving_duration.inspect
             td =route.stopped_time.inspect
