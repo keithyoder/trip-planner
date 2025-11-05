@@ -54,6 +54,12 @@ class Waypoint < ApplicationRecord
     COUNTRY_CURRENCY[country.to_sym]
   end
 
+  def formatted_toll
+    return nil unless toll && currency
+
+    Money.new(toll, currency).format
+  end
+
   def state
     boundaries.where(level: 4).pluck(:name).join(' ')
   end
@@ -121,6 +127,12 @@ class Waypoint < ApplicationRecord
   def latlon=(coordinates)
     latlon = coordinates.split(',')
     send(:lonlat=, GEO_FACTORY.point(latlon[1], latlon[0]))
+  end
+
+  def latlon
+    return nil unless lonlat
+
+    "#{lonlat.y}, #{lonlat.x}"
   end
 
   def self.find_boundary(level)

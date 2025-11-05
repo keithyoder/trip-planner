@@ -11,4 +11,10 @@ module ApplicationHelper
 
     parts.join(" #{t('common.and')} ")
   end
+
+  def format_currency(waypoint)
+    return '-' unless waypoint.toll && waypoint.currency
+
+    waypoint.formatted_toll
+  end
 end

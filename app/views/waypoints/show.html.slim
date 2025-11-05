@@ -52,6 +52,15 @@
             | Waypoint Information
         .card-body
           = render @waypoint
+          
+          / Toll/Cost information
+          - if @waypoint.toll && @waypoint.toll > 0
+            .mt-3.pt-3.border-top
+              .d-flex.justify-content-between.align-items-center
+                span.text-muted
+                  i.bi.bi-cash-coin.me-2
+                  | Toll / Cost
+                strong.text-success.fs-5 = @waypoint.formatted_toll
       
       / Danger zone for delete action
       .card.shadow-sm.danger-zone-card

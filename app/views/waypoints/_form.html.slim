@@ -1,27 +1,69 @@
-= form_with(model: [@trip, waypoint]) do |form|
+= form_with(model: [@trip, waypoint], class: "needs-validation", local: true) do |form|
   - if waypoint.errors.any?
-    div[style="color: red"]
-      h2
-        = pluralize(waypoint.errors.count, "error")
-        |  prohibited this waypoint from being saved:
-      ul
-        - waypoint.errors.each do |error|
-          li
-            = error.full_message
-  div
-    = form.label :name, style: "display: block"
-    = form.text_field :name
-  div
-    = form.label :sequence, style: "display: block"
-    = form.number_field :sequence
-  div
-    = form.label :waypoint_type, style: "display: block"
-    = form.select :waypoint_type, options_for_select(Waypoint.waypoint_types.map { |key, value| [key.humanize, Waypoint.waypoint_types.key(value)]}, @waypoint.waypoint_type), { include_blank: false }
-  div
-    = form.label :latlon, style: "display: block"
-    = form.text_field :latlon
-  div
-    = form.label :toll, style: "display: block"
-    = form.number_field :toll
-  div
-    = form.submit
+    .alert.alert-danger.alert-dismissible.fade.show[role="alert"]
+      .d-flex.align-items-start
+        i.bi.bi-exclamation-triangle-fill.me-3.fs-4
+        div
+          h5.alert-heading.mb-2
+            = pluralize(waypoint.errors.count, "error")
+            |  prohibited this waypoint from being saved:
+          ul.mb-0.ps-3
+            - waypoint.errors.each do |error|
+              li
+                = error.full_message
+      button.btn-close[type="button" data-bs-dismiss="alert" aria-label="Close"]
+  
+  / Name field
+  .mb-4
+    = form.label :name, class: "form-label fw-semibold" do
+      i.bi.bi-tag.me-2
+      | Name
+    = form.text_field :name, class: "form-control form-control-lg", placeholder: "Enter waypoint name"
+    .form-text
+      | A descriptive name for this waypoint
+  
+  / Sequence field
+  .mb-4
+    = form.label :sequence, class: "form-label fw-semibold" do
+      i.bi.bi-arrow-down-up.me-2
+      | Sequence
+    = form.number_field :sequence, class: "form-control form-control-lg", placeholder: "0"
+    .form-text
+      | Order in the trip sequence
+  
+  / Waypoint type
+  .mb-4
+    = form.label :waypoint_type, class: "form-label fw-semibold" do
+      i.bi.bi-signpost-split.me-2
+      | Waypoint Type
+    = form.select :waypoint_type, options_for_select(Waypoint.waypoint_types.map { |key, value| [key.humanize, Waypoint.waypoint_types.key(value)]}, waypoint.waypoint_type), { include_blank: false }, class: "form-select form-select-lg"
+    .form-text
+      | Type of waypoint (start, end, gas station, etc.)
+  
+  / Location field
+  .mb-4
+    = form.label :latlon, class: "form-label fw-semibold" do
+      i.bi.bi-geo.me-2
+      | Location (Lat, Lon)
+    = form.text_field :latlon, class: "form-control form-control-lg", placeholder: "40.7128, -74.0060"
+    .form-text
+      | Coordinates in format: latitude, longitude
+  
+  / Toll field
+  .mb-4
+    = form.label :toll, class: "form-label fw-semibold" do
+      i.bi.bi-cash-coin.me-2
+      | Toll Amount
+    .input-group.input-group-lg
+      span.input-group-text
+        | $
+      = form.number_field :toll, class: "form-control", placeholder: "0.00", step: "0.01"
+    .form-text
+      | Toll cost at this location (if applicable)
+  
+  / Submit button
+  .d-grid.gap-2.d-md-flex.justify-content-md-end.mt-4.pt-3.border-top
+    = link_to "Cancel", trip_waypoints_path(@trip), class: "btn btn-lg btn-outline-secondary"
+    = form.submit class: "btn btn-lg btn-primary px-5" do
+      i.bi.bi-check-circle.me-2
+      | Save Waypoint
