@@ -110,6 +110,8 @@ en:
       total_time: "Total Time"
       route_map: "Route Map"
       turn_by_turn_directions: "Turn-by-Turn Directions"
+      distance_km: "Distance Km"
+      elevation: "Elevation"
     edit:
       title: "Edit Route"
       calculate_route: "Calculate Route"

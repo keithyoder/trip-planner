@@ -45,6 +45,11 @@ export default class extends Controller {
     this.addResetViewControl();
     
     console.log("Map initialized");
+
+    const directionsController = document.querySelector('[data-controller="directions"]');
+    if (directionsController) {
+      directionsController.map = this.map;
+    }
     
     // If route data exists, parse and display it
     if (routeData && routeData.trim() !== '' && routeData !== 'null' && routeData !== 'undefined') {

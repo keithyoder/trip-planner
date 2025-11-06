@@ -1,4 +1,4 @@
-.card.shadow-sm.h-100
+.card.shadow-sm.h-100[data-controller="directions"]
     .card-header.bg-white.border-bottom
         h5.card-title.mb-0
             i.bi.bi-list-ol.me-2
@@ -12,6 +12,7 @@
                     th.border-0.text-end = t('routes.show.speed')
                     th.border-0.text-end = t('routes.show.time')
             tbody
+                - coordinates = @route.geom.coordinates
                 - route.waypoints.each do |waypoint|
                     -if waypoint.waypoint_type != "routing"
                         tr.table-success
@@ -20,7 +21,15 @@
                                 strong = link_to(waypoint.name, trip_waypoint_path(trip, waypoint))
                     - if (segment = route.segments&.shift)
                         - segment['steps'].select { |step| step['distance'] > 50 }.each do |step|
-                            tr 
+                            - coord = coordinates[step['way_points'].first]
+                            tr.direction-step[
+                                data-directions-target="step"
+                                data-action="click->directions#showOnMap"
+                                data-lat=coord[1]
+                                data-lng=coord[0]
+                                data-instruction=step['instruction']
+                                style="cursor: pointer;"
+                            ]
                                 td 
                                     small = step['instruction']
                                 td.text-end.text-nowrap

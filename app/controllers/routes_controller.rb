@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class RoutesController < ApplicationController
-  before_action :set_route, only: %i[show edit update destroy calculate]
+  before_action :set_route, only: %i[edit update destroy calculate]
   before_action :set_trip
   helper WaypointsHelper
 
@@ -19,7 +19,14 @@ class RoutesController < ApplicationController
   end
 
   # GET /routes/1 or /routes/1.json
-  def show; end
+  def show
+    @route = @trip.routes.includes(
+      :route_sequence,
+      :waypoint_start,
+      :waypoint_end,
+      :trip
+    ).find(params[:id])
+  end
 
   # GET /routes/new
   def new
@@ -81,7 +88,7 @@ class RoutesController < ApplicationController
 
   # Use callbacks to share common setup or constraints between actions.
   def set_route
-    @route = Route.find(params[:id])
+    @route = @trip.routes.find(params[:id])
   end
 
   def set_trip

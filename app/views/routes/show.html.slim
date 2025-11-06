@@ -107,7 +107,7 @@
             #routescontainer.w-100[
               data-routes-target="container" 
               style="min-height: 500px; height: 60vh;" 
-              data-lon="34.5" 
+              data-lon="-34.5" 
               data-lat="-8.5" 
               data-route="#{@route.geom.to_s}"
             ]
@@ -124,4 +124,4 @@
             i.bi.bi-graph-up.me-2
             = t('routes.show.elevation_profile')
         .card-body
-          = line_chart(@route.elevations.map {|e| [e.distance.km.to_f, e.elevation] }, points: false, library: { scales: { x: { title: { display: true, text: t('routes.show.distance_km') } }, y: { title: { display: true, text: t('routes.show.elevation_m') } } } })
+          = line_chart(@route.elevations.map {|e| [e.distance.km.to_f.round(1), e.elevation.round(0)] }, points: false, library: { scales: { x: { title: { display: true, text: t('routes.show.distance_km') } }, y: { title: { display: true, text: t('routes.show.elevation') } } } })

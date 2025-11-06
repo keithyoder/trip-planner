@@ -70,7 +70,7 @@ class Waypoint < ApplicationRecord
 
   def timezone
     # Find the boundary highest (more precise) level with a timezone
-    boundaries.where.not(timezone: nil).order(level: :desc).pluck(:timezone).first
+    @timezone ||= boundaries.where.not(timezone: nil).order(level: :desc).pluck(:timezone).first
   end
 
   def solar_position(date = Date.today)
