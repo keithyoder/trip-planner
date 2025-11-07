@@ -244,6 +244,25 @@ function initializeDashboard() {
         window.dashboardMap.setView([gps.lat, gps.lon], window.dashboardMap.getZoom())
       },
 
+      rotateCarIcon(heading) {
+        if (!window.currentMarker) return
+        
+        // Store current heading
+        window.currentHeading = heading
+        
+        // Get the marker icon element
+        const icon = window.currentMarker._icon
+        if (!icon) return
+        
+        // Find the car icon container
+        const carContainer = icon.querySelector('.car-icon-container')
+        if (!carContainer) return
+        
+        // Apply rotation
+        carContainer.style.transform = `rotate(${heading}deg)`
+        carContainer.style.transition = 'transform 0.3s ease'
+      },
+
       updateTripPolyline() {
         if (!window.dashboardMap || !window.currentTripPoints || window.currentTripPoints.length < 2) return
         
