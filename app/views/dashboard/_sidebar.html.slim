@@ -6,7 +6,7 @@
       .widget-icon-small
         i.bi.bi-thermometer-half.text-danger
       .widget-info
-        .widget-value-small
+        #weather-temperature.widget-value-small
           | --
           span.widget-unit-small °C
         .widget-label-small =t('dashboard.weather.temperature')
@@ -16,7 +16,7 @@
       .widget-icon-small
         i.bi.bi-droplet.text-primary
       .widget-info
-        .widget-value-small
+        #weather-humidity.widget-value-small
           | --
           span.widget-unit-small %
         .widget-label-small =t('dashboard.weather.humidity')
@@ -26,7 +26,7 @@
       .widget-icon-small
         i.bi.bi-speedometer.text-info
       .widget-info
-        .widget-value-small
+        #weather-pressure.widget-value-small
           | --
           span.widget-unit-small hPa
         .widget-label-small =t('dashboard.weather.pressure')
@@ -36,7 +36,7 @@
       .widget-icon-small
         i.bi.bi-moisture.text-secondary
       .widget-info
-        .widget-value-small
+        #weather-dewpoint.widget-value-small
           | --
           span.widget-unit-small °C
         .widget-label-small =t('dashboard.weather.dew_point')

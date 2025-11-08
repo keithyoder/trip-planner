@@ -42,9 +42,19 @@ class DashboardDataFetcher {
     // Store data globally for map initialization
     window.initialDashboardData = data
     
+    // Update all dashboard widgets with initial data
+    if (window.dashboardChannel) {
+      window.dashboardChannel.updateDashboardWidgets(data)
+    }
+    
     // If map already initialized, update it
     if (window.mapInitialized && window.updateMapWithData) {
       window.updateMapWithData(data)
+    } else {
+      // Initialize map if not yet done
+      if (window.dashboardChannel) {
+        window.dashboardChannel.initializeMap()
+      }
     }
   }
 }
@@ -75,6 +85,11 @@ function initializeDashboard() {
         console.log("✅ Connected to dashboard channel")
         this.updateConnectionStatus(true)
         this.startConnectionMonitor()
+        
+        // Initialize trip tracking
+        if (!window.currentTripPoints) {
+          window.currentTripPoints = []
+        }
       },
 
       disconnected() {
@@ -109,7 +124,14 @@ function initializeDashboard() {
         
         if (data.gps && data.gps.direction) {
           this.updateHeadingIndicator(data.gps.direction, data.travelling, data.speed_kmh)
+          // Rotate car icon when travelling and heading is available
+          if (data.travelling && data.gps.direction.degrees !== undefined) {
+            this.rotateCarIcon(data.gps.direction.degrees)
+          }
         }
+    
+        // Update speed circle (show/hide based on travelling status)
+        this.updateSpeedCircle(data.speed_kmh, data.travelling)
         
         if (data.gps) {
           this.updateGPSWidget(data.gps)
@@ -154,35 +176,87 @@ function initializeDashboard() {
       },
 
       updateOdometer(distanceKm) {
-        const odometerValue = document.getElementById('odometer-value')
-        if (odometerValue) {
-          odometerValue.textContent = distanceKm.toFixed(1)
+        const container = document.querySelector('.odometer-container')
+        if (!container) return
+        
+        const digits = distanceKm.toFixed(1).padStart(7, '0').split('')
+        
+        container.innerHTML = digits.map(digit => {
+          if (digit === '.') {
+            return '<div class="odometer-separator">.</div>'
+          } else {
+            return `<div class="odometer-digit">${digit}</div>`
+          }
+        }).join('')
+      },
+    
+      updateHeadingIndicator(direction, travelling, speedKmh) {
+        let headingIndicator = document.getElementById('heading-indicator')
+        const speedRounded = Math.round(speedKmh)
+        
+        // Check if data is stale (no updates in last 5 minutes)
+        const isStale = window.lastTelemetryUpdate && 
+                        (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
+        
+        console.log(`🧭 Heading: ${direction}, Travelling: ${travelling}, Speed: ${speedRounded} km/h, Stale: ${isStale}`)
+        
+        // Show heading indicator unless Not Connected (stale data)
+        if (!isStale && direction) {
+          // Show/update heading indicator
+          if (!headingIndicator) {
+            // Create heading indicator
+            console.log(`✨ Creating heading indicator: ${direction}`)
+            headingIndicator = document.createElement('div')
+            headingIndicator.id = 'heading-indicator'
+            headingIndicator.innerHTML = `
+              <div class="heading-direction">${direction}</div>
+            `
+            document.getElementById('dashboard-container').appendChild(headingIndicator)
+          } else {
+            // Update existing direction
+            console.log(`🔄 Updating heading indicator: ${direction}`)
+            const directionElement = headingIndicator.querySelector('.heading-direction')
+            if (directionElement) directionElement.textContent = direction
+          }
+        } else {
+          // Remove heading indicator when Not Connected (stale data)
+          if (headingIndicator) {
+            console.log(`🚫 Removing heading indicator (stale: ${isStale})`)
+            headingIndicator.remove()
+          }
         }
       },
 
-      updateHeadingIndicator(direction, isTravelling, speedKmh) {
-        const headingContainer = document.getElementById('heading-indicator-container')
-        if (!headingContainer) return
+      updateSpeedCircle(speedKmh, travelling) {
+        let speedCircle = document.getElementById('speed-circle')
+        const speedRounded = Math.round(speedKmh)
         
-        if (isTravelling) {
-          headingContainer.classList.add('visible')
-          const arrow = document.getElementById('heading-arrow')
-          const text = document.getElementById('heading-text')
-          const speed = document.getElementById('heading-speed')
-          
-          if (arrow && direction.degrees !== undefined) {
-            arrow.style.transform = `rotate(${direction.degrees}deg)`
-          }
-          
-          if (text && direction.cardinal) {
-            text.textContent = direction.cardinal
-          }
-          
-          if (speed && speedKmh !== undefined) {
-            speed.textContent = `${Math.round(speedKmh)} km/h`
+        // Check if data is stale (no updates in last 5 minutes)
+        const isStale = window.lastTelemetryUpdate && 
+                        (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
+        
+        // Show speed circle unless Not Connected (stale data)
+        if (!isStale) {
+          // Show/update speed circle
+          if (!speedCircle) {
+            // Create speed circle
+            speedCircle = document.createElement('div')
+            speedCircle.id = 'speed-circle'
+            speedCircle.innerHTML = `
+              <div class="speed-circle-value">${speedRounded}</div>
+              <div class="speed-circle-unit">km/h</div>
+            `
+            document.getElementById('dashboard-container').appendChild(speedCircle)
+          } else {
+            // Update existing speed value
+            const speedValue = speedCircle.querySelector('.speed-circle-value')
+            if (speedValue) speedValue.textContent = speedRounded
           }
         } else {
-          headingContainer.classList.remove('visible')
+          // Remove speed circle when Not Connected (stale data)
+          if (speedCircle) {
+            speedCircle.remove()
+          }
         }
       },
 
@@ -216,11 +290,67 @@ function initializeDashboard() {
         if (elements.humidity && weather.humidity !== undefined) {
           elements.humidity.textContent = `${weather.humidity}%`
         }
-        if (elements.dewpoint && weather.dew_point !== undefined) {
-          elements.dewpoint.textContent = `${weather.dew_point.toFixed(1)}°C`
+        if (elements.dewpoint && weather.dewpoint !== undefined) {
+          elements.dewpoint.textContent = `${weather.dewpoint.toFixed(1)}°C`
         }
         if (elements.pressure && weather.pressure !== undefined) {
           elements.pressure.textContent = `${weather.pressure.toFixed(1)} hPa`
+        }
+      },
+
+      initializeMap() {
+        const mapElement = document.getElementById('dashboard-map')
+        if (!mapElement || window.mapInitialized) {
+          console.log("ℹ️ Map already initialized or element not found")
+          return
+        }
+
+        console.log("🗺️ Initializing dashboard map...")
+
+        // Use initial data if available
+        const data = window.initialDashboardData
+        const lat = data?.gps?.lat || -23.5505
+        const lon = data?.gps?.lon || -46.6333
+        const zoom = 13
+
+        // Create map
+        window.dashboardMap = L.map('dashboard-map', {
+          zoomControl: true,
+          attributionControl: true
+        }).setView([lat, lon], zoom)
+
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 19
+        }).addTo(window.dashboardMap)
+
+        // Initialize trip points array
+        if (!window.currentTripPoints) {
+          window.currentTripPoints = []
+        }
+
+        // Add current location marker if we have GPS data
+        if (data?.gps) {
+          this.updateMapLocation(data.gps)
+          
+          // Initialize heading if available and travelling
+          if (data.gps.direction?.degrees !== undefined && data.travelling) {
+            this.rotateCarIcon(data.gps.direction.degrees)
+          }
+        }
+
+        window.mapInitialized = true
+        console.log("✅ Dashboard map initialized")
+
+        // Set up update function for async data loading
+        window.updateMapWithData = (newData) => {
+          if (newData?.gps) {
+            this.updateMapLocation(newData.gps)
+            if (newData.gps.direction?.degrees !== undefined && newData.travelling) {
+              this.rotateCarIcon(newData.gps.direction.degrees)
+            }
+          }
         }
       },
 
