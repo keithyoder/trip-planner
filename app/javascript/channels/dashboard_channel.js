@@ -359,7 +359,7 @@ function initializeDashboard() {
         
         if (!window.currentMarker) {
           const carIcon = L.divIcon({
-            html: '<div class="car-icon-container"><img src="/assets/car-icon.svg" alt="car" /></div>',
+            html: `<div class="car-icon-container"><img src="${window.car_icon_path}" alt="car" /></div>`,
             className: 'car-marker',
             iconSize: [32, 32],
             iconAnchor: [16, 16]
