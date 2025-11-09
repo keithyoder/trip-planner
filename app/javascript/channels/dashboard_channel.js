@@ -124,7 +124,7 @@ function initializeDashboard() {
         }
         
         // Update last telemetry timestamp
-        window.lastTelemetryUpdate = Date.now()
+        window.lastTelemetryUpdate = new Date(data.timestamp).getTime()
         
         this.updateTravellingStatus(data.travelling)
         this.updateOdometer(data.distance_km || 0)

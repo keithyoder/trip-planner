@@ -109,7 +109,7 @@
               style="min-height: 500px; height: 60vh;" 
               data-lon="-34.5" 
               data-lat="-8.5" 
-              data-route="#{@route.geom.to_s}"
+              data-route="#{@route.geom.coordinates.map { |coord| [coord[1], coord[0]] }}"
             ]
     
     / Turn-by-turn directions
