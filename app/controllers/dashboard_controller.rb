@@ -92,7 +92,7 @@ class DashboardController < ApplicationController
       start_location: trip_log.start_location,
       end_location: trip_log.end_location,
       point_count: trip_log.point_count,
-      coordinates: trip_log.coordinates # Extracted from geom
+      coordinates: trip_log.coordinates.map { |coord| [coord[1], coord[0]] }
     }
   end
 

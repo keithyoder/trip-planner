@@ -83,27 +83,31 @@ function initializeDashboard() {
     window.dashboardChannel = consumer.subscriptions.create("DashboardChannel", {
       connected() {
         console.log("✅ Connected to dashboard channel")
-        this.updateConnectionStatus(true)
         this.startConnectionMonitor()
         
         // Initialize trip tracking
         if (!window.currentTripPoints) {
           window.currentTripPoints = []
         }
+        
+        // Initialize GPS collapse after a short delay to ensure DOM is ready
+        setTimeout(() => {
+          this.initGPSCollapse()
+        }, 200)
       },
 
       disconnected() {
         console.log("❌ Disconnected from dashboard channel")
-        this.updateConnectionStatus(false)
         this.stopConnectionMonitor()
       },
 
       received(data) {
         console.log("📡 Received data via ActionCable:", data)
-        this.updateDashboardWidgets(data)
         
+        // Update timestamp immediately
         window.lastTelemetryUpdate = Date.now()
-        this.updateConnectionStatus(true)
+        
+        this.updateDashboardWidgets(data)
         
         if (data.gps && data.travelling) {
           window.currentTripPoints.push([data.gps.lat, data.gps.lon])
@@ -112,12 +116,15 @@ function initializeDashboard() {
       },
 
       updateDashboardWidgets(data) {
-        console.log("Updating dashboard with data:", data)
+        console.log("🔄 Updating dashboard with data:", data)
         
         if (!data) {
-          console.error("Dashboard data is null or undefined")
+          console.error("❌ Dashboard data is null or undefined")
           return
         }
+        
+        // Update last telemetry timestamp
+        window.lastTelemetryUpdate = Date.now()
         
         this.updateTravellingStatus(data.travelling)
         this.updateOdometer(data.distance_km || 0)
@@ -144,34 +151,52 @@ function initializeDashboard() {
         if (window.dashboardMap && data.gps) {
           this.updateMapLocation(data.gps)
         }
+        
+        // Load trip points if available (for initial page load with existing trip)
+        if (data.trip_points && data.trip_points.length > 0) {
+          console.log(`📍 Loading ${data.trip_points.length} existing trip points`)
+          window.currentTripPoints = data.trip_points
+          this.updateTripPolyline()
+        }
+        
+        // Plot today's completed trips
+        if (data.todays_trips && data.todays_trips.trips) {
+          this.plotTodaysTrips(data.todays_trips.trips)
+        }
       },
 
       updateTravellingStatus(isTravelling) {
         const statusElement = document.getElementById('travelling-status')
-        const statusIcon = document.getElementById('status-icon')
-        const statusText = document.getElementById('status-text')
+        if (!statusElement) {
+          console.warn("⚠️ travelling-status element not found")
+          return
+        }
         
-        if (statusElement && statusIcon && statusText) {
-          if (isTravelling) {
-            statusElement.classList.remove('not-connected')
-            statusElement.classList.add('travelling')
-            statusIcon.textContent = '🚗'
-            statusText.textContent = 'Travelling'
-          } else {
-            const isStale = window.lastTelemetryUpdate && 
-                           (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
-            
-            if (isStale || !window.lastTelemetryUpdate) {
-              statusElement.classList.remove('travelling')
-              statusElement.classList.add('not-connected')
-              statusIcon.textContent = '📡'
-              statusText.textContent = 'Not Connected'
-            } else {
-              statusElement.classList.remove('travelling', 'not-connected')
-              statusIcon.textContent = '🅿️'
-              statusText.textContent = 'Parked'
-            }
-          }
+        const badge = statusElement.querySelector('.badge')
+        if (!badge) {
+          console.warn("⚠️ badge element not found inside travelling-status")
+          return
+        }
+        
+        // Clear existing classes
+        badge.classList.remove('bg-success', 'bg-secondary', 'bg-warning', 'text-dark', 'text-white')
+        
+        // Check if data is stale
+        const isStale = window.lastTelemetryUpdate && 
+                       (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
+        
+        if (isTravelling) {
+          badge.classList.add('bg-success', 'text-white')
+          badge.innerHTML = '<i class="bi bi-car-front me-1"></i>Moving'
+          console.log("✅ Status: Moving")
+        } else if (isStale || !window.lastTelemetryUpdate) {
+          badge.classList.add('bg-warning', 'text-dark')
+          badge.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>Not Connected'
+          console.log("⚠️ Status: Not Connected")
+        } else {
+          badge.classList.add('bg-secondary', 'text-white')
+          badge.innerHTML = '<i class="bi bi-p-circle me-1"></i>Stationary'
+          console.log("🅿️ Status: Stationary")
         }
       },
 
@@ -265,14 +290,12 @@ function initializeDashboard() {
           lat: document.getElementById('gps-latitude'),
           lon: document.getElementById('gps-longitude'),
           alt: document.getElementById('gps-altitude'),
-          accuracy: document.getElementById('gps-accuracy'),
           satellites: document.getElementById('gps-satellites')
         }
         
         if (elements.lat) elements.lat.textContent = gps.lat.toFixed(6)
         if (elements.lon) elements.lon.textContent = gps.lon.toFixed(6)
         if (elements.alt) elements.alt.textContent = `${Math.round(gps.altitude || 0)} m`
-        if (elements.accuracy) elements.accuracy.textContent = `${(gps.accuracy || 0).toFixed(1)} m`
         if (elements.satellites) elements.satellites.textContent = gps.satellites || 0
       },
 
@@ -285,21 +308,21 @@ function initializeDashboard() {
         }
         
         if (elements.temp && weather.temperature !== undefined) {
-          elements.temp.textContent = `${weather.temperature.toFixed(1)}°C`
+          elements.temp.innerHTML = `${weather.temperature.toFixed(1)}<span class="widget-unit-small">°C</span>`
         }
         if (elements.humidity && weather.humidity !== undefined) {
-          elements.humidity.textContent = `${weather.humidity}%`
+          elements.humidity.innerHTML = `${weather.humidity}<span class="widget-unit-small">%</span>`
         }
         if (elements.dewpoint && weather.dewpoint !== undefined) {
-          elements.dewpoint.textContent = `${weather.dewpoint.toFixed(1)}°C`
+          elements.dewpoint.innerHTML = `${weather.dewpoint.toFixed(1)}<span class="widget-unit-small">°C</span>`
         }
         if (elements.pressure && weather.pressure !== undefined) {
-          elements.pressure.textContent = `${weather.pressure.toFixed(1)} hPa`
+          elements.pressure.innerHTML = `${weather.pressure.toFixed(1)}<span class="widget-unit-small">hPa</span>`
         }
       },
 
       initializeMap() {
-        const mapElement = document.getElementById('dashboard-map')
+        const mapElement = document.getElementById('map')
         if (!mapElement || window.mapInitialized) {
           console.log("ℹ️ Map already initialized or element not found")
           return
@@ -311,16 +334,20 @@ function initializeDashboard() {
         const data = window.initialDashboardData
         const lat = data?.gps?.lat || -23.5505
         const lon = data?.gps?.lon || -46.6333
-        const zoom = 13
+        const zoom = data?.gps ? 16 : 2
 
-        // Create map
-        window.dashboardMap = L.map('dashboard-map', {
-          zoomControl: true,
-          attributionControl: true
+        // Create map - use 'map' ID not 'dashboard-map'
+        window.dashboardMap = L.map('map', {
+          zoomControl: false
         }).setView([lat, lon], zoom)
+        
+        // Add zoom control to bottom right
+        L.control.zoom({
+          position: 'bottomright'
+        }).addTo(window.dashboardMap)
 
         // Add tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png?api_key=50e54c7f-f220-44f9-875c-a0ce16bc63b5', {
           attribution: '© OpenStreetMap contributors',
           maxZoom: 19
         }).addTo(window.dashboardMap)
@@ -339,6 +366,18 @@ function initializeDashboard() {
             this.rotateCarIcon(data.gps.direction.degrees)
           }
         }
+        
+        // Load existing trip points if available
+        if (data?.trip_points && data.trip_points.length > 0) {
+          console.log(`📍 Initializing map with ${data.trip_points.length} trip points`)
+          window.currentTripPoints = data.trip_points
+          this.updateTripPolyline()
+        }
+        
+        // Plot today's completed trips if available
+        if (data?.todays_trips && data.todays_trips.trips) {
+          this.plotTodaysTrips(data.todays_trips.trips)
+        }
 
         window.mapInitialized = true
         console.log("✅ Dashboard map initialized")
@@ -350,6 +389,15 @@ function initializeDashboard() {
             if (newData.gps.direction?.degrees !== undefined && newData.travelling) {
               this.rotateCarIcon(newData.gps.direction.degrees)
             }
+          }
+          // Load trip points if available
+          if (newData?.trip_points && newData.trip_points.length > 0) {
+            window.currentTripPoints = newData.trip_points
+            this.updateTripPolyline()
+          }
+          // Plot today's completed trips if available
+          if (newData?.todays_trips && newData.todays_trips.trips) {
+            this.plotTodaysTrips(newData.todays_trips.trips)
           }
         }
       },
@@ -371,7 +419,13 @@ function initializeDashboard() {
           window.currentMarker.setLatLng([gps.lat, gps.lon])
         }
         
-        window.dashboardMap.setView([gps.lat, gps.lon], window.dashboardMap.getZoom())
+        // Only update view if we have a reasonable zoom level already
+        const currentZoom = window.dashboardMap.getZoom()
+        if (currentZoom < 10) {
+          window.dashboardMap.setView([gps.lat, gps.lon], 16)
+        } else {
+          window.dashboardMap.setView([gps.lat, gps.lon], currentZoom)
+        }
       },
 
       rotateCarIcon(heading) {
@@ -394,48 +448,146 @@ function initializeDashboard() {
       },
 
       updateTripPolyline() {
-        if (!window.dashboardMap || !window.currentTripPoints || window.currentTripPoints.length < 2) return
+        if (!window.dashboardMap || !window.currentTripPoints || window.currentTripPoints.length < 2) {
+          console.log(`ℹ️ Cannot update trip polyline: map=${!!window.dashboardMap}, points=${window.currentTripPoints?.length || 0}`)
+          return
+        }
         
         if (window.currentTripPolyline) {
           window.currentTripPolyline.setLatLngs(window.currentTripPoints)
+          console.log(`🔄 Updated trip polyline with ${window.currentTripPoints.length} points`)
         } else {
           window.currentTripPolyline = L.polyline(window.currentTripPoints, {
             color: '#0066ff',
             weight: 4,
             opacity: 0.7
           }).addTo(window.dashboardMap)
+          console.log(`✨ Created trip polyline with ${window.currentTripPoints.length} points`)
         }
       },
 
+      plotTodaysTrips(trips) {
+        if (!window.dashboardMap || !trips || trips.length === 0) {
+          console.log("ℹ️ No trips to plot or map not ready")
+          return
+        }
+        
+        console.log(`🗺️ Plotting ${trips.length} completed trip(s) from today`)
+        
+        // Clear existing completed trips layer if it exists
+        if (window.completedTripsLayer) {
+          window.dashboardMap.removeLayer(window.completedTripsLayer)
+        }
+        
+        // Create a layer group for completed trips
+        window.completedTripsLayer = L.layerGroup().addTo(window.dashboardMap)
+        
+        trips.forEach((trip, index) => {
+          if (!trip.coordinates || trip.coordinates.length < 2) {
+            console.log(`⚠️ Trip ${index + 1} has insufficient coordinates`)
+            return
+          }
+          
+          // Create polyline for this trip with a different color than current trip
+          const tripPolyline = L.polyline(trip.coordinates, {
+            color: '#28a745', // Green for completed trips
+            weight: 3,
+            opacity: 0.6
+          })
+          
+          // Add popup with trip info
+          const popupContent = `
+            <div style="min-width: 200px;">
+              <h6 class="mb-2">${trip.name || 'Trip ' + (index + 1)}</h6>
+              <small class="d-block mb-1">
+                <i class="bi bi-clock"></i> ${trip.duration_minutes} min
+              </small>
+              <small class="d-block mb-1">
+                <i class="bi bi-speedometer"></i> ${trip.distance_km} km
+              </small>
+              <small class="d-block">
+                <i class="bi bi-arrow-up-circle"></i> ${trip.avg_speed_kmh} km/h avg
+              </small>
+            </div>
+          `
+          
+          tripPolyline.bindPopup(popupContent)
+          window.completedTripsLayer.addLayer(tripPolyline)
+        })
+        
+        console.log(`✅ Plotted ${trips.length} completed trip(s)`)
+      },
+
       initGPSCollapse() {
-        const trigger = document.getElementById('gps-collapse-trigger')
-        const content = document.getElementById('gps-details-content')
-        const icon = document.getElementById('gps-collapse-icon')
-        const header = document.getElementById('gps-widget-header')
+        // Find the widget header - this is the clickable trigger
+        const header = document.querySelector('.gps-widget .widget-header.clickable')
+        const content = document.querySelector('.gps-widget .gps-details')
+        const icon = document.querySelector('.gps-widget .collapse-icon')
         
-        if (!trigger || !content) return
+        console.log('🔍 GPS Collapse Init - Elements found:', {
+          header: !!header,
+          content: !!content,
+          icon: !!icon
+        })
         
-        trigger.addEventListener('click', () => {
-          const isExpanded = content.classList.contains('show')
+        if (!header || !content) {
+          console.warn("⚠️ GPS collapse elements not found, will retry...")
+          // Retry after a short delay if elements aren't ready yet
+          setTimeout(() => this.initGPSCollapse(), 500)
+          return
+        }
+        
+        console.log("📍 Initializing GPS collapse functionality")
+        
+        // Remove any existing listeners to prevent duplicates
+        const newHeader = header.cloneNode(true)
+        header.parentNode.replaceChild(newHeader, header)
+        
+        newHeader.addEventListener('click', (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          
+          const isExpanded = content.classList.contains('expanded')
+          
+          console.log(`📍 GPS widget clicked, currently ${isExpanded ? 'expanded' : 'collapsed'}`)
           
           if (isExpanded) {
-            content.classList.remove('show')
+            content.classList.remove('expanded')
+            content.classList.add('collapsed')
             if (icon) icon.classList.remove('expanded')
-            if (header) header.setAttribute('aria-expanded', 'false')
             console.log('📍 GPS info collapsed')
           } else {
-            content.classList.add('show')
+            content.classList.remove('collapsed')
+            content.classList.add('expanded')
             if (icon) icon.classList.add('expanded')
-            if (header) header.setAttribute('aria-expanded', 'true')
             console.log('📍 GPS info expanded')
           }
         })
+        
+        console.log("✅ GPS collapse functionality initialized")
       },
 
       startConnectionMonitor() {
+        // Clear any existing monitor
+        if (this.connectionMonitorInterval) {
+          clearInterval(this.connectionMonitorInterval)
+        }
+        
+        console.log("⏱️ Starting connection monitor (checks every 30 seconds)")
+        
         this.connectionMonitorInterval = setInterval(() => {
-          this.updateConnectionStatus(true)
-        }, 10000)
+          const now = Date.now()
+          const lastUpdate = window.lastTelemetryUpdate || now
+          const secondsSinceUpdate = Math.floor((now - lastUpdate) / 1000)
+          const isStale = (now - lastUpdate) > 5 * 60 * 1000 // 5 minutes
+          
+          console.log(`🔍 Connection check: ${secondsSinceUpdate}s since last update, stale: ${isStale}`)
+          
+          if (isStale && window.lastTelemetryUpdate) {
+            console.log("⚠️ Data is stale (>5 minutes), setting status to Not Connected")
+            this.updateTravellingStatus(false)
+          }
+        }, 30000) // Check every 30 seconds
       },
 
       stopConnectionMonitor() {
@@ -443,29 +595,10 @@ function initializeDashboard() {
           clearInterval(this.connectionMonitorInterval)
           this.connectionMonitorInterval = null
         }
-      },
-
-      updateConnectionStatus(checkStale) {
-        if (!checkStale) {
-          this.updateTravellingStatus(false)
-          return
-        }
-        
-        const isStale = window.lastTelemetryUpdate && 
-                        (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
-        
-        if (isStale) {
-          this.updateTravellingStatus(false)
-        }
       }
     })
     
     console.log("📺 Dashboard channel created")
-  }
-
-  // Initialize GPS collapse functionality
-  if (window.dashboardChannel) {
-    window.dashboardChannel.initGPSCollapse()
   }
   
   // Fetch initial data after a brief delay
