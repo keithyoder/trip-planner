@@ -10,4 +10,15 @@ class TripTrack < ApplicationRecord
   def readonly?
     true
   end
+
+  def coordinates # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    coords = geom&.coordinates || []
+    if coords.first.is_a?(Array) && coords.first.first.is_a?(Array)
+      coords.map do |line|
+        line.map { |coord| [coord[1], coord[0]] }
+      end
+    else
+      coords.map { |coord| [coord[1], coord[0]] }
+    end
+  end
 end

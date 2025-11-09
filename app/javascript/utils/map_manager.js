@@ -183,9 +183,15 @@ export class MapManager {
             opacity: 0.7
         };
 
-        const polyline = L.polyline(coordinates, { ...defaultOptions, ...options }).addTo(this.map);
-        this.polylines.push(polyline);
-        return polyline;
+        if (Array.isArray(coordinates[0][0])) {
+            for (const segment of coordinates) {
+                const polyline = L.polyline(segment, { ...defaultOptions, ...options }).addTo(this.map);
+                this.polylines.push(polyline);
+            }
+        } else {
+            const polyline = L.polyline(coordinates, { ...defaultOptions, ...options }).addTo(this.map);
+            this.polylines.push(polyline);
+        }
     }
 
     // Fit map bounds to show all markers
