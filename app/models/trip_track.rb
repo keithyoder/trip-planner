@@ -1,5 +1,13 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: trip_tracks
+#
+#  trip_id  :bigint           primary key
+#  geom     :geography        geometry, 0
+#  distance :float
+#
 class TripTrack < ApplicationRecord
   belongs_to :trip
   attribute :distance, :distance

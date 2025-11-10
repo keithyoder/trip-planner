@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: telemetry_logs
+#
+#  id         :bigint           not null, primary key
+#  mongo_id   :string           not null
+#  timestamp  :datetime         not null
+#  data       :jsonb            not null
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
 class TelemetryLog < ApplicationRecord
   validates :mongo_id, presence: true, uniqueness: true
   validates :timestamp, presence: true

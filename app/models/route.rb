@@ -1,5 +1,21 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: routes
+#
+#  id                :bigint           not null, primary key
+#  waypoint_start_id :bigint           not null
+#  waypoint_end_id   :bigint           not null
+#  segments          :jsonb
+#  geom              :geography        linestring, 4326
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  start_time        :interval
+#  trip_id           :bigint
+#  profile           :string           default("driving-car"), not null
+#  surfaces          :jsonb
+#
 class Route < ApplicationRecord
   GEO_FACTORY = RGeo::Geographic.spherical_factory(srid: 4326)
 

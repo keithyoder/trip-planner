@@ -1,5 +1,18 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: route_sequences
+#
+#  route_id            :bigint           primary key
+#  trip_id             :bigint
+#  sequence            :integer
+#  route_name          :text
+#  stopped_time        :interval
+#  distance            :float
+#  duration            :interval
+#  start_time_sequence :interval
+#
 class RouteSequence < ActiveRecord::Base
   belongs_to :route
   has_one :trip, through: :route, foreign_key: :route_trip_id, primary_key: :trip_id

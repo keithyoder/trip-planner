@@ -1,5 +1,21 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: boundaries
+#
+#  id            :bigint           not null, primary key
+#  name          :string
+#  level         :integer
+#  geom          :geography        multipolygon, 4326
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  hierarchy     :ltree
+#  admin_point   :geography        point, 4326
+#  osm_id        :integer
+#  admin_node_id :bigint
+#  timezone      :string
+#
 class Boundary < ActiveRecord::Base
   has_and_belongs_to_many :waypoints
 
@@ -10,6 +26,11 @@ class Boundary < ActiveRecord::Base
   scope :containing_point, lambda { |lat, lon|
     where('ST_Within(ST_SetSRID(ST_MakePoint(?, ?), 4326), geom::geometry)', lon, lat)
   }
+
+  def import_boundaries(level)
+    osm = OsmBoundary.new
+    osm.fetch_and_import(osm_id, level: level, hierarchy_prefix: hierarchy)
+  end
 
   def self.load_geojson(file_name)
     geom = RGeo::GeoJSON.decode(File.read(file_name))

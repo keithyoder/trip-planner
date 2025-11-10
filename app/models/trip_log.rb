@@ -1,5 +1,20 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: trip_logs
+#
+#  id         :bigint           not null, primary key
+#  name       :string
+#  start_time :datetime         not null
+#  end_time   :datetime         not null
+#  max_speed  :decimal(8, 3)
+#  avg_speed  :decimal(8, 3)
+#  geom       :geography        geometry, 4326
+#  data       :jsonb            not null
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
 class TripLog < ApplicationRecord
   # has_many :telemetry_logs, dependent: :nullify
   belongs_to :trip, optional: true
