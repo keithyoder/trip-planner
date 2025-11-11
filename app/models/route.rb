@@ -178,6 +178,10 @@ class Route < ApplicationRecord
     Route.joins(joins_sql).where(id: id).select(Arel.sql(select_sql))
   end
 
+  def boundaries
+    Boundary.intersecting_with_route(id)
+  end
+
   def self.find_by_waypoint(waypoint)
     Route.joins(%i[waypoint_start
                    waypoint_end]).where("#{waypoint.sequence} between waypoints.sequence and waypoint_ends_routes.sequence").first

@@ -27,6 +27,24 @@ class Boundary < ActiveRecord::Base
     where('ST_Within(ST_SetSRID(ST_MakePoint(?, ?), 4326), geom::geometry)', lon, lat)
   }
 
+  scope :intersecting_with_route, lambda { |route_id|
+    joins('JOIN routes ON ST_Intersects(boundaries.geom::geometry, routes.geom::geometry)')
+      .where(routes: { id: route_id })
+      .select(<<~SQL)
+          boundaries.id, name, level, hierarchy, osm_id,
+          ST_Length(
+            ST_Intersection(boundaries.geom::geometry, routes.geom::geometry)::geography
+          ) AS intersection_distance,
+        ST_LineLocatePoint(
+          routes.geom::geometry,
+          ST_StartPoint(ST_Intersection(boundaries.geom::geometry, routes.geom::geometry))
+        ) AS intersection_order
+      SQL
+      .order('intersection_order ASC', 'boundaries.level ASC')
+  }
+
+  attribute :intersection_distance, :distance, units: :meters
+
   def import_boundaries(level)
     osm = OsmBoundary.new
     osm.fetch_and_import(osm_id, level: level, hierarchy_prefix: hierarchy)
