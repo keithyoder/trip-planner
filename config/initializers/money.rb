@@ -1,3 +1,14 @@
+# frozen_string_literal: true
+
+require 'eu_central_bank'
+
+# bank = EuCentralBank.new
+
+# bank.update_rates
+# Money.default_bank = bank
+
+Money.default_currency = :brl
+
 Money.locale_backend = :currency
 Money.rounding_mode = BigDecimal::ROUND_HALF_UP
 Money.add_rate(:clp, :brl, 0.005828)
@@ -11,6 +22,7 @@ Money.add_rate(:pen, :usd, 0.2820)
 Money.add_rate(:bob, :brl, 0.7817)
 Money.add_rate(:bob, :usd, 0.1445)
 Money.add_rate(:usd, :brl, 5.421)
+Money.add_rate(:brl, :usd, 0.1845)
 Money.add_rate(:usd, :ars, 1242)
 Money.add_rate(:usd, :uyu, 40.14)
 Money.add_rate(:usd, :clp, 930.5)

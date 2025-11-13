@@ -15,3 +15,6 @@ application.register("routes", RoutesController)
 
 import DirectionsController from "./directions_controller"
 application.register("directions", DirectionsController)
+
+import WaypointsController from "./waypoints_controller"
+application.register("waypoints", WaypointsController)

@@ -33,6 +33,6 @@ class Trip < ApplicationRecord
   end
 
   def duration_days
-    (route_sequences.order(sequence: :desc).first.date - start_on) - 1
+    @duration_days ||= (route_sequences.order(sequence: :desc).first.date - start_on) - 1
   end
 end

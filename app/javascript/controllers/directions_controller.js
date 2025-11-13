@@ -10,8 +10,8 @@ export default class extends Controller {
   
   get map() {
     // Check if map is attached to this element
-    if (this.element.map) {
-      return this.element.map
+    if (this.element.mapManager) {
+      return this.element.mapManager.map
     }
   }
 

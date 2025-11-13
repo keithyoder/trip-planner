@@ -61,6 +61,10 @@ class Distance
     Distance.new(Distance.convert(value, units, new_units), units: new_units)
   end
 
+  def default
+    to_units(DEFAULT_DISTANCE)
+  end
+
   UNITS.each_key do |new_units|
     define_method new_units do
       to_units(new_units)

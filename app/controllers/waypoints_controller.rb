@@ -6,15 +6,17 @@ class WaypointsController < ApplicationController
 
   # GET /waypoints or /waypoints.json
   def index
+    waypoint_distances = @trip.waypoint_distances.includes(:waypoint, :boundaries).order(:sequence)
     @waypoints = if params.key?(:ferry)
-                   @trip.waypoint_distances.includes(:waypoint).where(waypoint_type: :ferry_disembarkment).order(:sequence)
+                   waypoint_distances.where(waypoint_type: :ferry_disembarkment)
                  elsif params.key?(:gas_station)
-                   @trip.waypoint_distances.includes(:waypoint).where(waypoint_type: :gas_station).order(:sequence)
+                   waypoint_distances.where(waypoint_type: :gas_station)
                  elsif params.key?(:toll)
-                   @trip.waypoint_distances.includes(:waypoint).where(waypoint_type: :toll_booth).order(:sequence)
+                   waypoint_distances.where(waypoint_type: :toll_booth)
                  else
-                   @trip.waypoint_distances.includes(:waypoint).order(:sequence)
+                   waypoint_distances
                  end
+    @waypoints = @waypoints.all
   end
 
   # GET /waypoints/1 or /waypoints/1.json

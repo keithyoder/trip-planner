@@ -25,7 +25,7 @@ export default class extends Controller {
 
     const directionsController = document.querySelector('[data-controller="directions"]');
     if (directionsController) {
-      directionsController.map = this.map;
+      directionsController.mapManager = this.mapManager;
     }
     
     // If route data exists, parse and display it

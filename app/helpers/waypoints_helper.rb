@@ -20,8 +20,11 @@ module WaypointsHelper
       "#{waypoint.toll} liters"
     else
       money = Money.from_amount(waypoint.toll, waypoint.currency)
-
-      "#{money.format} (#{money.exchange_to(:brl).format})"
+      if waypoint.currency != Money.default_currency.id
+        "#{money.format} (#{money.exchange_to(Money.default_currency).format})"
+      else
+        money.format
+      end
     end
   end
 
@@ -39,7 +42,7 @@ module WaypointsHelper
         name: waypoint.name,
         sequence: waypoint.sequence,
         toll: waypoint.toll,
-        toll_formatted: waypoint.toll ? number_to_currency(waypoint.toll, unit: 'R$ ') : nil
+        toll_formatted: waypoint.toll ? format_currency(waypoint) : nil
         # segment_distance: waypoint.segment_distance ? "#{waypoint.segment_distance.km.round(1)} km" : nil,
         # trip_distance: waypoint.trip_distance ? "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km" : nil
       }
@@ -49,7 +52,7 @@ module WaypointsHelper
   # Get Bootstrap icon class for waypoint type
   # @param waypoint_type [String, Symbol] The waypoint type
   # @return [String] Bootstrap icon class name
-  def waypoint_icon_class(waypoint_type)
+  def waypoint_icon_class(waypoint_type) # rubocop:disable Metrics/MethodLength
     icons = {
       'overnight' => 'bi-moon-stars-fill',
       'lunch' => 'bi-cup-hot-fill',
@@ -101,5 +104,101 @@ module WaypointsHelper
     }
 
     bg_colors[waypoint_type.to_s] || bg_colors['routing']
+  end
+
+  def waypoint_statistics(waypoints)
+    {
+      total_count: waypoints.count,
+      total_distance: waypoints.last&.trip_distance&.km&.round.to_i,
+      total_tolls: waypoints.sum { |w| w.toll || 0 },
+      by_type: waypoints.group_by(&:waypoint_type).transform_values(&:count),
+      overnight_count: waypoints.count { |w| w.waypoint_type == 'overnight' },
+      toll_count: waypoints.count { |w| w.waypoint_type == 'toll_booth' },
+      gas_count: waypoints.count { |w| w.waypoint_type == 'gas_station' }
+    }
+  end
+
+  def waypoint_to_map_marker(waypoint)
+    {
+      id: waypoint.id,
+      sequence: waypoint.sequence,
+      name: waypoint.name,
+      type: waypoint.waypoint_type,
+      lat: waypoint.lonlat&.x,
+      lon: waypoint.lonlat&.y,
+      icon: waypoint_icon_class(waypoint.waypoint_type),
+      color: waypoint_color(waypoint.waypoint_type),
+      location: waypoint.location,
+      toll: waypoint.toll ? format_currency(waypoint) : nil
+      # segment_distance: waypoint.segment_distance ? "#{waypoint.segment_distance.km}" : nil,
+      # trip_distance: waypoint.trip_distance ? "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km" : nil
+    }
+  end
+
+  def waypoints_by_day(waypoints)
+    days = []
+    current_day = []
+    day_number = 1
+
+    waypoints.each do |waypoint|
+      current_day << waypoint
+
+      next unless waypoint.waypoint_type == 'overnight'
+
+      days << {
+        day: day_number,
+        waypoints: current_day,
+        start: current_day.first,
+        end: waypoint,
+        distance: waypoint.trip_distance&.km&.round.to_i
+      }
+      current_day = []
+      day_number += 1
+    end
+
+    unless current_day.empty?
+      last_waypoint = current_day.last
+      days << {
+        day: day_number,
+        waypoints: current_day,
+        start: current_day.first,
+        end: last_waypoint,
+        distance: last_waypoint.trip_distance&.km&.round.to_i
+      }
+    end
+
+    days
+  end
+
+  def waypoint_summary_stats(waypoints)
+    stats = waypoint_statistics(waypoints)
+
+    [
+      {
+        icon: 'bi-geo-alt-fill',
+        label: 'Total Waypoints',
+        value: stats[:total_count],
+        color: 'primary'
+      },
+      {
+        icon: 'bi-signpost',
+        label: 'Total Distance',
+        value: "#{number_with_delimiter(stats[:total_distance])} km",
+        color: 'info'
+      },
+      {
+        icon: 'bi-moon-stars-fill',
+        label: 'Overnight Stops',
+        value: stats[:overnight_count],
+        color: 'purple',
+        custom_color: '#6f42c1'
+      },
+      {
+        icon: 'bi-cash-coin',
+        label: 'Total Tolls',
+        value: number_to_currency(stats[:total_tolls], unit: 'R$', separator: ',', delimiter: '.'),
+        color: 'success'
+      }
+    ]
   end
 end

@@ -40,6 +40,16 @@ en:
   helpers:
     links:
       back: "Back"
+  waypoints:
+    overnight: "Overnight"
+    lunch: "Lunch"
+    ferry_boarding: "Ferry Boarding"
+    ferry_disembarkment: "Ferry Disembark"
+    toll_booth: "Toll"
+    border_crossing: "Boarder Crossing"
+    gas_station: "Gas"
+    attraction: "Attraction"
+    routing: "Routing"
   dashboard:
     gps:
       title: "GPS Status"
@@ -84,7 +94,7 @@ en:
       trip_name: "Trip Name"
       start_date: "Start Date"
       not_set: "Not set"
-      distance_km: "Distance (km)"
+      distance: "Distance"
       not_available: "N/A"
       duration: "Duration"
   routes:

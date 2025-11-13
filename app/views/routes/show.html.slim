@@ -67,7 +67,7 @@
         .card-body.text-center
           i.bi.bi-sign-turn-right.text-primary.fs-1.mb-2
           h6.text-muted.mb-1 = t('routes.show.distance')
-          h4.mb-0 = @route.route_sequence.distance&.km.to_s
+          h4.mb-0 = @route.route_sequence.distance&.default&.to_s(units: true, decimals: 1)
     
     .col-sm-6.col-lg-3
       .card.shadow-sm.h-100

@@ -40,6 +40,16 @@ pt:
   helpers:
     links:
       back: "Voltar"
+  waypoints:
+    overnight: "Pernoite"
+    lunch: "Almoço"
+    ferry_boarding: "Embarque de Balsa"
+    ferry_disembarkment: "Desembarque de Balsa"
+    toll_booth: "Pedágio"
+    border_crossing: "Controle de Fronteira"
+    gas_station: "Combustível"
+    attraction: "Atração"
+    routing: "Roteamento"
   dashboard:
     gps:
       title: "Status do GPS"
@@ -84,7 +94,7 @@ pt:
       trip_name: "Nome da viagem"
       start_date: "Data de início"
       not_set: "Não definido"
-      distance_km: "Distância (km)"
+      distance: "Distância"
       not_available: "N/D"
       duration: "Duração"
   routes:
@@ -110,6 +120,9 @@ pt:
       total_time: "Tempo total"
       route_map: "Mapa da rota"
       turn_by_turn_directions: "Direções passo a passo"
+      distance_km: "Distância Km"
+      elevation: "Altitude"
+
     edit:
       title: "Editar Rota"
       calculate_route: "Calcular Rota"

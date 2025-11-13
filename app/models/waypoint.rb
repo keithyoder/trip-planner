@@ -19,7 +19,7 @@
 #
 class Waypoint < ApplicationRecord
   belongs_to :trip
-  has_and_belongs_to_many :boundaries
+  has_and_belongs_to_many :boundaries, -> { select(:id, :name, :level, :timezone, :hierarchy) }
   has_one :osm_poi
   has_one :waypoint_distance, foreign_key: :id
 
@@ -36,7 +36,7 @@ class Waypoint < ApplicationRecord
     Peru: :pen
   }.freeze
 
-  enum waypoint_type: {
+  enum :waypoint_type, {
     overnight: 1,
     lunch: 2,
     ferry_boarding: 3,
@@ -82,7 +82,8 @@ class Waypoint < ApplicationRecord
   end
 
   def location
-    boundaries.order(:level).pluck(:name).join(', ')
+    # boundaries.order(:level).pluck(:name).join(', ')
+    boundaries.sort_by(&:level).map(&:name).join(', ')
   end
 
   def timezone

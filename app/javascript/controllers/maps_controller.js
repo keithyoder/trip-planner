@@ -51,15 +51,15 @@ export default class extends Controller {
 
       // Add sequence number to popup if available
       if (sequence) {
-        const config = getWaypointConfig(type);
+        //const config = getWaypointConfig(type);
         const popupContent = `
           <div style="text-align: center;">
-            <div style="background-color: ${config.backgroundColor}; padding: 5px; border-radius: 5px; margin-bottom: 5px;">
-              <i class="bi ${config.icon}" style="color: ${config.color};"></i>
+            <div style="background-color: ${waypoint.backgroundColor}; padding: 5px; border-radius: 5px; margin-bottom: 5px;">
+              <i class="bi ${waypoint.icon}" style="color: ${waypoint.color};"></i>
               <strong style="margin-left: 5px;">Seq. ${sequence}</strong>
             </div>
             <strong>${name}</strong><br>
-            <small class="text-muted">${config.label}</small>
+            <small class="text-muted">${waypoint.label}</small>
           </div>
         `;
         marker.bindPopup(popupContent);
