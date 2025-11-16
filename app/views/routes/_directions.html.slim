@@ -33,9 +33,9 @@
                                 td 
                                     small = step['instruction']
                                 td.text-end.text-nowrap
-                                    small = Distance.new(step['distance']).default.to_s(units: true, decimals: 2)
+                                    small = format_distance(Units::Distance.new(step['distance']), decimals: 2)
                                 td.text-end.text-nowrap
                                     - if step['duration'] > 0
-                                        small = Speed.new(step['distance'] / step['duration']).default.to_s(units: true, decimals: 0)
+                                        small = format_speed(Units::Speed.new(step['distance'] / step['duration']))
                                 td.text-end.text-nowrap
                                     small = (Time.at(route.start_time % 86400.0).utc + route.geom.points[step['way_points'].last].m).strftime("%H:%M")

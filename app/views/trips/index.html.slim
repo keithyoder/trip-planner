@@ -37,7 +37,7 @@
                   small.text-muted.d-block
                     i.bi.bi-sign-turn-right.me-1
                     = t('trips.index.distance')
-                  strong.d-block = trip.distance ? trip.distance.default.to_s(units: true, decimals: 0) : t('trips.index.not_available')
+                  strong.d-block = trip.distance ? format_distance(trip.distance, decimals: 0) : t('trips.index.not_available')
               - if trip.duration_days
                 .mb-2
                   small.text-muted

@@ -19,7 +19,7 @@ div[id=dom_id(trip)]
         small.text-muted.d-block.mb-1
           i.bi.bi-sign-turn-right.me-1
           = t('trips.show.distance')
-        p.mb-0.fw-semibold = trip.distance.default.to_s(units: true, decimals: 0) || t('trips.show.not_available')
+        p.mb-0.fw-semibold = format_distance(trip.distance, decimals: 0) || t('trips.show.not_available')
     
     .col-md-6
       .info-item

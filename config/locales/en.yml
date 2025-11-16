@@ -37,6 +37,16 @@ en:
     minute:
       one: "minute"
       other: "minutes"
+  units:
+    distance: "miles"
+    distance_abbr: "mi"
+    speed: "miles_per_hour"
+    speed_abbr: "mph"
+    system: "imperial"
+  number:
+    format:
+      delimiter: ","
+      separator: "."
   helpers:
     links:
       back: "Back"
@@ -50,6 +60,9 @@ en:
     gas_station: "Gas"
     attraction: "Attraction"
     routing: "Routing"
+  locale:
+    changed: "Language changed successfully"
+    invalid: "Invalid language selected"
   dashboard:
     gps:
       title: "GPS Status"

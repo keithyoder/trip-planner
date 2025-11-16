@@ -37,6 +37,16 @@ es:
     minute:
       one: "minuto"
       other: "minutos"
+  units:
+    distance: "km"
+    distance_abbr: "km"
+    speed: "km_per_hour"
+    speed_abbr: "km/h"
+    system: "metric"
+  number:
+    format:
+      delimiter: "."
+      separator: ","
   helpers:
     links:
       back: "Volver"
@@ -50,6 +60,9 @@ es:
     gas_station: "Combustível"
     attraction: "Atração"
     routing: "Roteamento"
+  locale:
+    changed: "Idioma cambiado exitosamente"
+    invalid: "Idioma no válido seleccionado"
   dashboard:
     gps:
       title: "GPS Status"

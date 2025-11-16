@@ -1,0 +1,24 @@
+/ Top navigation bar for locale selector
+- locale_flags = { 'en' => 'us', 'es' => 'es', 'pt' => 'br' }
+- current_flag = locale_flags[I18n.locale.to_s]
+
+nav.navbar.navbar-light.bg-light.border-bottom.py-1
+  .container-fluid
+    .ms-auto
+      .dropdown
+        button.btn.btn-sm.btn-link.dropdown-toggle.p-1 aria-expanded="false" data-bs-toggle="dropdown" type="button"
+          = image_tag "flags/countries/#{current_flag}.png", alt: I18n.locale.to_s.upcase, class: "me-1", style: "width: 20px; height: 15px;"
+          span.small = I18n.locale.to_s.upcase
+        ul.dropdown-menu.dropdown-menu-end.py-1
+          li
+            = button_to locale_path(locale: 'en'), method: :post, class: "dropdown-item small py-1 text-start border-0 bg-transparent w-100", data: { turbo: false } do
+              = image_tag "flags/countries/us.png", alt: "US", class: "me-2", style: "width: 20px; height: 15px;"
+              | English
+          li
+            = button_to locale_path(locale: 'es'), method: :post, class: "dropdown-item small py-1 text-start border-0 bg-transparent w-100", data: { turbo: false } do
+              = image_tag "flags/countries/es.png", alt: "ES", class: "me-2", style: "width: 20px; height: 15px;"
+              | Español
+          li
+            = button_to locale_path(locale: 'pt'), method: :post, class: "dropdown-item small py-1 text-start border-0 bg-transparent w-100", data: { turbo: false } do
+              = image_tag "flags/countries/br.png", alt: "BR", class: "me-2", style: "width: 20px; height: 15px;"
+              | Português

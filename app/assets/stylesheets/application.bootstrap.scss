@@ -4,3 +4,43 @@
 @import "trip";
 @import "route";
 @import "waypoint_markers";
+
+/* Locale Switcher Styles */
+/* Locale Switcher Styles */
+.navbar.py-1 {
+  min-height: 40px;
+}
+
+.navbar .btn-link {
+  text-decoration: none;
+  color: #495057;
+}
+
+.navbar .btn-link:hover {
+  color: #212529;
+}
+
+.dropdown-menu.py-1 .dropdown-item {
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-menu.py-1 .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Style button_to forms to look like dropdown items */
+.dropdown-menu form {
+  margin: 0;
+  padding: 0;
+}
+
+.dropdown-menu button.dropdown-item {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-menu button.dropdown-item:hover {
+  background-color: #f8f9fa;
+}

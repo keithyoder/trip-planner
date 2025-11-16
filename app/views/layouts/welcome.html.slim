@@ -10,4 +10,5 @@ html
     = javascript_include_tag "application", "data-turbo-track": "reload", defer: true
 
   body
+    = render 'shared/locale_switcher'
     = yield
