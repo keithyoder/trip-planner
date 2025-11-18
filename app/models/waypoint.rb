@@ -20,7 +20,7 @@
 class Waypoint < ApplicationRecord
   belongs_to :trip
   has_and_belongs_to_many :boundaries, -> { select(:id, :name, :level, :timezone, :hierarchy) }
-  has_one :osm_poi
+  belongs_to :osm_poi, foreign_key: :osm_poi_osm_id, primary_key: :osm_id, optional: true
   has_one :waypoint_distance, foreign_key: :id
 
   attribute :distance, :distance
@@ -96,50 +96,58 @@ class Waypoint < ApplicationRecord
   end
 
   def copy_from_osm(osm_poi_id)
-    osm_poi = OsmPoi.find(osm_poi_id)
-    puts osm_poi.to_json
-    case osm_poi.poi_type
-    when 'fuel'
-      waypoint_type = :gas_station
-      delay = 900
-    when 'border_crossing'
-      waypoint_type = :border_crossing
-      delay = 1800
-    when 'toll'
-      waypoint_type = :toll_booth
-      delay = 0
-    end
-    update!(
-      waypoint_type: waypoint_type,
-      delay: delay,
-      name: osm_poi.name,
-      lonlat: osm_poi.geom,
-      osm_poi_id: osm_poi.id
-    )
+    # Just delegate to the class method
+    waypoint = self.class.copy_from_osm(osm_poi_id, trip_id, sequence)
+
+    # Copy the attributes to self
+    return unless waypoint
+
+    assign_attributes(waypoint.attributes.except('id', 'created_at', 'updated_at'))
+    save!
   end
 
-  def self.copy_from_osm(osm_poi_id, sequence)
-    osm_poi = OsmPoi.find(osm_poi_id)
-    puts osm_poi.to_json
-    case osm_poi.poi_type
-    when 'fuel'
+  def self.copy_from_osm(osm_poi_id, trip_id, sequence)
+    osm_poi = OsmPoi.find_by(osm_id: osm_poi_id) # Changed: use osm_id
+    return unless osm_poi
+
+    case osm_poi.poi_type.to_sym # Changed: convert enum to symbol
+    when :fuel
       waypoint_type = :gas_station
       delay = 900
-    when 'border'
+    when :border_crossing
       waypoint_type = :border_crossing
       delay = 1800
-    when 'toll'
+    when :toll
       waypoint_type = :toll_booth
       delay = 0
+    when :ferry
+      waypoint_type = :ferry_boarding
+      delay = 1800
+    when :restaurant
+      waypoint_type = :lunch
+      delay = 3600
+    when :hotel
+      waypoint_type = :overnight
+      delay = 0
+    else
+      waypoint_type = :attraction
+      delay = 0
     end
-    Waypoint.create(
+
+    create_attrs = {
+      trip_id: trip_id, # Added: need trip_id
       sequence: sequence,
       waypoint_type: waypoint_type,
       delay: delay,
-      name: osm_poi.name,
+      name: osm_poi.name || osm_poi.metadata.dig('all_tags', 'note'),
       lonlat: osm_poi.geom,
-      osm_poi_id: osm_poi.id
-    )
+      osm_poi_id: osm_poi.old_id # Or use osm_id if you changed the FK
+    }
+
+    # Add toll amount if available
+    create_attrs[:toll] = osm_poi.toll_amount if osm_poi.toll_amount
+
+    create(create_attrs)
   end
 
   def latlon=(coordinates)
