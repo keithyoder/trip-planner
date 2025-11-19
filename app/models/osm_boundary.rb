@@ -38,7 +38,10 @@ class OsmBoundary
 
   # Fetch and import boundaries in one step
   def fetch_and_import(osm_id, level: 2, hierarchy_prefix: nil)
-    geojson = fetch_boundary(osm_id, level: level)
+    while (geojson = fetch_boundary(osm_id, level: level)).blank?
+      puts "Retrying fetch for OSM ID: #{osm_id} at level: #{level}..."
+      sleep(10)
+    end
     import_boundaries(geojson, hierarchy_prefix: hierarchy_prefix)
   end
 

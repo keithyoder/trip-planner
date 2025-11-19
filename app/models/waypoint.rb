@@ -214,6 +214,8 @@ class Waypoint < ApplicationRecord
         sequence_range = wp.sequence - prev_waypoint.sequence
         new_sequence = prev_waypoint.sequence + (fraction_percent * sequence_range).round
 
+        new_sequence += 1 if new_sequence == prev_waypoint.sequence
+        new_sequence -= 1 if new_sequence == wp.sequence
         return new_sequence
       end
 
