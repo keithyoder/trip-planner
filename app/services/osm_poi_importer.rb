@@ -1,6 +1,8 @@
-# app/services/osm_poi_importer.rb
 class OsmPoiImporter
   def self.import_from_overpass(poi, node_type)
+    # Normalize to symbol keys for consistency
+    poi = poi.deep_symbolize_keys if poi.respond_to?(:deep_symbolize_keys)
+
     osm_poi = OsmPoi.find_or_initialize_by(osm_id: "#{poi[:type]}_#{poi[:id]}")
 
     osm_poi.update!(
@@ -17,8 +19,10 @@ class OsmPoiImporter
     osm_poi
   end
 
+  private
+
   def self.create_geometry(poi)
-    case poi['type']
+    case poi[:type]
     when 'node'
       # Nodes already have a point
       "POINT(#{poi[:lon]} #{poi[:lat]})"
@@ -33,10 +37,10 @@ class OsmPoiImporter
 
   def self.calculate_centroid_from_way(poi)
     # Use provided center if available
-    return "POINT(#{poi['center']['lon']} #{poi['center']['lat']})" if poi['center']
+    return "POINT(#{poi[:center][:lon]} #{poi[:center][:lat]})" if poi[:center]
 
     # Otherwise calculate from geometry
-    return nil unless poi['geometry']&.any?
+    return nil unless poi[:geometry]&.any?
 
     lats = poi[:geometry].map { |node| node[:lat] }.compact
     lons = poi[:geometry].map { |node| node[:lon] }.compact
@@ -70,7 +74,7 @@ class OsmPoiImporter
   def self.extract_metadata(tags, node_type)
     return {} unless tags
 
-    case node_type
+    case node_type.to_sym
     when :toll
       extract_toll_metadata(tags)
     when :fuel
@@ -79,6 +83,8 @@ class OsmPoiImporter
       extract_restaurant_metadata(tags)
     when :hotel
       extract_hotel_metadata(tags)
+    when :tourism
+      extract_tourism_metadata(tags)
     else
       extract_generic_metadata(tags)
     end
@@ -105,20 +111,10 @@ class OsmPoiImporter
 
   def self.extract_fuel_metadata(tags)
     {
-      brand: tags['brand'],
-      operator: tags['operator'],
-      fuel_diesel: tags['fuel:diesel'],
-      fuel_octane_95: tags['fuel:octane_95'],
-      opening_hours: tags['opening_hours'],
-      website: tags['website'],
-      phone: tags['phone'],
-      all_tags: tags
-    }.compact
-  end
-
-  def self.extract_restaurant_metadata(tags)
-    {
-      cuisine: tags[:cuisine],
+      brand: tags[:brand],
+      operator: tags[:operator],
+      fuel_diesel: tags[:'fuel:diesel'],
+      fuel_octane_95: tags[:'fuel:octane_95'],
       opening_hours: tags[:opening_hours],
       website: tags[:website],
       phone: tags[:phone],
@@ -126,21 +122,67 @@ class OsmPoiImporter
     }.compact
   end
 
+  def self.extract_restaurant_metadata(tags)
+    {
+      cuisine: tags[:cuisine],
+      diet_vegetarian: tags[:'diet:vegetarian'],
+      diet_vegan: tags[:'diet:vegan'],
+      outdoor_seating: tags[:outdoor_seating],
+      takeaway: tags[:takeaway],
+      delivery: tags[:delivery],
+      opening_hours: tags[:opening_hours],
+      website: tags[:website],
+      phone: tags[:phone],
+      wheelchair: tags[:wheelchair],
+      all_tags: tags
+    }.compact
+  end
+
   def self.extract_hotel_metadata(tags)
     {
-      stars: tags['stars'],
-      website: tags['website'],
-      phone: tags['phone'],
+      stars: tags[:stars],
+      rooms: tags[:rooms],
+      beds: tags[:beds],
+      internet_access: tags[:internet_access],
+      internet_access_fee: tags[:'internet_access:fee'],
+      swimming_pool: tags[:swimming_pool],
+      restaurant: tags[:restaurant],
+      bar: tags[:bar],
+      parking: tags[:parking],
+      wheelchair: tags[:wheelchair],
+      website: tags[:website],
+      phone: tags[:phone],
+      email: tags[:email],
+      all_tags: tags
+    }.compact
+  end
+
+  def self.extract_tourism_metadata(tags)
+    {
+      tourism_type: tags[:tourism],
+      historic_type: tags[:historic],
+      name_local: tags[:'name:es'] || tags[:'name:pt'],
+      description: tags[:description],
+      wikipedia: tags[:wikipedia],
+      wikidata: tags[:wikidata],
+      opening_hours: tags[:opening_hours],
+      fee: tags[:fee],
+      entrance_fee: tags[:charge],
+      website: tags[:website] || tags[:'contact:website'],
+      phone: tags[:phone] || tags[:'contact:phone'],
+      wheelchair: tags[:wheelchair],
+      operator: tags[:operator],
       all_tags: tags
     }.compact
   end
 
   def self.extract_generic_metadata(tags)
     {
-      operator: tags['operator'],
-      opening_hours: tags['opening_hours'],
-      website: tags['website'],
-      phone: tags['phone'],
+      operator: tags[:operator],
+      opening_hours: tags[:opening_hours],
+      website: tags[:website],
+      phone: tags[:phone],
+      wheelchair: tags[:wheelchair],
       all_tags: tags
     }.compact
   end
