@@ -107,7 +107,7 @@ class Waypoint < ApplicationRecord
   end
 
   def self.copy_from_osm(osm_poi_id, trip_id, sequence)
-    osm_poi = OsmPoi.find_by(osm_id: osm_poi_id) # Changed: use osm_id
+    osm_poi = OsmPoi.find_by(osm_id: osm_poi_id)
     return unless osm_poi
 
     case osm_poi.poi_type.to_sym # Changed: convert enum to symbol
@@ -192,6 +192,9 @@ class Waypoint < ApplicationRecord
 
     # Find where this waypoint should be inserted based on its fraction
     # Compare with fractions of existing waypoints
+    prev_waypoint = waypoint_start
+    prev_fraction = 0.0
+
     existing_waypoints.each do |wp|
       next unless wp.lonlat
 
@@ -199,17 +202,30 @@ class Waypoint < ApplicationRecord
       wp_fraction = wp_point_info[:fraction]
 
       # If new waypoint comes before this existing waypoint
-      next unless fraction < wp_fraction
+      if fraction < wp_fraction
+        # Calculate sequence between prev_waypoint and wp based on fraction
+        fraction_range = wp_fraction - prev_fraction
+        fraction_position = fraction - prev_fraction
+        fraction_percent = fraction_position / fraction_range
 
-      # Insert before this waypoint
-      # Shift all subsequent waypoints down by 1
-      trip.waypoints.where('sequence >= ?', wp.sequence).update_all('sequence = sequence + 1')
-      return wp.sequence
+        sequence_range = wp.sequence - prev_waypoint.sequence
+        new_sequence = prev_waypoint.sequence + (fraction_percent * sequence_range).round
+
+        return new_sequence
+      end
+
+      # Update for next iteration
+      prev_waypoint = wp
+      prev_fraction = wp_fraction
     end
 
     # If we get here, waypoint comes after all existing waypoints
-    # Insert before the end waypoint
-    trip.waypoints.where('sequence >= ?', waypoint_end.sequence).update_all('sequence = sequence + 1')
-    waypoint_end.sequence
+    # Calculate sequence between last waypoint and end
+    fraction_range = 1.0 - prev_fraction
+    fraction_position = fraction - prev_fraction
+    fraction_percent = fraction_position / fraction_range
+
+    sequence_range = waypoint_end.sequence - prev_waypoint.sequence
+    prev_waypoint.sequence + (fraction_percent * sequence_range).round
   end
 end
