@@ -15,7 +15,8 @@ class Overpass
     parking: { query: "'amenity'='parking'", distance: 100, types: %i[way relation] },
     park: { query: "'leisure'='park'", distance: 500, types: %i[way relation] },
     rest_area: { query: "'highway'='rest_area'", distance: 100, types: %i[node way] },
-    tourism: { query: "'tourism'", distance: 500, types: %i[node way relation] }
+    tourism: { query: "'tourism']['tourism'!='hotel']['tourism'!='hostel']['tourism'!='motel']['tourism'!='guest_house'",
+               distance: 500, types: %i[node way relation] }
   }.freeze
 
   def initialize(route_id, node_type)
@@ -39,6 +40,7 @@ class Overpass
 
     overpass = OverpassAPI::QL.new(options)
     query = build_query
+    puts query
     @response = overpass.query(query)
   rescue JSON::ParserError
     @response = overpass.query(query)
