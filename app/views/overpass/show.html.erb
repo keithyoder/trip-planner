@@ -1,0 +1,106 @@
+<div class="container-fluid" 
+     data-controller="overpass-map"
+     data-overpass-map-route-value="<%= @route.geom.coordinates.map { |coord| [coord[1], coord[0]] } %>"
+     data-overpass-map-pois-value="<%= @overpass.pois_for_map.to_json %>"
+     data-overpass-map-node-type-value="<%= @node_type %>"
+     data-overpass-map-route-id-value="<%= @route.id %>"
+     data-overpass-map-import-url-value="<%= import_waypoint_trip_route_overpass_path(@trip, @route, @node_type) %>">
+  
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h2><%= @node_type.to_s.titleize %> near <%= @route.id %></h2>
+          <p class="text-muted">Found <%= @pois.length %> locations</p>
+        </div>
+        <div>
+          <%= link_to "New Search", trip_route_overpass_index_path(@trip, @route), class: "btn btn-secondary" %>
+          <%= link_to "Back to Route", [@trip, @route], class: "btn btn-outline-secondary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div id="map" style="height: 70vh; border-radius: 8px;"></div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Points of Interest</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush" style="max-height: 70vh; overflow-y: auto;">
+            <% @pois.each do |poi| %>
+              <%= content_tag :div, 
+                  class: "list-group-item list-group-item-action poi-item", 
+                  data: { 
+                    action: "click->overpass-map#panToMarker",
+                    poi_id: "#{poi[:type]}_#{poi[:id]}", 
+                    lat: poi[:lat] || poi.dig(:center, :lat),
+                    lon: poi[:lon] || poi.dig(:center, :lon)
+                  } do %>
+                <div class="d-flex w-100 justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <h6 class="mb-1">
+                      <%= poi.dig(:tags, :name) || "Unnamed #{@node_type}" %>
+                    </h6>
+                    <% if poi.dig(:tags, :"addr:city") %>
+                      <small class="text-muted">
+                        <%= poi.dig(:tags, :"addr:city") %>
+                      </small>
+                    <% end %>
+                    
+                    <%# Display toll-specific info %>
+                    <% if @node_type == :toll %>
+                      <div class="mt-2">
+                        <% if poi.dig(:tags, :toll) || poi.dig(:tags, :charge) %>
+                          <span class="badge bg-success">
+                            <%= poi.dig(:tags, :toll) || poi.dig(:tags, :charge) %>
+                          </span>
+                        <% end %>
+                        <% if poi.dig(:tags, :"payment:electronic_toll_collection") == "yes" %>
+                          <span class="badge bg-info">Electronic</span>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                  <button class="btn btn-sm btn-primary" 
+                          data-osm-id="<%= poi[:type] %>_<%= poi[:id] %>"
+                          data-action="click->overpass-map#importWaypoint">
+                    Import
+                  </button>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .custom-poi-marker {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .poi-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .poi-item:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .popup-content {
+    min-width: 200px;
+  }
+</style>

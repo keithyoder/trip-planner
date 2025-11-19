@@ -1,0 +1,39 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <h2>Search Points of Interest</h2>
+      <p class="text-muted">Route: <%= @route.id %></p>
+
+      <%= form_with url: trip_route_overpass_index_path(@trip, @route), method: :post, class: "mt-4" do |f| %>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Select POI Type</h5>
+            
+            <div class="row">
+              <% @categories.each do |category| %>
+                <div class="col-md-6 mb-3">
+                  <div class="form-check">
+                    <%= f.radio_button :type, category, 
+                        id: "node_type_#{category}", 
+                        class: "form-check-input" %>
+                    <%= f.label "node_type_#{category}", class: "form-check-label" do %>
+                      <strong><%= category.to_s.titleize %></strong>
+                      <small class="text-muted d-block">
+                        Within <%= Overpass::CATEGORIES[category][:distance] %>m
+                      </small>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="mt-4">
+              <%= f.submit "Search", class: "btn btn-primary" %>
+              <%= link_to "Back to Route", [@trip, @route], class: "btn btn-secondary" %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

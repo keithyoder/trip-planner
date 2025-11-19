@@ -140,7 +140,7 @@ class Waypoint < ApplicationRecord
       waypoint_type: waypoint_type,
       delay: delay,
       name: osm_poi.name || osm_poi.metadata.dig('all_tags', 'note'),
-      lonlat: osm_poi.geom,
+      lonlat: osm_poi.lonlat,
       osm_poi_id: osm_poi.old_id # Or use osm_id if you changed the FK
     }
 
@@ -166,5 +166,50 @@ class Waypoint < ApplicationRecord
       boundary = Boundary.select(:id).waypoint(w, level).first
       w.boundaries << boundary if boundary.present?
     end
+  end
+
+  def self.calculate_sequence_for_position(trip, route, lat, lon)
+    # Get the start and end waypoints for this route
+    waypoint_start = route.waypoint_start
+    waypoint_end = route.waypoint_end
+
+    return 1 unless waypoint_start && waypoint_end
+
+    # Find closest point on route and its fraction (0.0 to 1.0)
+    point_info = route.closest_point_info(lat, lon)
+    fraction = point_info[:fraction]
+
+    # Get all waypoints between start and end, ordered by sequence
+    existing_waypoints = trip.waypoints
+                             .where('sequence > ? AND sequence < ?', waypoint_start.sequence, waypoint_end.sequence)
+                             .order(:sequence)
+
+    # If no waypoints exist between start and end, use fraction to calculate
+    if existing_waypoints.empty?
+      # Calculate sequence as fraction between start and end
+      return (waypoint_start.sequence + (fraction * (waypoint_end.sequence - waypoint_start.sequence))).round
+    end
+
+    # Find where this waypoint should be inserted based on its fraction
+    # Compare with fractions of existing waypoints
+    existing_waypoints.each do |wp|
+      next unless wp.lonlat
+
+      wp_point_info = route.closest_point_info(wp.lonlat.y, wp.lonlat.x)
+      wp_fraction = wp_point_info[:fraction]
+
+      # If new waypoint comes before this existing waypoint
+      next unless fraction < wp_fraction
+
+      # Insert before this waypoint
+      # Shift all subsequent waypoints down by 1
+      trip.waypoints.where('sequence >= ?', wp.sequence).update_all('sequence = sequence + 1')
+      return wp.sequence
+    end
+
+    # If we get here, waypoint comes after all existing waypoints
+    # Insert before the end waypoint
+    trip.waypoints.where('sequence >= ?', waypoint_end.sequence).update_all('sequence = sequence + 1')
+    waypoint_end.sequence
   end
 end

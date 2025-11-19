@@ -18,3 +18,6 @@ application.register("directions", DirectionsController)
 
 import WaypointsController from "./waypoints_controller"
 application.register("waypoints", WaypointsController)
+
+import OverpassMapController from "./overpass_map_controller"
+application.register("overpass-map", OverpassMapController)

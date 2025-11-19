@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class RoutesController < ApplicationController
-  before_action :set_route, only: %i[edit update destroy calculate]
   before_action :set_trip
+  before_action :set_route, only: %i[edit update destroy calculate]
   helper WaypointsHelper
 
   # GET /routes or /routes.json

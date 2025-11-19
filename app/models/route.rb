@@ -33,6 +33,16 @@ class Route < ApplicationRecord
     select(["ST_Distance(geom, ST_Point(#{lng}, #{lat})) as distance"])
   }
 
+  scope :with_bbox, lambda {
+    select(
+      '*',
+      'ST_XMin(geom::geometry) AS bbox_w',
+      'ST_XMax(geom::geometry) AS bbox_e',
+      'ST_YMin(geom::geometry) AS bbox_s',
+      'ST_YMax(geom::geometry) AS bbox_n'
+    )
+  }
+
   def waypoints
     @waypoints ||= trip.waypoints
                        .where(sequence: waypoint_start.sequence..waypoint_end.sequence)
@@ -66,7 +76,6 @@ class Route < ApplicationRecord
         "coordinates": waypoints_coordinates
       }
     )
-    puts response[:features].first[:properties][:extras]
     update(
       segments: response[:features].first[:properties][:segments],
       surfaces: response[:features].first[:properties][:extras][:surface]
@@ -92,7 +101,6 @@ class Route < ApplicationRecord
     duration = 0
     segments.each do |segment|
       waypoint = wp.shift
-      puts waypoint.inspect
       duration += waypoint.delay || 0
       segment['steps'].each do |step|
         velocity = step['distance'] / step['duration']
@@ -185,6 +193,25 @@ class Route < ApplicationRecord
   def self.find_by_waypoint(waypoint)
     Route.joins(%i[waypoint_start
                    waypoint_end]).where("#{waypoint.sequence} between waypoints.sequence and waypoint_ends_routes.sequence").first
+  end
+
+  def closest_point_info(lat, lon)
+    point = RGeo::Geographic.spherical_factory(srid: 4326).point(lon, lat)
+
+    sql = <<~SQL
+      SELECT#{' '}
+        ST_Distance(geom::geography, ST_GeomFromText('#{point.as_text}', 4326)::geography) as distance,
+        ST_LineLocatePoint(geom::geometry, ST_ClosestPoint(geom::geometry, ST_GeomFromText('#{point.as_text}', 4326)::geometry)) as fraction
+      FROM routes
+      WHERE id = #{id}
+    SQL
+
+    result = ActiveRecord::Base.connection.select_one(sql)
+
+    {
+      distance: result['distance'].to_f,
+      fraction: result['fraction'].to_f
+    }
   end
 
   private

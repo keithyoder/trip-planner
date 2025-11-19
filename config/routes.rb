@@ -22,6 +22,14 @@ Rails.application.routes.draw do
       member do
         post :calculate
       end
+      resources :overpass, param: :type, only: %i[index show] do
+        collection do
+          post :create
+        end
+        member do
+          post :import_waypoint
+        end
+      end
     end
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

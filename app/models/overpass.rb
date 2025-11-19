@@ -19,16 +19,18 @@ class Overpass
 
   def initialize(route_id, node_type)
     @node_type = node_type
-    @route = Route.find(route_id)
+    # @route = Route.find(route_id)
     @max_distance = CATEGORIES[node_type][:distance]
 
-    box = RGeo::Cartesian::BoundingBox.create_from_geometry(@route.geom)
+    @route = Route.with_bbox.find(route_id)
+
+    # box = RGeo::Cartesian::BoundingBox.create_from_geometry(@route.geom)
     options = {
       bbox: {
-        s: box.min_y,
-        n: box.max_y,
-        w: box.min_x,
-        e: box.max_x
+        s: @route.bbox_s,
+        n: @route.bbox_n,
+        w: @route.bbox_w,
+        e: @route.bbox_e
       },
       timeout: 900,
       maxsize: 1_073_741_824
@@ -36,6 +38,8 @@ class Overpass
 
     overpass = OverpassAPI::QL.new(options)
     query = build_query
+    @response = overpass.query(query)
+  rescue JSON::ParserError
     @response = overpass.query(query)
   end
 
@@ -58,20 +62,24 @@ class Overpass
   def import
     return if close_to_route.empty?
 
-    # Batch query existing POIs to avoid N+1
-    existing_ids = close_to_route.map { |e| osm_id_for_element(e) }
-    existing_pois = OsmPoi.where(osm_id: existing_ids).index_by(&:osm_id)
-
-    poi_attributes = close_to_route.map do |element|
-      build_poi_attributes(element)
+    close_to_route.each do |element|
+      OsmPoiImporter.import_from_overpass(element, @node_type)
     end
+  end
 
-    # Use upsert for bulk insert/update
-    OsmPoi.upsert_all(
-      poi_attributes,
-      unique_by: :osm_id,
-      update_only: %i[name poi_type city street district geom osm_type metadata]
-    )
+  def pois_for_map
+    close_to_route.map do |poi|
+      {
+        osm_id: osm_id_for_element(poi),
+        lat: latitude_for_element(poi),
+        lon: longitude_for_element(poi),
+        name: poi.dig(:tags, :name),
+        street: poi.dig(:tags, :"addr:street"),
+        city: poi.dig(:tags, :"addr:city"),
+        toll_amount: poi.dig(:tags, :toll) || poi.dig(:tags, :charge),
+        operator: poi.dig(:tags, :operator)
+      }
+    end
   end
 
   private
@@ -343,5 +351,54 @@ class Overpass
 
       all_tags: tags
     }.compact
+  end
+
+  def osm_id_for_element(element)
+    "#{element[:type]}_#{element[:id]}"
+  end
+
+  def latitude_for_element(element)
+    case element[:type]
+    when 'node'
+      element[:lat]
+    when 'way', 'relation'
+      # Use provided center if available
+      if element[:center]
+        element[:center][:lat]
+      elsif element[:geometry]&.any?
+        # Calculate centroid from geometry
+        calculate_centroid(element[:geometry])[:lat]
+      end
+    end
+  end
+
+  def longitude_for_element(element)
+    case element[:type]
+    when 'node'
+      element[:lon]
+    when 'way', 'relation'
+      # Use provided center if available
+      if element[:center]
+        element[:center][:lon]
+      elsif element[:geometry]&.any?
+        # Calculate centroid from geometry
+        calculate_centroid(element[:geometry])[:lon]
+      end
+    end
+  end
+
+  def calculate_centroid(geometry)
+    # Calculate the centroid (center point) from geometry coordinates
+    return nil if geometry.empty?
+
+    lats = geometry.map { |point| point[:lat] }.compact
+    lons = geometry.map { |point| point[:lon] }.compact
+
+    return nil if lats.empty? || lons.empty?
+
+    {
+      lat: lats.sum / lats.size.to_f,
+      lon: lons.sum / lons.size.to_f
+    }
   end
 end

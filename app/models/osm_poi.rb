@@ -72,6 +72,12 @@ class OsmPoi < ApplicationRecord
     parse_toll_amount(toll_value) if toll_value
   end
 
+  def lonlat
+    return geom if geom.geometry_type == RGeo::Feature::Point
+
+    geom.centroid
+  end
+
   private
 
   def parse_toll_amount(toll_string)

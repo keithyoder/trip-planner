@@ -25,4 +25,5 @@ end
 
 ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.acronym 'RabbitMQ'
+  inflect.uncountable %w[overpass]
 end
