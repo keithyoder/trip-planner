@@ -5,16 +5,17 @@ class Overpass
   attr_reader :response
 
   CATEGORIES = {
-    fuel: { query: "'amenity'='fuel'", distance: 100, types: [:node] },
+    fuel: { query: "'amenity'='fuel'", distance: 200, types: %i[node way] },
     border_crossing: { query: "'barrier'='border_control'", distance: 10, types: %i[node way] },
     ferry: { query: "'amenity'='ferry_terminal'", distance: 5, types: %i[node way] },
-    restaurant: { query: "'amenity'='restaurant'", distance: 250, types: %i[node way] },
+    restaurant: { query: "'amenity'='restaurant'", distance: 2000, types: %i[node way] },
     bank: { query: "'amenity'='bank'", distance: 100, types: %i[node way] },
     hotel: { query: "'tourism'='hotel'", distance: 250, types: %i[node way] },
     toll: { query: "'barrier'='toll_booth'", distance: 5, types: %i[node way] },
     parking: { query: "'amenity'='parking'", distance: 100, types: %i[way relation] },
     park: { query: "'leisure'='park'", distance: 500, types: %i[way relation] },
-    rest_area: { query: "'highway'='rest_area'", distance: 100, types: %i[node way] }
+    rest_area: { query: "'highway'='rest_area'", distance: 100, types: %i[node way] },
+    tourism: { query: "'tourism'", distance: 500, types: %i[node way relation] }
   }.freeze
 
   def initialize(route_id, node_type)

@@ -129,6 +129,9 @@ class Waypoint < ApplicationRecord
     when :hotel
       waypoint_type = :overnight
       delay = 0
+    when :tourism
+      waypoint_type = :attraction
+      delay = 1800
     else
       waypoint_type = :attraction
       delay = 0

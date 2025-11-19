@@ -27,18 +27,17 @@ class OverpassController < ApplicationController
     @overpass = Overpass.new(@route.id, @node_type)
     @pois = @overpass.close_to_route
 
-    session[:overpass_data] = {
-      route_id: @route.id,
-      node_type: @node_type.to_s,
-      pois: @pois
-    }
+    cache_key = "overpass_#{@route.id}_#{@node_type}"
+    Rails.cache.write(cache_key, @pois, expires_in: 1.hour)
+    session[:overpass_cache_key] = cache_key
   end
 
   def import_waypoint
     osm_id = params[:osm_id]
-
-    # Get POI from session
-    unless session[:overpass_data] && session[:overpass_data]['pois']
+    cache_key = session[:overpass_cache_key]
+    pois = Rails.cache.read(cache_key)
+    puts pois
+    unless pois
       render json: {
         success: false,
         message: 'Session expired. Please search again.'
@@ -46,9 +45,9 @@ class OverpassController < ApplicationController
       return
     end
 
-    # Find the POI in the session data
-    poi = session[:overpass_data]['pois'].find do |p|
-      "#{p['type']}_#{p['id']}" == osm_id
+    # Find the POI in the cached data
+    poi = pois.find do |p|
+      "#{p[:type]}_#{p[:id]}" == osm_id
     end
 
     unless poi
@@ -62,7 +61,7 @@ class OverpassController < ApplicationController
     # Import the POI
     begin
       # Use the service object
-      osm_poi = OsmPoiImporter.import_from_overpass(poi, session[:overpass_data]['node_type'].to_sym)
+      osm_poi = OsmPoiImporter.import_from_overpass(poi, params['type'].to_sym)
 
       # Calculate the appropriate sequence based on route position
       sequence = Waypoint.calculate_sequence_for_position(@trip, @route, osm_poi.geom.lat, osm_poi.geom.lon)
