@@ -15,7 +15,6 @@ module WaypointsHelper
   def format_currency(waypoint)
     return unless waypoint.toll.present?
 
-    puts waypoint.waypoint_type
     if waypoint.waypoint_type == 'gas_station'
       "#{waypoint.toll} liters"
     else

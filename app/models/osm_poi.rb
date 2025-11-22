@@ -20,7 +20,16 @@
 #
 class OsmPoi < ApplicationRecord
   has_one :waypont
-  enum :poi_type, { fuel: 1, camping: 2, ferry: 3, border_crossing: 4, toll: 5, restaurant: 6 }
+  enum :poi_type, {
+    fuel: 1,
+    accommodation: 2,
+    ferry: 3,
+    border_crossing: 4,
+    toll: 5,
+    restaurant: 6,
+    tourism: 7,
+    barrier: 8
+  }
 
   def self.import
     ActiveRecord::Base.connection.execute(

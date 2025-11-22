@@ -5,18 +5,23 @@ class Overpass
   attr_reader :response
 
   CATEGORIES = {
-    fuel: { query: "'amenity'='fuel'", distance: 200, types: %i[node way] },
+    fuel: { query: "'amenity'='fuel'", distance: 500, types: %i[node way] },
     border_crossing: { query: "'barrier'='border_control'", distance: 10, types: %i[node way] },
     ferry: { query: "'amenity'='ferry_terminal'", distance: 5, types: %i[node way] },
     restaurant: { query: "'amenity'='restaurant'", distance: 2000, types: %i[node way] },
     bank: { query: "'amenity'='bank'", distance: 100, types: %i[node way] },
-    hotel: { query: "'tourism'='hotel'", distance: 250, types: %i[node way] },
+    accommodation: {
+      query: "'tourism'~'hotel|hostel|motel|guest_house|apartment|chalet|camp_site|caravan_site|wilderness_hut|alpine_hut'",
+      distance: 500,
+      types: %i[node way]
+    },
     toll: { query: "'barrier'='toll_booth'", distance: 5, types: %i[node way] },
     parking: { query: "'amenity'='parking'", distance: 100, types: %i[way relation] },
     park: { query: "'leisure'='park'", distance: 500, types: %i[way relation] },
     rest_area: { query: "'highway'='rest_area'", distance: 100, types: %i[node way] },
+    barrier: { query: "'barrier'='lift_gate'", distance: 10, types: %i[node way] },
     tourism: { query: "'tourism']['tourism'!='hotel']['tourism'!='hostel']['tourism'!='motel']['tourism'!='guest_house'",
-               distance: 500, types: %i[node way relation] }
+               distance: 10_000, types: %i[node way relation] }
   }.freeze
 
   def initialize(route_id, node_type)
@@ -180,7 +185,7 @@ class Overpass
 
     # Build SQL for batch distance calculation
     geom_cases = elements_with_geom.map.with_index do |item, idx|
-      "WHEN #{idx} THEN ST_GeomFromText('#{item[:geom]}', 4326)::geography"
+      "WHEN #{idx} THEN ST_MakeValid(ST_GeomFromText('#{item[:geom]}', 4326))::geography"
     end.join(' ')
 
     sql = <<~SQL

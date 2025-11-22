@@ -18,6 +18,8 @@ class Trip < ApplicationRecord
   has_many :waypoint_distances, foreign_key: :trip_id, primary_key: :id
   has_one :track, class_name: 'TripTrack', foreign_key: :trip_id, primary_key: :id
 
+  attribute :fuel_consumption_l_per_100km, :fuel_consumption
+
   validates :name, presence: true
 
   def distance

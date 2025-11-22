@@ -42,6 +42,8 @@ es:
     distance_abbr: "km"
     speed: "km_per_hour"
     speed_abbr: "km/h"
+    fuel_consumption: "km_per_liter"
+    fuel_consumption_abbr: "km/L"
     system: "metric"
   number:
     format:
@@ -110,6 +112,8 @@ es:
       distance: "Distancia"
       not_available: "N/D"
       duration: "Duración"
+      vehicle: "Vehículo"
+      fuel_consumption: "Consumo de Combustible"
   routes:
     show:
       route_details: "Detalles de la ruta"

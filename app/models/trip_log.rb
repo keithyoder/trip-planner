@@ -59,9 +59,9 @@ class TripLog < ApplicationRecord
   def distance
     return 0 unless geom
 
-    @distance ||= self.class.connection.select_value(
+    @distance ||= Units::Distance.new(self.class.connection.select_value(
       "SELECT ST_Length(geom::geography) FROM trip_logs WHERE id = #{id}"
-    )&.to_f || 0
+    )&.to_f || 0)
   end
 
   def distance_km

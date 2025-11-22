@@ -42,6 +42,8 @@ en:
     distance_abbr: "mi"
     speed: "miles_per_hour"
     speed_abbr: "mph"
+    fuel_consumption: "mpg_us"
+    fuel_consumption_abbr: "MPG"
     system: "imperial"
   number:
     format:
@@ -110,6 +112,8 @@ en:
       distance: "Distance"
       not_available: "N/A"
       duration: "Duration"
+      vehicle: "Vehicle"
+      fuel_consumption: "Fuel Consumption"
   routes:
     show:
       route_details: "Route Details"

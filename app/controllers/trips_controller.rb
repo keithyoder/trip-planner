@@ -68,6 +68,6 @@ class TripsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def trip_params
-    params.require(:trip).permit(:name, :start_on)
+    params.require(:trip).permit(:name, :start_on, :vehicle_description, :fuel_consumption_l_per_100km)
   end
 end

@@ -99,7 +99,7 @@ GEM
     benchmark (0.5.0)
     bigdecimal (3.3.1)
     bindex (0.8.1)
-    bootsnap (1.18.6)
+    bootsnap (1.19.0)
       msgpack (~> 1.2)
     builder (3.3.0)
     bunny (2.24.0)
@@ -153,11 +153,8 @@ GEM
       railties (>= 6.1)
     drb (2.2.3)
     ed25519 (1.4.0)
-    erb (5.1.3)
+    erb (6.0.0)
     erubi (1.13.1)
-    eu_central_bank (1.7.0)
-      money (~> 6.13, >= 6.13.6)
-      nokogiri (~> 1.9)
     faraday (2.14.0)
       faraday-net_http (>= 2.0, < 3.5)
       json
@@ -177,7 +174,7 @@ GEM
     globalid (1.3.0)
       activesupport (>= 6.1)
     hashie (5.0.0)
-    htmlentities (4.3.4)
+    htmlentities (4.4.2)
     httparty (0.10.2)
       multi_json (~> 1.0)
       multi_xml (>= 0.5.2)
@@ -214,15 +211,17 @@ GEM
     marcel (1.1.0)
     matrix (0.4.3)
     mini_mime (1.1.5)
-    minitest (5.26.1)
+    minitest (5.26.2)
     money (6.19.0)
       i18n (>= 0.6.4, <= 2)
+    money-open-exchange-rates (1.4.2)
+      money (~> 6.12)
     msgpack (1.8.0)
     multi_json (1.17.0)
     multi_xml (0.7.2)
       bigdecimal (~> 3.1)
-    net-http (0.7.0)
-      uri
+    net-http (0.8.0)
+      uri (>= 0.11.1)
     net-imap (0.5.12)
       date
       net-protocol
@@ -361,7 +360,7 @@ GEM
       tsort
     redis (4.8.1)
     regexp_parser (2.11.3)
-    reline (0.6.2)
+    reline (0.6.3)
       io-console (~> 0.5)
     responders (3.2.0)
       actionpack (>= 7.0)
@@ -442,7 +441,7 @@ GEM
       ostruct
     stimulus-rails (1.3.4)
       railties (>= 6.0.0)
-    stringio (3.1.7)
+    stringio (3.1.8)
     temple (0.10.4)
     thor (1.4.0)
     tilt (2.6.1)
@@ -504,11 +503,11 @@ DEPENDENCIES
   devise
   dotenv-rails
   ed25519 (>= 1.2, < 2.0)
-  eu_central_bank
   geocoder
   jbuilder
   jsbundling-rails
   money
+  money-open-exchange-rates
   omniauth
   omniauth-google-oauth2
   omniauth-rails_csrf_protection

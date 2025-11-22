@@ -27,3 +27,24 @@ div[id=dom_id(trip)]
           i.bi.bi-hourglass-split.me-1
           = t('trips.show.duration')
         p.mb-0.fw-semibold = trip.duration_days ? "#{trip.duration_days.to_i} #{t('trips.index.day', count: trip.duration_days)}" : t('trips.show.not_available')
+    
+    .col-md-6
+      .info-item
+        small.text-muted.d-block.mb-1
+          i.bi.bi-car-front.me-1
+          = t('trips.show.vehicle')
+        p.mb-0.fw-semibold = trip.vehicle_description.presence || t('trips.show.not_set')
+    
+    .col-md-6
+      .info-item
+        small.text-muted.d-block.mb-1
+          i.bi.bi-fuel-pump.me-1
+          = t('trips.show.fuel_consumption')
+        p.mb-0.fw-semibold
+          - if trip.fuel_consumption_l_per_100km
+            - fuel_unit = I18n.t('units.fuel_consumption').to_sym
+            = trip.fuel_consumption_l_per_100km.send(fuel_unit).round(1)
+            = " "
+            = t('units.fuel_consumption_abbr')
+          - else
+            = t('trips.show.not_set')

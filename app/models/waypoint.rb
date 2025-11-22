@@ -126,12 +126,15 @@ class Waypoint < ApplicationRecord
     when :restaurant
       waypoint_type = :lunch
       delay = 3600
-    when :hotel
+    when :accommodation
       waypoint_type = :overnight
       delay = 0
     when :tourism
       waypoint_type = :attraction
       delay = 1800
+    when :barrier
+      waypoint_type = :attraction
+      delay = 600
     else
       waypoint_type = :attraction
       delay = 0

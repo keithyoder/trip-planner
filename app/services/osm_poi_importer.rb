@@ -75,13 +75,13 @@ class OsmPoiImporter
     return {} unless tags
 
     case node_type.to_sym
-    when :toll
+    when :toll, :barrier
       extract_toll_metadata(tags)
     when :fuel
       extract_fuel_metadata(tags)
     when :restaurant
       extract_restaurant_metadata(tags)
-    when :hotel
+    when :accommodation
       extract_hotel_metadata(tags)
     when :tourism
       extract_tourism_metadata(tags)

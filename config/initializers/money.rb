@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-require 'eu_central_bank'
+require 'money/bank/open_exchange_rates_bank'
 
-# bank = EuCentralBank.new
+oxr = Money::Bank::OpenExchangeRatesBank.new
+oxr.app_id = ENV['OPEN_EXCHANGE_RATES_APP_ID']
+oxr.update_rates
 
-# bank.update_rates
-# Money.default_bank = bank
+Money.default_bank = oxr
 
 Money.default_currency = :brl
 

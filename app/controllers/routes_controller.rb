@@ -54,7 +54,7 @@ class RoutesController < ApplicationController
   # PATCH/PUT /routes/1 or /routes/1.json
   def update
     respond_to do |format|
-      if @Route.update(route_params)
+      if @route.update(route_params)
         format.html { redirect_to trip_route_url(@trip, @route), notice: 'Route was successfully updated.' }
         format.json { render :show, status: :ok, location: @route }
       else

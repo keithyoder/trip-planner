@@ -60,7 +60,7 @@
                 span.text-muted
                   i.bi.bi-cash-coin.me-2
                   | Toll / Cost
-                strong.text-success.fs-5 = @waypoint.formatted_toll
+                strong.text-success.fs-5 = format_currency(@waypoint)
       
       / Danger zone for delete action
       .card.shadow-sm.danger-zone-card
