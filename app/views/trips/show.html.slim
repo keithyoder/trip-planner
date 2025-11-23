@@ -49,6 +49,9 @@
             = t('trips.show.trip_information')
         .card-body
           = render @trip
+          = link_to currencies_trip_path(@trip), class: 'btn btn-outline-info' do
+            i.bi.bi-currency-exchange.me-2
+            = t('trips.show.view_currencies', default: 'View Exchange Rates')
       
 / Optional: Add custom styles
 css:

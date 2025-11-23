@@ -114,6 +114,17 @@ en:
       duration: "Duration"
       vehicle: "Vehicle"
       fuel_consumption: "Fuel Consumption"
+    currencies:
+      title: "Currency Exchange Rates for %{trip_name}"
+      back_to_trip: "Back to Trip"
+      no_countries: "No countries found for this trip. Add waypoints to see exchange rates."
+      exchange_rates_header: "Exchange Rates (Base: %{default_currency})"
+      country: "Country"
+      currency: "Currency"
+      exchange_rate: "Exchange Rate"
+      inverse_rate: "Inverse Rate"
+      rates_updated: "Rates last updated: %{updated_at}"
+      rates_not_updated: "Exchange rates have not been updated yet"
   routes:
     show:
       route_details: "Route Details"

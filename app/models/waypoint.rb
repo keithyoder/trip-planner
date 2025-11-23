@@ -33,7 +33,7 @@ class Waypoint < ApplicationRecord
     Argentina: :ars,
     Chile: :clp,
     Bolivia: :bob,
-    Peru: :pen
+    Perú: :pen
   }.freeze
 
   enum :waypoint_type, {

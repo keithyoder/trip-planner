@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_10_24_142254) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_23_002551) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "ltree"
   enable_extension "plpgsql"
@@ -27,15 +27,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_24_142254) do
     t.integer "osm_id"
     t.bigint "admin_node_id"
     t.string "timezone"
+    t.index ["geom"], name: "index_boundaries_on_geom", using: :gist
+    t.index ["level"], name: "index_boundaries_on_level"
     t.index ["osm_id"], name: "index_boundaries_on_osm_id", unique: true
   end
 
   create_table "boundaries_waypoints", id: false, force: :cascade do |t|
     t.bigint "waypoint_id", null: false
     t.bigint "boundary_id", null: false
+    t.index ["boundary_id", "waypoint_id"], name: "index_boundaries_waypoints_on_boundary_and_waypoint"
+    t.index ["waypoint_id", "boundary_id"], name: "index_boundaries_waypoints_on_waypoint_and_boundary"
   end
 
-  create_table "osm_pois", force: :cascade do |t|
+  create_table "osm_pois", primary_key: "old_id", id: :bigint, default: -> { "nextval('osm_pois_id_seq'::regclass)" }, force: :cascade do |t|
     t.string "name"
     t.integer "poi_type"
     t.string "city"
@@ -50,6 +54,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_24_142254) do
     t.geography "geom", limit: {srid: 4326, type: "st_point", geographic: true}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "osm_type", default: "node", null: false
+    t.string "osm_id", null: false
+    t.jsonb "metadata", default: {}
+    t.index ["metadata"], name: "index_osm_pois_on_metadata", using: :gin
+    t.index ["osm_id"], name: "index_osm_pois_on_osm_id", unique: true
   end
 
   create_table "routes", force: :cascade do |t|
@@ -68,11 +77,38 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_24_142254) do
     t.index ["waypoint_start_id"], name: "index_routes_on_waypoint_start_id"
   end
 
+  create_table "telemetry_logs", force: :cascade do |t|
+    t.string "mongo_id", null: false
+    t.datetime "timestamp", null: false
+    t.jsonb "data", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["data"], name: "index_telemetry_logs_on_data", using: :gin
+    t.index ["mongo_id"], name: "index_telemetry_logs_on_mongo_id", unique: true
+    t.index ["timestamp"], name: "index_telemetry_logs_on_timestamp"
+  end
+
+  create_table "trip_logs", force: :cascade do |t|
+    t.string "name"
+    t.datetime "start_time", null: false
+    t.datetime "end_time", null: false
+    t.decimal "max_speed", precision: 8, scale: 3
+    t.decimal "avg_speed", precision: 8, scale: 3
+    t.geography "geom", limit: {srid: 4326, type: "geometry", geographic: true}
+    t.jsonb "data", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["geom"], name: "index_trip_logs_on_geom", using: :gist
+    t.index ["start_time"], name: "index_trip_logs_on_start_time", unique: true
+  end
+
   create_table "trips", force: :cascade do |t|
     t.string "name"
     t.date "start_on"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "vehicle_description"
+    t.decimal "fuel_consumption_l_per_100km", precision: 4, scale: 2
   end
 
   create_table "users", force: :cascade do |t|
@@ -104,7 +140,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_24_142254) do
     t.integer "delay"
     t.bigint "osm_poi_id"
     t.bigint "trip_id"
+    t.string "osm_poi_osm_id"
     t.index ["osm_poi_id"], name: "index_waypoints_on_osm_poi_id"
+    t.index ["osm_poi_osm_id"], name: "index_waypoints_on_osm_poi_osm_id"
     t.index ["trip_id", "sequence"], name: "index_waypoints_on_trip_id_and_sequence", unique: true
     t.index ["trip_id"], name: "index_waypoints_on_trip_id"
   end
@@ -114,20 +152,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_24_142254) do
   add_foreign_key "routes", "waypoints", column: "waypoint_start_id"
   add_foreign_key "waypoints", "trips"
 
-  create_view "route_elevations", sql_definition: <<-SQL
-      SELECT routes.id AS route_id,
-      (route_points.dp).path[1] AS index,
-      st_z((route_points.dp).geom) AS elevation,
-          CASE
-              WHEN ((route_points.dp).path[1] = 1) THEN (0)::double precision
-              ELSE st_length((st_geometryn(st_split((routes.geom)::geometry, (route_points.dp).geom), 1))::geography)
-          END AS distance
-     FROM ( SELECT routes_1.id,
-              st_dumppoints((routes_1.geom)::geometry) AS dp
-             FROM routes routes_1) route_points,
-      routes
-    WHERE (route_points.id = routes.id);
-  SQL
   create_view "route_sequences", sql_definition: <<-SQL
       WITH r1 AS (
            SELECT routes.id AS route_id,
@@ -247,5 +271,43 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_24_142254) do
        LEFT JOIN waypoint_distances ON (((waypoints.sequence >= waypoint_distances.sequence) AND (waypoints.trip_id = waypoint_distances.trip_id))))
     GROUP BY waypoints.id
     ORDER BY waypoints.sequence;
+  SQL
+  create_view "route_elevations", sql_definition: <<-SQL
+      WITH point_data AS (
+           SELECT routes.id AS route_id,
+              (route_points.dp).path[1] AS index,
+              (route_points.dp).geom AS point,
+              st_y((route_points.dp).geom) AS latitude,
+              st_x((route_points.dp).geom) AS longitude,
+              st_z((route_points.dp).geom) AS elevation,
+                  CASE
+                      WHEN ((route_points.dp).path[1] = 1) THEN (0)::double precision
+                      ELSE st_length((st_geometryn(st_split((routes.geom)::geometry, (route_points.dp).geom), 1))::geography)
+                  END AS distance
+             FROM ( SELECT routes_1.id,
+                      st_dumppoints((routes_1.geom)::geometry) AS dp
+                     FROM routes routes_1) route_points,
+              routes
+            WHERE (route_points.id = routes.id)
+          ), bucketed AS (
+           SELECT point_data.route_id,
+              point_data.index,
+              point_data.latitude,
+              point_data.longitude,
+              point_data.elevation,
+              point_data.distance,
+              floor((point_data.distance / (100)::double precision)) AS bucket,
+              row_number() OVER (PARTITION BY point_data.route_id, (floor((point_data.distance / (100)::double precision))) ORDER BY point_data.index) AS rn
+             FROM point_data
+          )
+   SELECT route_id,
+      index,
+      latitude,
+      longitude,
+      elevation,
+      distance
+     FROM bucketed
+    WHERE (rn = 1)
+    ORDER BY route_id, index;
   SQL
 end

@@ -114,6 +114,17 @@ pt:
       duration: "Duração"
       vehicle: "Veículo"
       fuel_consumption: "Consumo de Combustível"
+    currencies:
+      title: "Taxas de Câmbio para %{trip_name}"
+      back_to_trip: "Voltar para Viagem"
+      no_countries: "Nenhum país encontrado para esta viagem. Adicione pontos de parada para ver as taxas de câmbio."
+      exchange_rates_header: "Taxas de Câmbio (Base: %{default_currency})"
+      country: "País"
+      currency: "Moeda"
+      exchange_rate: "Taxa de Câmbio"
+      rates_updated: "Taxas atualizadas em: %{updated_at}"
+      inverse_rate: "Taxa Inversa"
+      rates_not_updated: "As taxas de câmbio ainda não foram atualizadas"
   routes:
     show:
       route_details: "Detalhes da rota"

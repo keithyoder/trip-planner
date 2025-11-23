@@ -99,6 +99,17 @@ es:
       no_trips: "Aún no hay viajes"
       start_planning: "¡Comienza a planificar tu primera aventura!"
       create_first_trip: "Crea tu primer viaje"
+    currencies:
+      title: "Tipos de Cambio para %{trip_name}"
+      back_to_trip: "Volver al Viaje"
+      no_countries: "No se encontraron países para este viaje. Agregue puntos de ruta para ver los tipos de cambio."
+      exchange_rates_header: "Tipos de Cambio (Base: %{default_currency})"
+      country: "País"
+      currency: "Moneda"
+      exchange_rate: "Tipo de Cambio"
+      inverse_rate: "Tipo Inverso"
+      rates_updated: "Tipos actualizadas: %{updated_at}"
+      rates_not_updated: "Los tipos de cambio aún no se han actualizado"
     show:
       trip_details: "Detalles del viaje"
       starting_on: "Comienza el %{date}"
