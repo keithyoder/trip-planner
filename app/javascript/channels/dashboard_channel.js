@@ -307,16 +307,16 @@ function initializeDashboard() {
           pressure: document.getElementById('weather-pressure')
         }
         
-        if (elements.temp && weather.temperature !== undefined) {
+        if (elements.temp && weather.temperature !== undefined && weather.temperature !== null) {
           elements.temp.innerHTML = `${weather.temperature.toFixed(1)}<span class="widget-unit-small">°C</span>`
         }
-        if (elements.humidity && weather.humidity !== undefined) {
+        if (elements.humidity && weather.humidity !== undefined && weather.humidity !== null) {
           elements.humidity.innerHTML = `${weather.humidity}<span class="widget-unit-small">%</span>`
         }
-        if (elements.dewpoint && weather.dewpoint !== undefined) {
+        if (elements.dewpoint && weather.dewpoint !== undefined && weather.dewpoint !== null) {
           elements.dewpoint.innerHTML = `${weather.dewpoint.toFixed(1)}<span class="widget-unit-small">°C</span>`
         }
-        if (elements.pressure && weather.pressure !== undefined) {
+        if (elements.pressure && weather.pressure !== undefined && weather.pressure !== null) {
           elements.pressure.innerHTML = `${weather.pressure.toFixed(1)}<span class="widget-unit-small">hPa</span>`
         }
       },
