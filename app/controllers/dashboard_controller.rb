@@ -32,12 +32,12 @@ class DashboardController < ApplicationController
 
         trip_detector = TripDetector.instance
         trip_detector.todays_trips
-        today_distance = calculate_today_distance_meters(trip_detector)
+        today_distance = calculate_today_distance(trip_detector)
 
         data = build_dashboard_data(
           latest_log,
           trip_detector: trip_detector,
-          today_distance_meters: today_distance
+          today_distance: today_distance.send(I18n.t('units.distance').to_sym).to_json
         )
 
         # Add trip polyline points if currently travelling
@@ -69,7 +69,7 @@ class DashboardController < ApplicationController
 
   private
 
-  def calculate_today_distance_meters(trip_detector)
+  def calculate_today_distance(trip_detector)
     distance_meters = TripLog.today.to_a.sum(&:distance)
     distance_meters += trip_detector.current_trip[:total_distance] if trip_detector.current_trip
     distance_meters

@@ -6,14 +6,14 @@ module DashboardDataBuilder
   extend ActiveSupport::Concern
   include HeadingCalculator
 
-  def build_dashboard_data(log, trip_detector: nil, today_distance_meters: 0) # rubocop:disable Metrics/MethodLength
+  def build_dashboard_data(log, trip_detector: nil, today_distance: 0) # rubocop:disable Metrics/MethodLength
     return nil unless log
 
     gps_data = extract_gps_data(log)
 
     {
       travelling: trip_detector&.currently_travelling? || false,
-      distance_km: (today_distance_meters / 1000.0).round(1),
+      distance_km: today_distance.to_f.round(1),
       speed_kmh: calculate_speed(log.data['gps_speed']),
       gps: gps_data,
       temperature: log.data['shtc3_temperature']&.round(1),

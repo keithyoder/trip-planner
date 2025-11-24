@@ -166,7 +166,7 @@ class TelemetrySyncService # rubocop:disable Metrics/ClassLength
     data = build_dashboard_data(
       log,
       trip_detector: @trip_detector,
-      today_distance_meters: calculate_today_distance_meters
+      today_distance: calculate_today_distance
     )
 
     # Detect and save trip when it completes
@@ -204,7 +204,7 @@ class TelemetrySyncService # rubocop:disable Metrics/ClassLength
     Rails.logger.debug "[TripDetector] Currently travelling: #{travelling}"
   end
 
-  def calculate_today_distance_meters
+  def calculate_today_distance
     # Calculate distance from loaded records
     distance_meters = TripLog.today.to_a.sum(&:distance)
     distance_meters += @trip_detector.current_trip[:total_distance] if @trip_detector&.current_trip
