@@ -81,6 +81,13 @@ class WaypointsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def waypoint_params
-    params.require(:waypoint).permit(:name, :sequence, :toll, :waypoint_type, :latlon)
+    params.require(:waypoint).permit(:name, :sequence, :waypoint_type, :latlon, :toll, :delay_hours,
+                                     :delay_minutes).tap do |permitted_params|
+      if permitted_params[:delay_hours].present? || permitted_params[:delay_minutes].present?
+        hours = permitted_params.delete(:delay_hours).to_i
+        minutes = permitted_params.delete(:delay_minutes).to_i
+        permitted_params[:delay] = (hours * 3600) + (minutes * 60)
+      end
+    end
   end
 end

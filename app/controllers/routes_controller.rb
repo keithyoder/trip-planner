@@ -97,6 +97,6 @@ class RoutesController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def route_params
-    params.require(:route).permit(:name, :sequence, :waypoint_start_id, :waypoint_end_id)
+    params.require(:route).permit(:name, :sequence, :waypoint_start_id, :waypoint_end_id, :start_time)
   end
 end

@@ -53,6 +53,23 @@
         .card-body
           = render @waypoint
           
+          / Delay information
+          - if @waypoint.delay && @waypoint.delay > 0
+            .mt-3.pt-3.border-top
+              .d-flex.justify-content-between.align-items-center
+                span.text-muted
+                  i.bi.bi-clock.me-2
+                  | Delay Duration
+                - hours = (@waypoint.delay / 3600).to_i
+                - minutes = ((@waypoint.delay % 3600) / 60).to_i
+                strong.fs-5
+                  - if hours > 0 && minutes > 0
+                    = "#{hours} #{t('common.hour', count: hours)} #{t('common.and')} #{minutes} #{t('common.minute', count: minutes)}"
+                  - elsif hours > 0
+                    = "#{hours} #{t('common.hour', count: hours)}"
+                  - else
+                    = "#{minutes} #{t('common.minute', count: minutes)}"
+          
           / Toll/Cost information
           - if @waypoint.toll && @waypoint.toll > 0
             .mt-3.pt-3.border-top

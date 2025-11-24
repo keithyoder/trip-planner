@@ -61,7 +61,9 @@ module WaypointsHelper
       'border_crossing' => 'bi-shield-check',
       'gas_station' => 'bi-fuel-pump-fill',
       'attraction' => 'bi-camera-fill',
-      'routing' => 'bi-signpost-2-fill'
+      'routing' => 'bi-signpost-2-fill',
+      'parking' => 'bi-car-front-fill',
+      'bank' => 'bi-currency-exchange'
     }
 
     icons[waypoint_type.to_s] || icons['routing']
@@ -80,7 +82,9 @@ module WaypointsHelper
       'border_crossing' => '#dc3545',
       'gas_station' => '#ffc107',
       'attraction' => '#d63384',
-      'routing' => '#6c757d'
+      'routing' => '#6c757d',
+      'parking' => '#6c757d',
+      'bank' => '#6c757d'
     }
 
     colors[waypoint_type.to_s] || colors['routing']
@@ -99,7 +103,9 @@ module WaypointsHelper
       'border_crossing' => '#f8d7da',
       'gas_station' => '#fff3cd',
       'attraction' => '#f7d6e6',
-      'routing' => '#e9ecef'
+      'routing' => '#e9ecef',
+      'parking' => '#e9ecef',
+      'bank' => '#e9ecef'
     }
 
     bg_colors[waypoint_type.to_s] || bg_colors['routing']

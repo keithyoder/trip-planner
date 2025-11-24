@@ -28,7 +28,9 @@ class OsmPoi < ApplicationRecord
     toll: 5,
     restaurant: 6,
     tourism: 7,
-    barrier: 8
+    barrier: 8,
+    parking: 9,
+    bank: 10
   }
 
   def self.import

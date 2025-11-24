@@ -54,5 +54,17 @@ export const WaypointIcons = {
         color: '#6c757d', // gray
         backgroundColor: '#e9ecef',
         label: 'Routing'
+    },
+    parking: {
+        icon: 'bi-bi-car-front-fill',
+        color: '#6c757d', // gray
+        backgroundColor: '#e9ecef',
+        label: 'Routing'
+    },
+    bank: {
+        icon: 'bi-bi-currency-exchange',
+        color: '#6c757d', // gray
+        backgroundColor: '#e9ecef',
+        label: 'Routing'
     }
 };

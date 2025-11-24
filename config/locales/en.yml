@@ -62,6 +62,8 @@ en:
     gas_station: "Gas"
     attraction: "Attraction"
     routing: "Routing"
+    parking: "Parking"
+    bank: "Bank"
   locale:
     changed: "Language changed successfully"
     invalid: "Invalid language selected"

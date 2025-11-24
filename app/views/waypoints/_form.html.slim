@@ -49,6 +49,27 @@
     .form-text
       | Coordinates in format: latitude, longitude
   
+  / Delay field
+  .mb-4
+    = form.label :delay, class: "form-label fw-semibold" do
+      i.bi.bi-clock.me-2
+      | Delay Duration
+    - delay_hours = waypoint.delay ? (waypoint.delay / 3600).to_i : 0
+    - delay_minutes = waypoint.delay ? ((waypoint.delay % 3600) / 60).to_i : 0
+    .row.g-2
+      .col-6
+        .input-group.input-group-lg
+          = form.number_field :delay_hours, value: delay_hours, class: "form-control", placeholder: "0", min: "0"
+          span.input-group-text
+            | hours
+      .col-6
+        .input-group.input-group-lg
+          = form.number_field :delay_minutes, value: delay_minutes, class: "form-control", placeholder: "0", min: "0", max: "59"
+          span.input-group-text
+            | minutes
+    .form-text
+      | Time spent at this waypoint
+  
   / Toll field
   .mb-4
     = form.label :toll, class: "form-label fw-semibold" do

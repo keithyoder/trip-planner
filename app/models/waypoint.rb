@@ -45,7 +45,9 @@ class Waypoint < ApplicationRecord
     border_crossing: 6,
     gas_station: 7,
     attraction: 8,
-    routing: 9
+    routing: 9,
+    parking: 10,
+    bank: 11
   }
 
   geocoded_by :address do |record, results|
