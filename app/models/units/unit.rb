@@ -127,6 +127,16 @@ module Units
       self.class.new(value.abs, units: units)
     end
 
+    def coerce(other)
+      raise TypeError, "#{self.class} can't be coerced into #{other.class}" unless other.is_a?(Numeric)
+
+      [self.class.new(other, units: @units), self]
+    end
+
+    def as_json(_options = {})
+      to_f # or to_d, or to_kilometers, depending on what you want
+    end
+
     # Arithmetic operations for same-type objects
     def +(other) # rubocop:disable Metrics/AbcSize
       if other.is_a?(self.class)
