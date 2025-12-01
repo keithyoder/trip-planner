@@ -5,3 +5,11 @@
 #
 #   movies = Movie.create([{ name: "Star Wars" }, { name: "Lord of the Rings" }])
 #   Character.create(name: "Luke", movie: movies.first)
+
+load Rails.root.join('db', 'seeds', 'uruguay_holidays.rb')
+load Rails.root.join('db', 'seeds', 'argentina_holidays.rb')
+load Rails.root.join('db', 'seeds', 'chile_holidays.rb')
+load Rails.root.join('db', 'seeds', 'peru_holidays.rb')
+load Rails.root.join('db', 'seeds', 'bolivia_holidays.rb')
+load Rails.root.join('db', 'seeds', 'brazil_holidays.rb')
+load Rails.root.join('db', 'seeds', 'pernambuco_holidays.rb')

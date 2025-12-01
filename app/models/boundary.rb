@@ -18,6 +18,7 @@
 #
 class Boundary < ActiveRecord::Base
   has_and_belongs_to_many :waypoints
+  has_many :holidays, dependent: :destroy
 
   scope :waypoint, lambda { |waypoint, level|
     where("ST_Within(ST_GeomFromText('#{waypoint.lonlat}', 4326), geom::geometry) AND level = #{level}")
@@ -65,5 +66,49 @@ class Boundary < ActiveRecord::Base
         geom: g.geometry
       )
     end
+  end
+
+  def descendants_at_level(level, include_self: false)
+    query = Boundary.where('hierarchy <@ ?', hierarchy)
+                    .where(level: level)
+
+    query = query.where.not(id: id) unless include_self
+    query
+  end
+
+  # Helper method to get all holidays for a specific year, sorted by date
+  # Includes holidays from this boundary and all parent boundaries
+  def holidays_for_year(year)
+    all_boundary_holidays.map do |holiday|
+      {
+        holiday: holiday,
+        date: holiday.date_for_year(year),
+        boundary: {
+          name: holiday.boundary_name,
+          level: holiday.level
+        }
+      }
+    end.sort_by { |h| h[:date] }
+  end
+
+  # Check if a specific date is a holiday in this boundary or any parent boundary
+  def holiday_on?(date)
+    all_boundary_holidays.any? { |holiday| holiday.occurs_on?(date) }
+  end
+
+  # Get the holiday(s) that occur on a specific date (including parent boundaries)
+  def holidays_on(date)
+    all_boundary_holidays.select { |holiday| holiday.occurs_on?(date) }
+  end
+
+  private
+
+  # Get all holidays from this boundary and all parent boundaries using ltree
+  def all_boundary_holidays
+    Holiday.joins('INNER JOIN boundaries ON boundaries.id = holidays.boundary_id')
+           .select('holidays.*')
+           .select('boundaries.name as boundary_name')
+           .select('boundaries.level as level')
+           .where('boundaries.hierarchy @> ?', hierarchy)
   end
 end

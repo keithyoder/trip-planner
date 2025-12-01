@@ -9,7 +9,7 @@ class Overpass
     border_crossing: { query: "'barrier'='border_control'", distance: 10, types: %i[node way] },
     ferry: { query: "'amenity'='ferry_terminal'", distance: 5, types: %i[node way] },
     restaurant: { query: "'amenity'='restaurant'", distance: 2000, types: %i[node way] },
-    bank: { query: "'amenity'='bank'", distance: 100, types: %i[node way] },
+    bank: { query: "'amenity'~'bank|money_transfer'", distance: 1000, types: %i[node way] },
     accommodation: {
       query: "'tourism'~'hotel|hostel|motel|guest_house|apartment|chalet|camp_site|caravan_site|wilderness_hut|alpine_hut'",
       distance: 500,

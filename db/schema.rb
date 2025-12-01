@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_23_002551) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_30_173537) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "ltree"
   enable_extension "plpgsql"
@@ -37,6 +37,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_23_002551) do
     t.bigint "boundary_id", null: false
     t.index ["boundary_id", "waypoint_id"], name: "index_boundaries_waypoints_on_boundary_and_waypoint"
     t.index ["waypoint_id", "boundary_id"], name: "index_boundaries_waypoints_on_waypoint_and_boundary"
+  end
+
+  create_table "holidays", force: :cascade do |t|
+    t.bigint "boundary_id", null: false
+    t.string "name", null: false
+    t.integer "month"
+    t.integer "day"
+    t.integer "calculation_type", default: 0, null: false
+    t.integer "offset_days", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["boundary_id", "name"], name: "index_holidays_on_boundary_id_and_name"
+    t.index ["boundary_id"], name: "index_holidays_on_boundary_id"
+    t.index ["calculation_type"], name: "index_holidays_on_calculation_type"
   end
 
   create_table "osm_pois", primary_key: "old_id", id: :bigint, default: -> { "nextval('osm_pois_id_seq'::regclass)" }, force: :cascade do |t|
@@ -147,6 +161,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_23_002551) do
     t.index ["trip_id"], name: "index_waypoints_on_trip_id"
   end
 
+  add_foreign_key "holidays", "boundaries"
   add_foreign_key "routes", "trips"
   add_foreign_key "routes", "waypoints", column: "waypoint_end_id"
   add_foreign_key "routes", "waypoints", column: "waypoint_start_id"

@@ -15,6 +15,9 @@
             p.text-muted.mb-0 = t('trips.show.starting_on', date: l(@trip.start_on, format: :long))
         
         .btn-group role="group"
+          = link_to edit_trip_path(@trip), class: "btn btn-outline-primary" do
+            i.bi.bi-pencil.me-2
+            = t('trips.show.edit_trip')
           = link_to trip_routes_path(@trip), class: "btn btn-outline-primary" do
             i.bi.bi-pencil-square.me-2
             = t('trips.show.trip_routes')

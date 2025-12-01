@@ -33,13 +33,13 @@ class Route < ApplicationRecord
     select(["ST_Distance(geom, ST_Point(#{lng}, #{lat})) as distance"])
   }
 
-  scope :with_bbox, lambda {
+  scope :with_bbox, lambda { |padding_meters = 5000|
     select(
       '*',
-      'ST_XMin(geom::geometry) AS bbox_w',
-      'ST_XMax(geom::geometry) AS bbox_e',
-      'ST_YMin(geom::geometry) AS bbox_s',
-      'ST_YMax(geom::geometry) AS bbox_n'
+      "ST_XMin(ST_Expand(geom::geometry, #{padding_meters})) AS bbox_w",
+      "ST_XMax(ST_Expand(geom::geometry, #{padding_meters})) AS bbox_e",
+      "ST_YMin(ST_Expand(geom::geometry, #{padding_meters})) AS bbox_s",
+      "ST_YMax(ST_Expand(geom::geometry, #{padding_meters})) AS bbox_n"
     )
   }
 

@@ -38,7 +38,7 @@ class RoutesController < ApplicationController
 
   # POST /routes or /routes.json
   def create
-    @route = @trip.routes.new(route_params)
+    @route = @trip.routes.build(route_params_with_duration)
 
     respond_to do |format|
       if @route.save
@@ -54,7 +54,7 @@ class RoutesController < ApplicationController
   # PATCH/PUT /routes/1 or /routes/1.json
   def update
     respond_to do |format|
-      if @route.update(route_params)
+      if @route.update(route_params_with_duration)
         format.html { redirect_to trip_route_url(@trip, @route), notice: 'Route was successfully updated.' }
         format.json { render :show, status: :ok, location: @route }
       else
@@ -97,6 +97,30 @@ class RoutesController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def route_params
-    params.require(:route).permit(:name, :sequence, :waypoint_start_id, :waypoint_end_id, :start_time)
+    params.require(:route).permit(
+      :name,
+      :sequence,
+      :waypoint_start_id,
+      :waypoint_end_id,
+      :start_time_days,
+      :start_time_hours,
+      :start_time_minutes
+    )
+  end
+
+  def route_params_with_duration # rubocop:disable Metrics/AbcSize
+    permitted = route_params
+
+    # Convert duration fields to seconds
+    if permitted[:start_time_days].present? || permitted[:start_time_hours].present? || permitted[:start_time_minutes].present?
+      days = (permitted[:start_time_days].presence || 0).to_i
+      hours = (permitted[:start_time_hours].presence || 0).to_i
+      minutes = (permitted[:start_time_minutes].presence || 0).to_i
+
+      permitted[:start_time] = (days * 86_400) + (hours * 3600) + (minutes * 60)
+    end
+
+    # Remove the virtual attributes
+    permitted.except(:start_time_days, :start_time_hours, :start_time_minutes)
   end
 end

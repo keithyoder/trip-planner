@@ -31,6 +31,9 @@ en:
   common:
     and: "and"
     not_available: "N/A"
+    day:
+      one: "day"
+      other: "days"
     hour:
       one: "hour"
       other: "hours"

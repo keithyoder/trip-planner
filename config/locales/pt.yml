@@ -31,6 +31,9 @@ pt:
   common:
     and: "e"
     not_available: "N/D"
+    day:
+      one: "dia"
+      other: "dias"
     hour:
       one: "hora"
       other: "horas"

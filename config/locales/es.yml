@@ -31,6 +31,9 @@ es:
   common:
     and: "y"
     not_available: "N/D"
+    day:
+      one: "día"
+      other: "días"
     hour:
       one: "hora"
       other: "horas"

@@ -19,7 +19,16 @@
 
   .mb-3
     = form.label :start_time, t('routes.form.start_time'), class: 'form-label'
-    = form.time_field :start_time, class: 'form-control', value: (Time.at(route.start_time).utc.strftime('%H:%M') if route.start_time)
+    .row.g-2
+      .col-4
+        = form.number_field :start_time_days, value: (route.start_time ? (route.start_time / 86400).to_i : 0), min: 0, class: 'form-control', placeholder: t('common.day.other')
+        small.form-text.text-muted = t('common.day.other')
+      .col-4
+        = form.number_field :start_time_hours, value: (route.start_time ? ((route.start_time % 86400) / 3600).to_i : 0), min: 0, max: 23, class: 'form-control', placeholder: t('common.hour.other')
+        small.form-text.text-muted = t('common.hour.other')
+      .col-4
+        = form.number_field :start_time_minutes, value: (route.start_time ? ((route.start_time % 3600) / 60).to_i : 0), min: 0, max: 59, class: 'form-control', placeholder: t('common.minute.other')
+        small.form-text.text-muted = t('common.minute.other')
 
   .d-grid
     = form.submit t('routes.form.submit'), class: 'btn btn-primary'
