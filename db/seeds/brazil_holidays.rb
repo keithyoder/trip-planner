@@ -164,6 +164,9 @@ state_holidays = [
 
   # Northeast Region
   ['Alagoas', 'Emancipação Política de Alagoas', 9, 16],
+  ['Alagoas', 'Dia de São João', 6, 24],
+  ['Alagoas', 'Dia de São Pedro e São Paulo', 6, 29],
+  ['Alagoas', 'Dia do Evangêlico', 11, 30],
   ['Bahia', 'Independência da Bahia', 7, 2],
   ['Ceará', 'Dia de São José', 3, 19],
   ['Maranhão', 'Adesão do Maranhão à Independência', 7, 28],

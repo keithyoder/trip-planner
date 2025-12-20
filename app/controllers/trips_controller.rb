@@ -7,7 +7,7 @@ class TripsController < ApplicationController
 
   # GET /trips or /trips.json
   def index
-    @trips = Trip.all
+    @trips = Trip.with_distance.with_duration.all
   end
 
   # GET /trips/1 or /trips/1.json
@@ -96,7 +96,7 @@ class TripsController < ApplicationController
 
   # Use callbacks to share common setup or constraints between actions.
   def set_trip
-    @trip = Trip.find(params[:id])
+    @trip = Trip.with_duration.with_distance.find(params[:id])
   end
 
   # Only allow a list of trusted parameters through.

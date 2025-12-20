@@ -8,19 +8,13 @@ class LocalesController < ApplicationController
   }.freeze
 
   def update
-    locale = LOCALE_MAPPING[params[:locale]] || params[:locale]
+    locale = params[:locale]&.to_sym
 
-    Rails.logger.debug "Before: session[:locale] = #{session[:locale]}"
-
-    if I18n.available_locales.map(&:to_s).include?(locale)
-      session[:locale] = locale
-      I18n.locale = locale
-
-      Rails.logger.debug "After: session[:locale] = #{session[:locale]}"
-
-      redirect_back_or_to(root_path, allow_other_host: false)
+    if I18n.available_locales.include?(locale)
+      cookies[:locale] = { value: locale.to_s, expires: 1.year.from_now }
+      redirect_back(fallback_location: root_path, notice: "Locale changed to #{locale}")
     else
-      redirect_back(fallback_location: root_path, alert: t('locale.invalid'))
+      redirect_back(fallback_location: root_path, alert: 'Invalid locale')
     end
   end
 end

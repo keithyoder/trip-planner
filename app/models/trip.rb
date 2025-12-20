@@ -19,12 +19,31 @@ class Trip < ApplicationRecord
   has_one :track, class_name: 'TripTrack', foreign_key: :trip_id, primary_key: :id
 
   attribute :fuel_consumption_l_per_100km, :fuel_consumption
+  attribute :distance, :distance
 
   validates :name, presence: true
 
-  def distance
-    route_sequences.sum(:distance)
-  end
+  scope :with_distance, lambda {
+    select(
+      'trips.*',
+      '(SELECT SUM(route_sequences.distance)
+        FROM route_sequences
+        INNER JOIN routes ON route_sequences.route_id = routes.id
+        WHERE routes.trip_id = trips.id) AS distance'
+    )
+  }
+
+  scope :with_duration, lambda {
+    select(
+      'trips.*',
+      '((SELECT trips.start_on + (EXTRACT(DAY FROM route_sequences.start_time_sequence)::integer + 1)
+       FROM route_sequences
+       INNER JOIN routes ON route_sequences.route_id = routes.id
+       WHERE routes.trip_id = trips.id
+       ORDER BY route_sequences.sequence DESC
+       LIMIT 1) - trips.start_on - 1) AS duration_days'
+    )
+  }
 
   def waypoints_coordinates
     waypoints.map { |wp| [wp.lonlat.x, wp.lonlat.y] }
@@ -32,9 +51,5 @@ class Trip < ApplicationRecord
 
   def calculate_route
     routes.each(&:calculate_route)
-  end
-
-  def duration_days
-    @duration_days ||= (route_sequences.order(sequence: :desc).first.date - start_on) - 1
   end
 end
