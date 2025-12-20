@@ -359,7 +359,10 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
-    redis (4.8.1)
+    redis (5.4.1)
+      redis-client (>= 0.22.0)
+    redis-client (0.26.2)
+      connection_pool
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -517,7 +520,7 @@ DEPENDENCIES
   puma (~> 7.0)
   rails (~> 7.1)
   rails-i18n
-  redis (~> 4.0)
+  redis (~> 5.0)
   rgeo-geojson
   rosemary
   rubocop
