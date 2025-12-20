@@ -1,5 +1,5 @@
 # config valid for current version and patch releases of Capistrano
-lock '~> 3.19.2'
+lock '~> 3.20.0'
 
 set :application, 'trip-planner'
 set :repo_url, 'https://github.com/keithyoder/trip-planner.git'
