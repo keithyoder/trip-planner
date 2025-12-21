@@ -40,6 +40,9 @@ en:
     minute:
       one: "minute"
       other: "minutes"
+    back: "Back"
+    close: "Close"
+    cancel: "Cancel"
   units:
     distance: "miles"
     distance_abbr: "mi"
@@ -104,6 +107,32 @@ en:
       no_trips: "No trips yet"
       start_planning: "Start planning your first adventure!"
       create_first_trip: "Create Your First Trip"
+    edit:
+      title: "Edit Trip"
+      subtitle: "Update your trip details"
+      view_trip: "View Trip"
+      all_trips: "All Trips"
+    form:
+      errors:
+        header:
+          one: "1 error prohibited this trip from being saved:"
+          other: "%{count} errors prohibited this trip from being saved:"
+      name:
+        label: "Trip Name"
+        placeholder: "e.g., Summer Road Trip 2025"
+        help: "Give your trip a memorable name"
+      start_on:
+        label: "Start Date"
+      vehicle_section:
+        title: "Vehicle Information"
+      vehicle_description:
+        label: "Vehicle"
+        placeholder: "e.g., 2020 Toyota Hilux 4x4"
+        help: "Year, make, model of your vehicle"
+      fuel_consumption:
+        label: "Fuel Consumption"
+        help: "Your vehicle's average fuel consumption"
+      submit: "Save Changes"
     show:
       trip_details: "Trip Details"
       starting_on: "Starting on %{date}"

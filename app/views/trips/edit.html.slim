@@ -7,12 +7,12 @@
           div
             h1.display-6.fw-bold.mb-1
               i.bi.bi-pencil-square.me-2
-              | Edit Trip
-            p.text-muted.mb-0 Update your trip details
+              = t('.title')
+            p.text-muted.mb-0 = t('.subtitle')
           
           = link_to trips_path, class: "btn btn-outline-secondary" do
             i.bi.bi-arrow-left.me-2
-            | Back
+            = t('common.back')
       
       / Form card
       .card.shadow-sm
@@ -23,8 +23,8 @@
       .d-flex.gap-2.mt-3
         = link_to @trip, class: "btn btn-outline-primary" do
           i.bi.bi-eye.me-2
-          | View Trip
+          = t('.view_trip')
         
         = link_to trips_path, class: "btn btn-outline-secondary" do
           i.bi.bi-list-ul.me-2
-          | All Trips
+          = t('.all_trips')

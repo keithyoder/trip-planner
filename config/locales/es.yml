@@ -40,6 +40,9 @@ es:
     minute:
       one: "minuto"
       other: "minutos"
+    back: "Volver"
+    close: "Cerrar"
+    cancel: "Cancelar"
   units:
     distance: "km"
     distance_abbr: "km"
@@ -102,6 +105,32 @@ es:
       no_trips: "Aún no hay viajes"
       start_planning: "¡Comienza a planificar tu primera aventura!"
       create_first_trip: "Crea tu primer viaje"
+    edit:
+      title: "Editar Viaje"
+      subtitle: "Actualiza los detalles de tu viaje"
+      view_trip: "Ver Viaje"
+      all_trips: "Todos los Viajes"
+    form:
+      errors:
+        header:
+          one: "1 error impidió que se guardara este viaje:"
+          other: "%{count} errores impidieron que se guardara este viaje:"
+      name:
+        label: "Nombre del Viaje"
+        placeholder: "ej: Viaje de Verano 2025"
+        help: "Dale un nombre memorable a tu viaje"
+      start_on:
+        label: "Fecha de Inicio"
+      vehicle_section:
+        title: "Información del Vehículo"
+      vehicle_description:
+        label: "Vehículo"
+        placeholder: "ej: Toyota Hilux 4x4 2020"
+        help: "Año, marca y modelo de tu vehículo"
+      fuel_consumption:
+        label: "Consumo de Combustible"
+        help: "Consumo promedio de tu vehículo"
+      submit: "Guardar Cambios"
     currencies:
       title: "Tipos de Cambio para %{trip_name}"
       back_to_trip: "Volver al Viaje"

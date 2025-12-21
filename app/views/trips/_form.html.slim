@@ -2,11 +2,10 @@
   / Error messages
   - if trip.errors.any?
     .alert.alert-danger.alert-dismissible.fade.show role="alert"
-      button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+      button.btn-close type="button" data-bs-dismiss="alert" aria-label=t('common.close')
       h5.alert-heading
         i.bi.bi-exclamation-triangle.me-2
-        = pluralize(trip.errors.count, "error")
-        |  prohibited this trip from being saved:
+        = t('.errors.header', count: trip.errors.count)
       ul.mb-0
         - trip.errors.full_messages.each do |message|
           li = message
@@ -14,47 +13,45 @@
   / Trip Name
   .mb-3
     = form.label :name, class: "form-label fw-semibold"
-      | Trip Name
+      = t('.name.label')
       span.text-danger<>  *
-    = form.text_field :name, class: "form-control form-control-lg", placeholder: "e.g., Summer Road Trip 2025", required: true
-    small.form-text.text-muted Give your trip a memorable name
+    = form.text_field :name, class: "form-control form-control-lg", placeholder: t('.name.placeholder'), required: true
+    small.form-text.text-muted = t('.name.help')
     
   / Start Date
   .row.mb-3
     .col-md-6
       = form.label :start_on, class: "form-label fw-semibold" do
-        | Start Date
+        = t('.start_on.label')
       = form.date_field :start_on, class: "form-control"
   
   / Vehicle Information Section
   .mb-4.pb-3.border-bottom
     h5.fw-semibold.mb-3
       i.bi.bi-car-front.me-2
-      | Vehicle Information
+      = t('.vehicle_section.title')
     
     / Vehicle Description
     .mb-3
       = form.label :vehicle_description, class: "form-label fw-semibold" do
-        | Vehicle
-      = form.text_field :vehicle_description, class: "form-control", placeholder: "e.g., 2020 Toyota Hilux 4x4"
-      small.form-text.text-muted Year, make, model of your vehicle
+        = t('.vehicle_description.label')
+      = form.text_field :vehicle_description, class: "form-control", placeholder: t('.vehicle_description.placeholder')
+      small.form-text.text-muted = t('.vehicle_description.help')
     
     / Fuel Consumption
     .row.mb-3
       .col-md-6
         = form.label :fuel_consumption_l_per_100km, class: "form-label fw-semibold" do
-          | Fuel Consumption
+          = t('.fuel_consumption.label')
         .input-group
           = form.number_field :fuel_consumption_l_per_100km, class: "form-control", step: "0.1", placeholder: "8.5"
           span.input-group-text
             - fuel_unit = :liters_per_100km
             = Units::FuelConsumption::UNITS[fuel_unit]
-        small.form-text.text-muted Your vehicle's average fuel consumption
+        small.form-text.text-muted = t('.fuel_consumption.help')
         
   / Form Actions
   .d-flex.gap-2.mt-4.pt-3.border-top
-    = form.submit class: "btn btn-primary btn-lg px-4" do
-      i.bi.bi-check-circle.me-2
-      | Save Changes
+    = form.submit t('.submit'), class: "btn btn-primary btn-lg px-4"
     
-    = link_to "Cancel", trip.persisted? ? trip : trips_path, class: "btn btn-outline-secondary btn-lg px-4"
+    = link_to t('common.cancel'), trip.persisted? ? trip : trips_path, class: "btn btn-outline-secondary btn-lg px-4"

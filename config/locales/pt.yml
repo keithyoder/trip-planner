@@ -40,6 +40,9 @@ pt:
     minute:
       one: "minuto"
       other: "minutos"
+    back: "Voltar"
+    close: "Fechar"
+    cancel: "Cancelar"
   units:
     distance: "km"
     distance_abbr: "km"
@@ -102,6 +105,32 @@ pt:
       no_trips: "Ainda não há viagens"
       start_planning: "Comece a planejar sua primeira aventura!"
       create_first_trip: "Crie sua primeira viagem"
+    edit:
+      title: "Editar Viagem"
+      subtitle: "Atualize os detalhes da sua viagem"
+      view_trip: "Ver Viagem"
+      all_trips: "Todas as Viagens"
+    form:
+      errors:
+        header:
+          one: "1 erro impediu que esta viagem fosse salva:"
+          other: "%{count} erros impediram que esta viagem fosse salva:"
+      name:
+        label: "Nome da Viagem"
+        placeholder: "ex: Viagem de Verão 2025"
+        help: "Dê um nome memorável à sua viagem"
+      start_on:
+        label: "Data de Início"
+      vehicle_section:
+        title: "Informações do Veículo"
+      vehicle_description:
+        label: "Veículo"
+        placeholder: "ex: Toyota Hilux 4x4 2020"
+        help: "Ano, marca e modelo do seu veículo"
+      fuel_consumption:
+        label: "Consumo de Combustível"
+        help: "Consumo médio do seu veículo"
+      submit: "Salvar Alterações"
     show:
       trip_details: "Detalhes da viagem"
       starting_on: "Inicia em %{date}"
