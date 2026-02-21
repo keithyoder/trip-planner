@@ -19,7 +19,7 @@
 #
 class Waypoint < ApplicationRecord
   belongs_to :trip
-  has_and_belongs_to_many :boundaries, -> { select(:id, :name, :level, :timezone, :hierarchy) }
+  has_and_belongs_to_many :boundaries
   belongs_to :osm_poi, foreign_key: :osm_poi_osm_id, primary_key: :osm_id, optional: true
   has_one :waypoint_distance, foreign_key: :id
 
@@ -48,8 +48,8 @@ class Waypoint < ApplicationRecord
     record.lonlat = GEO_FACTORY.point(result.longitude, result.latitude)
   end
 
-  after_commit :assign_boundaries, on: :create
-  after_commit :assign_boundaries, on: :update, if: :saved_change_to_lonlat?
+  after_create_commit { assign_boundaries }
+  after_update_commit { assign_boundaries if saved_change_to_lonlat? }
 
   scope :no_level, lambda { |level|
     where("id not in (SELECT waypoint_id FROM boundaries_waypoints JOIN boundaries ON boundaries_waypoints.boundary_id = boundaries.id WHERE level = #{level})")
@@ -79,7 +79,7 @@ class Waypoint < ApplicationRecord
 
   def location
     # boundaries.order(:level).pluck(:name).join(', ')
-    boundaries.sort_by(&:level).map(&:name).join(', ')
+    boundaries.without_geom.sort_by(&:level).map(&:name).join(', ')
   end
 
   def timezone
@@ -230,8 +230,6 @@ class Waypoint < ApplicationRecord
     sequence_range = waypoint_end.sequence - prev_waypoint.sequence
     prev_waypoint.sequence + (fraction_percent * sequence_range).round
   end
-
-  private
 
   # Triggers boundary assignment after the waypoint is saved.
   # Kept thin — all logic lives in Waypoints::BoundaryAssigner.

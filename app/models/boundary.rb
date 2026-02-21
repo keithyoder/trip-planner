@@ -20,6 +20,8 @@ class Boundary < ActiveRecord::Base
   has_and_belongs_to_many :waypoints
   has_many :holidays, dependent: :destroy
 
+  scope :without_geom, -> { select(:id, :name, :level, :timezone, :hierarchy, :osm_id, :admin_node_id, :admin_point) }
+
   scope :waypoint, lambda { |waypoint, level|
     where("ST_Within(ST_GeomFromText('#{waypoint.lonlat}', 4326), geom::geometry) AND level = #{level}")
   }

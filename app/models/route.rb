@@ -23,8 +23,8 @@ class Route < ApplicationRecord
   belongs_to :waypoint_start, class_name: 'Waypoint'
   belongs_to :waypoint_end, class_name: 'Waypoint'
 
-  after_commit :enqueue_calculate_route, on: :create
-  after_commit :enqueue_calculate_route, on: :update, if: :waypoints_changed?
+  after_create_commit { enqueue_calculate_route }
+  after_update_commit { enqueue_calculate_route if waypoints_changed? }
 
   scope :bounding_box, lambda {
     select('ST_Envelope(geom::geometry) AS bounding_box, *')
