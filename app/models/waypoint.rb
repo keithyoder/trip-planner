@@ -27,15 +27,6 @@ class Waypoint < ApplicationRecord
 
   GEO_FACTORY = RGeo::Geographic.spherical_factory(srid: 4326)
 
-  COUNTRY_CURRENCY = {
-    Brasil: :brl,
-    Uruguay: :uyu,
-    Argentina: :ars,
-    Chile: :clp,
-    Bolivia: :bob,
-    Perú: :pen
-  }.freeze
-
   enum :waypoint_type, {
     overnight: 1,
     lunch: 2,
@@ -57,6 +48,9 @@ class Waypoint < ApplicationRecord
     record.lonlat = GEO_FACTORY.point(result.longitude, result.latitude)
   end
 
+  after_commit :assign_boundaries, on: :create
+  after_commit :assign_boundaries, on: :update, if: :saved_change_to_lonlat?
+
   scope :no_level, lambda { |level|
     where("id not in (SELECT waypoint_id FROM boundaries_waypoints JOIN boundaries ON boundaries_waypoints.boundary_id = boundaries.id WHERE level = #{level})")
   }
@@ -70,7 +64,7 @@ class Waypoint < ApplicationRecord
   end
 
   def currency
-    COUNTRY_CURRENCY[country.to_sym]
+    CountryCurrency.for(country)
   end
 
   def formatted_toll
@@ -169,11 +163,9 @@ class Waypoint < ApplicationRecord
     "#{lonlat.y}, #{lonlat.x}"
   end
 
+  # Delegates to Waypoints::BoundaryAssigner — see app/services/waypoints/boundary_assigner.rb
   def self.find_boundary(level)
-    Waypoint.no_level(level).each do |w|
-      boundary = Boundary.select(:id).waypoint(w, level).first
-      w.boundaries << boundary if boundary.present?
-    end
+    Waypoints::BoundaryAssigner.assign_missing(levels: [level])
   end
 
   def self.calculate_sequence_for_position(trip, route, lat, lon)
@@ -237,5 +229,13 @@ class Waypoint < ApplicationRecord
 
     sequence_range = waypoint_end.sequence - prev_waypoint.sequence
     prev_waypoint.sequence + (fraction_percent * sequence_range).round
+  end
+
+  private
+
+  # Triggers boundary assignment after the waypoint is saved.
+  # Kept thin — all logic lives in Waypoints::BoundaryAssigner.
+  def assign_boundaries
+    Waypoints::BoundaryAssigner.new(self).assign
   end
 end

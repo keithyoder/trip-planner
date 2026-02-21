@@ -33,7 +33,7 @@ class GasPrice
   # @return [Money] Price per liter in the country's currency
   # @raise [KeyError] if country is not found
   def self.in_local_currency(country)
-    GASOLINE_PRICES.fetch(country).exchange_to(Waypoint::COUNTRY_CURRENCY[country])
+    GASOLINE_PRICES.fetch(country).exchange_to(CountryCurrency.fetch(country))
   end
 
   # Returns the gasoline price for a country in any specified currency
@@ -91,7 +91,7 @@ class GasPrice
     distance = Units::Distance.new(distance, units: :kilometers) if distance.is_a?(Numeric)
 
     # Get price per liter in target currency
-    currency ||= Waypoint::COUNTRY_CURRENCY[country]
+    currency ||= CountryCurrency.fetch(country)
     price_per_liter = for_country(country, currency)
 
     # Calculate fuel volume needed

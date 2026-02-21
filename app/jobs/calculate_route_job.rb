@@ -5,10 +5,10 @@ class CalculateRouteJob < ApplicationJob
     route = Route.find(route_id)
     return unless route
 
-    route.calculate_route
+    Routing::OrsService.new(route).calculate
     sleep(2)
     route.reload
-    route.import_duration
+    Routing::DurationImporter.new(route).import
   rescue StandardError => e
     Rails.logger.error("Failed to calculate route for Route ID #{route_id}: #{e.message}")
   end
