@@ -4,38 +4,39 @@
             i.bi.bi-list-ol.me-2
             = t('routes.show.turn_by_turn_directions')
     .card-body.p-0[style="max-height: 60vh; overflow-y: auto;"]
-        table.table.table-sm.table-hover.mb-0
-            thead.sticky-top.bg-white
-                tr 
-                    th.border-0 = t('routes.show.directions')
-                    th.border-0.text-end = t('routes.show.distance')
-                    th.border-0.text-end = t('routes.show.speed')
-                    th.border-0.text-end = t('routes.show.time')
-            tbody
-                - coordinates = @route.geom.coordinates
-                - route.waypoints.each do |waypoint|
-                    -if waypoint.waypoint_type != "routing"
-                        tr.table-success
-                            td[colspan="4"]
-                                i.bi.bi-geo-alt-fill.me-2
-                                strong = link_to(waypoint.name, trip_waypoint_path(trip, waypoint))
-                    - if (segment = route.segments&.shift)
-                        - segment['steps'].select { |step| step['distance'] > 50 }.each do |step|
-                            - coord = coordinates[step['way_points'].first]
-                            tr.direction-step[
-                                data-directions-target="step"
-                                data-action="click->directions#showOnMap"
-                                data-lat=coord[1]
-                                data-lng=coord[0]
-                                data-instruction=step['instruction']
-                                style="cursor: pointer;"
-                            ]
-                                td 
-                                    small = step['instruction']
-                                td.text-end.text-nowrap
-                                    small = format_distance(Units::Distance.new(step['distance']), decimals: 2)
-                                td.text-end.text-nowrap
-                                    - if step['duration'] > 0
-                                        small = format_speed(Units::Speed.new(step['distance'] / step['duration']))
-                                td.text-end.text-nowrap
-                                    small = (Time.at(route.start_time % 86400.0).utc + route.geom.points[step['way_points'].last].m).strftime("%H:%M")
+        - if @route.geom
+            table.table.table-sm.table-hover.mb-0
+                thead.sticky-top.bg-white
+                    tr 
+                        th.border-0 = t('routes.show.directions')
+                        th.border-0.text-end = t('routes.show.distance')
+                        th.border-0.text-end = t('routes.show.speed')
+                        th.border-0.text-end = t('routes.show.time')
+                tbody
+                    - coordinates = @route.geom.coordinates
+                    - route.waypoints.each do |waypoint|
+                        -if waypoint.waypoint_type != "routing"
+                            tr.table-success
+                                td[colspan="4"]
+                                    i.bi.bi-geo-alt-fill.me-2
+                                    strong = link_to(waypoint.name, trip_waypoint_path(trip, waypoint))
+                        - if (segment = route.segments&.shift)
+                            - segment['steps'].select { |step| step['distance'] > 50 }.each do |step|
+                                - coord = coordinates[step['way_points'].first]
+                                tr.direction-step[
+                                    data-directions-target="step"
+                                    data-action="click->directions#showOnMap"
+                                    data-lat=coord[1]
+                                    data-lng=coord[0]
+                                    data-instruction=step['instruction']
+                                    style="cursor: pointer;"
+                                ]
+                                    td 
+                                        small = step['instruction']
+                                    td.text-end.text-nowrap
+                                        small = format_distance(Units::Distance.new(step['distance']), decimals: 2)
+                                    td.text-end.text-nowrap
+                                        - if step['duration'] > 0
+                                            small = format_speed(Units::Speed.new(step['distance'] / step['duration']))
+                                    td.text-end.text-nowrap
+                                        small = (Time.at(route.start_time % 86400.0).utc + route.geom.points[step['way_points'].last].m).strftime("%H:%M")

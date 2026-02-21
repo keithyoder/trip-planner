@@ -35,13 +35,13 @@
             = t('trips.show.route_map')
         .card-body.p-0
           div[data-controller="routes"]
-            #container.w-100[
+            #container.w-100(
               data-routes-target="container" 
               style="min-height: 500px; height: 60vh;" 
               data-lon="34.5" 
               data-lat="-8.5" 
               data-route="#{@trip.track&.coordinates}"
-            ]
+            )
     
     / Trip details sidebar
     .col-lg-4
