@@ -31,6 +31,7 @@ Rails.application.routes.draw do
         end
       end
     end
+    resource :budget, only: :show
     member do
       get :currencies
     end
