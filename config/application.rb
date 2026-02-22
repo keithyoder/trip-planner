@@ -2,8 +2,6 @@
 
 require_relative 'boot'
 
-require 'rgeo/active_record'
-require 'active_record/connection_adapters/postgis_adapter'
 require 'rails/all'
 
 # Require the gems listed in Gemfile, including any gems

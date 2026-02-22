@@ -1,0 +1,80 @@
+/ app/views/budgets/show.html.slim
+
+- total = @budget.total
+- percentages = @budget.category_percentages
+
+.container-fluid.py-4
+  .row.mb-4
+    .col
+      h1.h3.fw-light
+        | #{@trip.name}
+        span.text-muted.ms-2.fs-6 Orçamento
+
+  / Summary cards
+  .row.g-3.mb-4
+    .col-6.col-md-3
+      .card.border-0.bg-light.h-100
+        .card-body
+          .small.text-muted.text-uppercase.fw-semibold.mb-1 Total
+          .fs-4.fw-bold = total.format
+
+    - @budget.by_category.sort_by { |_, v| -v.fractional }.each do |category, amount|
+      .col-6.col-md-3
+        .card.border-0.bg-light.h-100
+          .card-body
+            .small.text-muted.text-uppercase.fw-semibold.mb-1
+              = t("budget.categories.#{category}", default: category.to_s.humanize)
+            .fs-5.fw-semibold = amount.format
+            .progress.mt-2.bg-white style="height: 4px"
+              .progress-bar style="width: #{percentages[category]}%" role="progressbar"
+
+  / Category breakdown with collapsible line items
+  .card.border-0.shadow-sm
+    .card-header.bg-white.border-bottom.py-3
+      h2.h6.mb-0.text-uppercase.fw-semibold.text-muted Detalhamento por Categoria
+
+    .list-group.list-group-flush
+      - @budget.by_category.sort_by { |_, v| -v.fractional }.each_with_index do |(category, amount), index|
+        - items = @budget.items_for(category)
+        - collapse_id = "category-#{category}"
+
+        .list-group-item.px-4
+          / Category row — clickable to expand
+          a.d-flex.align-items-center.text-decoration-none.text-dark.py-2 href="##{collapse_id}" data-bs-toggle="collapse" aria-expanded="#{index == 0}" aria-controls="#{collapse_id}"
+            span.me-2.text-muted
+              i.bi.bi-chevron-down.collapse-chevron
+
+            span.flex-grow-1.fw-medium
+              = t("budget.categories.#{category}", default: category.to_s.humanize)
+
+            span.badge.bg-secondary.rounded-pill.me-3.fw-normal
+              = "#{items.size} #{'item'.pluralize(items.size)}"
+
+            span.fw-semibold = amount.format
+
+            - pct = percentages[category]
+            span.text-muted.small.ms-3.text-end style="min-width: 3.5rem"
+              = "#{pct}%"
+
+          / Line items
+          div id=collapse_id class="collapse #{index == 0 ? 'show' : ''}"
+            table.table.table-sm.table-borderless.mb-0.mt-1
+              thead
+                tr.text-muted.small.text-uppercase
+                  th.ps-0 Descrição
+                  th País
+                  th.text-end Valor
+              tbody
+                - items.each do |item|
+                  tr
+                    td.ps-0 = item.label
+                    td.text-muted.small = item.country
+                    td.text-end = item.amount.format
+              tfoot
+                tr.border-top
+                  td.ps-0.fw-semibold.text-end colspan="2" Subtotal
+                  td.text-end.fw-semibold = amount.format
+
+  / Footer: currency note
+  .text-muted.small.mt-3.text-end
+    | Valores convertidos para BRL. Taxas de câmbio podem variar.

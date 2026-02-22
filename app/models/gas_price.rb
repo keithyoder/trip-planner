@@ -20,11 +20,11 @@ class GasPrice
   # Prices are approximate averages and should be updated periodically
   GASOLINE_PRICES = {
     Brasil: Money.from_amount(6.16, :brl),
-    Argentina: Money.from_amount(1561, :ars),
-    Uruguay: Money.from_amount(81, :uyu),
-    Chile: Money.from_amount(1190, :clp),
-    Bolivia: Money.from_amount(3.77, :bob),
-    Peru: Money.from_amount(4.31, :pen)
+    Argentina: Money.from_amount(1630, :ars),
+    Uruguay: Money.from_amount(77, :uyu),
+    Chile: Money.from_amount(1175, :clp),
+    Bolivia: Money.from_amount(7, :bob),
+    Peru: Money.from_amount(4.0, :pen)
   }.freeze
 
   # Returns the gasoline price for a country in its local currency
