@@ -45,13 +45,13 @@
       h2.h6.mb-0.text-uppercase.fw-semibold.text-muted = t('budget.detail_heading')
 
     .list-group.list-group-flush
-      - @budget.by_category.sort_by { |_, v| -v.fractional }.each_with_index do |(category, amount), index|
+      - @budget.by_category.sort_by { |_, v| -v.fractional }.each do |category, amount|
         - items = @budget.items_for(category)
         - collapse_id = "category-#{category}"
 
         .list-group-item.px-4
-          / Category row — clickable to expand
-          a.d-flex.align-items-center.text-decoration-none.text-dark.py-2 href="##{collapse_id}" data-bs-toggle="collapse" aria-expanded="#{index == 0}" aria-controls="#{collapse_id}"
+          / Category row — clickable to expand (all collapsed by default)
+          a.d-flex.align-items-center.text-decoration-none.text-dark.py-2 href="##{collapse_id}" data-bs-toggle="collapse" aria-expanded="false" aria-controls="#{collapse_id}"
             span.me-2.text-muted
               i.bi.bi-chevron-down.collapse-chevron
 
@@ -67,23 +67,31 @@
             span.text-muted.small.ms-3.text-end style="min-width: 3.5rem"
               = "#{pct}%"
 
-          / Line items
-          div id=collapse_id class="collapse #{index == 0 ? 'show' : ''}"
+          / Line items — collapsed by default
+          div id=collapse_id class="collapse"
             table.table.table-sm.table-borderless.mb-0.mt-1
               thead
                 tr.text-muted.small.text-uppercase
                   th.ps-0 = t('budget.columns.description')
                   th = t('budget.columns.country')
-                  th.text-end = t('budget.columns.amount')
+                  th.text-end = t('budget.columns.local_amount')
+                  th.text-end = t('budget.columns.amount', currency: current_currency)
               tbody
                 - items.each do |item|
+                  - wp = item.waypoint
                   tr
-                    td.ps-0 = item.label
+                    td.ps-0
+                      / Translated waypoint type
+                      span.text-muted.small.me-1
+                        = t("waypoint.#{wp.waypoint_type}", default: wp.waypoint_type&.humanize)
+                      / Linked waypoint name
+                      = link_to wp.name, trip_waypoint_path(@trip, wp), class: 'text-decoration-none'
                     td.text-muted.small = item.country
-                    td.text-end = item.amount.format
+                    td.text-end.text-muted.small = item.amount.format
+                    td.text-end.fw-medium = item.amount.exchange_to(@budget.currency).format
               tfoot
                 tr.border-top
-                  td.ps-0.fw-semibold.text-end colspan="2" = t('budget.subtotal')
+                  td.ps-0.fw-semibold.text-end colspan="3" = t('budget.subtotal')
                   td.text-end.fw-semibold = amount.format
 
   / Footer: currency note

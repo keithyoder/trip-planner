@@ -18,23 +18,16 @@
 #
 # All amounts are converted to a single target currency for summary totals,
 # while line items retain their original currency for display.
-#
-# == Usage
-#
-#   budget = Budget.new(trip, currency: :brl)
-#   budget.total                 # => #<Money ...>
-#   budget.by_category           # => { lodging: Money, meals: Money, ... }
-#   budget.line_items            # => Array of BudgetItem
-#   budget.fuel_cost             # => Money
-#   budget.category_percentages  # => { lodging: 49.4, fuel: 20.9, ... }
+# Labels and translations are handled in the view layer.
 #
 class Budget
-  # A single budget line item
+  # A single budget line item.
+  # `amount` is in the waypoint's local currency.
+  # The view is responsible for translation and formatting.
   BudgetItem = Data.define(
     :waypoint,   # Waypoint — the source waypoint
     :category,   # Symbol — one of the CATEGORY_MAP values or :other
-    :label,      # String — display name
-    :amount,     # Money — in the waypoint's original currency
+    :amount,     # Money — in the waypoint's original local currency
     :country     # String — country name for context
   )
 
@@ -164,7 +157,6 @@ class Budget
       BudgetItem.new(
         waypoint: waypoint,
         category: category,
-        label: waypoint_label(waypoint),
         amount: amount,
         country: country_for(waypoint) || 'Unknown'
       )
@@ -201,7 +193,7 @@ class Budget
   # @return [Money]
   def monetary_cost_for(waypoint)
     country_sym = country_for(waypoint)&.to_sym
-    wp_currency = (country_sym && CountryCurrency.fetch(country_sym)) || currency
+    wp_currency = (country_sym && CountryCurrency.for(country_sym)) || currency
     Money.new(toll_in_minor_units(waypoint.toll, wp_currency), wp_currency)
   end
 
@@ -230,10 +222,5 @@ class Budget
                                   scope: Boundary.without_geom
                                 ).call
                               end
-  end
-
-  def waypoint_label(waypoint)
-    type_label = waypoint.waypoint_type&.humanize || 'Parada'
-    waypoint.name.presence ? "#{type_label} — #{waypoint.name}" : type_label
   end
 end
