@@ -2,7 +2,14 @@
 
 class Overpass
   require 'overpass_api_ruby'
+
+  class RateLimitError < StandardError; end
+  class QueryError < StandardError; end
+
   attr_reader :response
+
+  RETRY_ATTEMPTS = 3
+  RETRY_DELAY_SECONDS = 15
 
   CATEGORIES = {
     fuel: { query: "'amenity'='fuel'", distance: 500, types: %i[node way] },
@@ -20,40 +27,27 @@ class Overpass
     park: { query: "'leisure'='park'", distance: 500, types: %i[way relation] },
     rest_area: { query: "'highway'='rest_area'", distance: 100, types: %i[node way] },
     barrier: { query: "'barrier'='lift_gate'", distance: 10, types: %i[node way] },
-    tourism: { query: "'tourism']['tourism'!='hotel']['tourism'!='hostel']['tourism'!='motel']['tourism'!='guest_house'",
-               distance: 20_000, types: %i[node way relation] }
+    tourism: {
+      query: "'tourism']['tourism'!='hotel']['tourism'!='hostel']['tourism'!='motel']['tourism'!='guest_house'",
+      distance: 20_000,
+      types: %i[node way relation]
+    }
   }.freeze
 
   def initialize(route_id, node_type)
     @node_type = node_type
-    # @route = Route.find(route_id)
-    @max_distance = CATEGORIES[node_type][:distance]
-
+    @max_distance = CATEGORIES.fetch(node_type).fetch(:distance)
     @route = Route.with_bbox.find(route_id)
 
-    # box = RGeo::Cartesian::BoundingBox.create_from_geometry(@route.geom)
-    options = {
-      bbox: {
-        s: @route.bbox_s,
-        n: @route.bbox_n,
-        w: @route.bbox_w,
-        e: @route.bbox_e
-      },
-      timeout: 900,
-      maxsize: 1_073_741_824
-    }
-
-    overpass = OverpassAPI::QL.new(options)
     query = build_query
-    puts query
-    @response = overpass.query(query)
-  rescue JSON::ParserError
-    @response = overpass.query(query)
+    Rails.logger.debug "[Overpass] Query: #{query}"
+
+    @response = query_with_retry(build_client, query)
   end
 
   def close_to_route
     @close_to_route ||= begin
-      elements_with_geom = @response[:elements].filter_map do |element|
+      elements_with_geom = response[:elements].filter_map do |element|
         geom = element_to_geometry(element)
         next unless geom
 
@@ -62,25 +56,20 @@ class Overpass
 
       return [] if elements_with_geom.empty?
 
-      # Batch calculate distances in a single query
       calculate_distances_batch(elements_with_geom)
     end
   end
 
   def import
-    return if close_to_route.empty?
-
-    close_to_route.each do |element|
-      OsmPoiImporter.import_from_overpass(element, @node_type)
-    end
+    close_to_route.each { |element| OsmPoiImporter.import_from_overpass(element, @node_type) }
   end
 
   def pois_for_map
     close_to_route.map do |poi|
       {
         osm_id: osm_id_for_element(poi),
-        lat: latitude_for_element(poi),
-        lon: longitude_for_element(poi),
+        lat: coordinate_for_element(poi, :lat),
+        lon: coordinate_for_element(poi, :lon),
         name: poi.dig(:tags, :name),
         street: poi.dig(:tags, :"addr:street"),
         city: poi.dig(:tags, :"addr:city"),
@@ -92,37 +81,56 @@ class Overpass
 
   private
 
+  # -- Query ---------------------------------------------------------------
+
+  def build_client
+    OverpassAPI::QL.new(
+      bbox: {
+        s: @route.bbox_s,
+        n: @route.bbox_n,
+        w: @route.bbox_w,
+        e: @route.bbox_e
+      },
+      timeout: 900,
+      maxsize: 1_073_741_824
+    )
+  end
+
   def build_query
-    category = CATEGORIES[@node_type]
-    types = category[:types]
-
-    # Build query for each type (node, way, relation)
-    queries = types.map do |type|
-      case type
-      when :node
-        "node[#{category[:query]}]"
-      when :way
-        "way[#{category[:query]}]"
-      when :relation
-        "relation[#{category[:query]}]"
-      end
-    end
-
-    # Combine queries and request geometry data
+    types = CATEGORIES[@node_type][:types]
+    filter = CATEGORIES[@node_type][:query]
+    queries = types.map { |type| "#{type}[#{filter}]" }
     "(#{queries.join(';')};);out body geom;"
   end
 
+  def query_with_retry(client, query)
+    RETRY_ATTEMPTS.times do |attempt|
+      return client.query(query)
+    rescue JSON::ParserError => e
+      handle_parse_error(e, attempt)
+    end
+  end
+
+  def handle_parse_error(error, attempt)
+    Rails.logger.warn "[Overpass] XML response on attempt #{attempt + 1}/#{RETRY_ATTEMPTS} " \
+                      "(likely rate limit or server error): #{error.message.truncate(200)}"
+
+    raise RateLimitError, "Overpass API failed after #{RETRY_ATTEMPTS} attempts" if attempt == RETRY_ATTEMPTS - 1
+
+    Rails.logger.info "[Overpass] Retrying in #{RETRY_DELAY_SECONDS}s..."
+    sleep(RETRY_DELAY_SECONDS)
+  end
+
+  # -- Geometry ------------------------------------------------------------
+
   def element_to_geometry(element)
     case element[:type]
-    when 'node'
-      node_to_point(element)
-    when 'way'
-      way_to_geometry(element)
-    when 'relation'
-      relation_to_geometry(element)
+    when 'node'     then node_to_point(element)
+    when 'way'      then way_to_geometry(element)
+    when 'relation' then relation_to_geometry(element)
     end
   rescue StandardError => e
-    Rails.logger.warn "Failed to create geometry for #{element[:type]} #{element[:id]}: #{e.message}"
+    Rails.logger.warn "[Overpass] Failed to build geometry for #{element[:type]} #{element[:id]}: #{e.message}"
     nil
   end
 
@@ -133,49 +141,25 @@ class Overpass
   end
 
   def way_to_geometry(element)
-    return nil unless element[:geometry]&.any?
+    coords = element[:geometry]&.map { |n| "#{n[:lon]} #{n[:lat]}" }
+    return nil if coords.nil? || coords.size < 2
 
-    coords = element[:geometry].map { |node| "#{node[:lon]} #{node[:lat]}" }
-    return nil if coords.size < 2
+    first, last = element[:geometry].first, element[:geometry].last
+    closed = coords.size >= 4 && first[:lat] == last[:lat] && first[:lon] == last[:lon]
 
-    # Check if way is closed (polygon)
-    first_coord = element[:geometry].first
-    last_coord = element[:geometry].last
-
-    if coords.size >= 4 && first_coord[:lat] == last_coord[:lat] && first_coord[:lon] == last_coord[:lon]
-      "POLYGON((#{coords.join(', ')}))"
-    else
-      "LINESTRING(#{coords.join(', ')})"
-    end
+    closed ? "POLYGON((#{coords.join(', ')}))" : "LINESTRING(#{coords.join(', ')})"
   end
 
   def relation_to_geometry(element)
-    # For relations, we'll use the center point if available
-    # or calculate centroid from members
-    return nil unless element[:center] || element[:members]&.any?
+    return "POINT(#{element[:center][:lon]} #{element[:center][:lat]})" if element[:center]
 
-    if element[:center]
-      "POINT(#{element[:center][:lon]} #{element[:center][:lat]})"
-    else
-      # Try to build geometry from outer members
-      build_relation_from_members(element)
-    end
-  end
-
-  def build_relation_from_members(element)
-    # Extract coordinates from all way members with role 'outer'
     outer_ways = element[:members]&.select { |m| m[:type] == 'way' && m[:role] == 'outer' }
     return nil unless outer_ways&.any?
 
-    # If we have geometry in members, use it
-    all_coords = outer_ways.flat_map do |way|
-      way[:geometry]&.map { |node| "#{node[:lon]} #{node[:lat]}" }
-    end.compact
+    coords = outer_ways.flat_map { |w| w[:geometry]&.map { |n| "#{n[:lon]} #{n[:lat]}" } }.compact
+    return nil if coords.size < 4
 
-    return nil if all_coords.size < 4
-
-    # Create a polygon if we have enough points
-    "POLYGON((#{all_coords.join(', ')}))"
+    "POLYGON((#{coords.join(', ')}))"
   rescue StandardError
     nil
   end
@@ -183,8 +167,7 @@ class Overpass
   def calculate_distances_batch(elements_with_geom)
     route_geog = "'#{@route.geom.as_text}'::geography"
 
-    # Build SQL for batch distance calculation
-    geom_cases = elements_with_geom.map.with_index do |item, idx|
+    geom_cases = elements_with_geom.each_with_index.map do |item, idx|
       "WHEN #{idx} THEN ST_MakeValid(ST_GeomFromText('#{item[:geom]}', 4326))::geography"
     end.join(' ')
 
@@ -192,221 +175,38 @@ class Overpass
       SELECT idx, ST_Distance(
         #{route_geog},
         CASE idx #{geom_cases} END
-      ) as distance
-      FROM generate_series(0, #{elements_with_geom.size - 1}) as idx
+      ) AS distance
+      FROM generate_series(0, #{elements_with_geom.size - 1}) AS idx
     SQL
 
-    distances = ActiveRecord::Base.connection.select_rows(sql)
-
-    distances.each_with_object([]) do |(idx, distance), result|
+    ActiveRecord::Base.connection.select_rows(sql).each_with_object([]) do |(idx, distance), result|
       result << elements_with_geom[idx.to_i][:element] if distance.to_f < @max_distance
     end
   end
 
-  def osm_id_for_element(element)
-    # Create a unique ID combining type and ID
-    "#{element[:type]}_#{element[:id]}"
-  end
-
-  def build_poi_attributes(element)
-    {
-      osm_id: osm_id_for_element(element),
-      osm_type: element[:type],
-      name: element.dig(:tags, :name),
-      poi_type: @node_type,
-      city: element.dig(:tags, :"addr:city"),
-      street: element.dig(:tags, :"addr:street"),
-      district: element.dig(:tags, :"addr:suburb"),
-      geom: element_to_geometry(element),
-      metadata: extract_metadata(element)
-    }
-  end
-
-  def extract_metadata(element)
-    tags = element[:tags] || {}
-
-    case @node_type
-    when :toll
-      extract_toll_metadata(tags)
-    when :fuel
-      extract_fuel_metadata(tags)
-    when :restaurant
-      extract_restaurant_metadata(tags)
-    when :hotel
-      extract_hotel_metadata(tags)
-    else
-      # Store all relevant tags for other types
-      extract_generic_metadata(tags)
-    end
-  end
-
-  def extract_toll_metadata(tags)
-    {
-      # Toll amounts
-      toll: tags[:toll],
-      charge: tags[:charge],
-      toll_hgv: tags[:"toll:hgv"],
-      toll_motorcar: tags[:"toll:motorcar"],
-      toll_motorcycle: tags[:"toll:motorcycle"],
-
-      # Payment methods
-      payment_cash: tags[:"payment:cash"],
-      payment_cards: tags[:"payment:cards"],
-      payment_electronic: tags[:"payment:electronic_toll_collection"],
-      payment_notes: tags[:"payment:notes"],
-
-      # Toll details
-      toll_type: tags[:toll_type],
-      barrier: tags[:barrier],
-
-      # Operational info
-      operator: tags[:operator],
-      operator_wikidata: tags[:"operator:wikidata"],
-      network: tags[:network],
-      ref: tags[:ref],
-
-      # Access info
-      opening_hours: tags[:opening_hours],
-      lanes: tags[:lanes],
-      maxheight: tags[:maxheight],
-      maxweight: tags[:maxweight],
-
-      # Contact
-      website: tags[:website] || tags[:"contact:website"],
-      phone: tags[:phone] || tags[:"contact:phone"],
-
-      # Keep all tags for reference
-      all_tags: tags
-    }.compact # Remove nil values
-  end
-
-  def extract_fuel_metadata(tags)
-    {
-      brand: tags[:brand],
-      operator: tags[:operator],
-
-      # Fuel types
-      fuel_diesel: tags[:"fuel:diesel"],
-      fuel_octane_95: tags[:"fuel:octane_95"],
-      fuel_octane_98: tags[:"fuel:octane_98"],
-      fuel_e85: tags[:"fuel:e85"],
-      fuel_lpg: tags[:"fuel:lpg"],
-
-      # Amenities
-      shop: tags[:shop],
-      car_wash: tags[:car_wash],
-      compressed_air: tags[:compressed_air],
-      vacuum_cleaner: tags[:vacuum_cleaner],
-
-      # Services
-      atm: tags[:atm],
-      toilets: tags[:toilets],
-      restaurant: tags[:restaurant],
-
-      # Hours & contact
-      opening_hours: tags[:opening_hours],
-      website: tags[:website],
-      phone: tags[:phone],
-
-      all_tags: tags
-    }.compact
-  end
-
-  def extract_restaurant_metadata(tags)
-    {
-      cuisine: tags[:cuisine],
-      diet_vegetarian: tags[:"diet:vegetarian"],
-      diet_vegan: tags[:"diet:vegan"],
-      outdoor_seating: tags[:outdoor_seating],
-      takeaway: tags[:takeaway],
-      delivery: tags[:delivery],
-      opening_hours: tags[:opening_hours],
-      website: tags[:website],
-      phone: tags[:phone],
-      wheelchair: tags[:wheelchair],
-
-      all_tags: tags
-    }.compact
-  end
-
-  def extract_hotel_metadata(tags)
-    {
-      stars: tags[:stars],
-      rooms: tags[:rooms],
-      beds: tags[:beds],
-      internet_access: tags[:internet_access],
-      internet_access_fee: tags[:"internet_access:fee"],
-      swimming_pool: tags[:swimming_pool],
-      restaurant: tags[:restaurant],
-      bar: tags[:bar],
-      parking: tags[:parking],
-      wheelchair: tags[:wheelchair],
-      website: tags[:website],
-      phone: tags[:phone],
-      email: tags[:email],
-
-      all_tags: tags
-    }.compact
-  end
-
-  def extract_generic_metadata(tags)
-    {
-      operator: tags[:operator],
-      opening_hours: tags[:opening_hours],
-      website: tags[:website],
-      phone: tags[:phone],
-      wheelchair: tags[:wheelchair],
-
-      all_tags: tags
-    }.compact
-  end
+  # -- Element helpers -----------------------------------------------------
 
   def osm_id_for_element(element)
     "#{element[:type]}_#{element[:id]}"
   end
 
-  def latitude_for_element(element)
+  # Returns lat or lon for any element type, falling back to centroid for ways/relations.
+  def coordinate_for_element(element, axis)
     case element[:type]
     when 'node'
-      element[:lat]
+      element[axis]
     when 'way', 'relation'
-      # Use provided center if available
-      if element[:center]
-        element[:center][:lat]
-      elsif element[:geometry]&.any?
-        # Calculate centroid from geometry
-        calculate_centroid(element[:geometry])[:lat]
-      end
-    end
-  end
-
-  def longitude_for_element(element)
-    case element[:type]
-    when 'node'
-      element[:lon]
-    when 'way', 'relation'
-      # Use provided center if available
-      if element[:center]
-        element[:center][:lon]
-      elsif element[:geometry]&.any?
-        # Calculate centroid from geometry
-        calculate_centroid(element[:geometry])[:lon]
-      end
+      element.dig(:center, axis) || calculate_centroid(element[:geometry])&.dig(axis)
     end
   end
 
   def calculate_centroid(geometry)
-    # Calculate the centroid (center point) from geometry coordinates
-    return nil if geometry.empty?
+    return nil if geometry.blank?
 
-    lats = geometry.map { |point| point[:lat] }.compact
-    lons = geometry.map { |point| point[:lon] }.compact
+    values = geometry.filter_map { |p| { lat: p[:lat], lon: p[:lon] } if p[:lat] && p[:lon] }
+    return nil if values.empty?
 
-    return nil if lats.empty? || lons.empty?
-
-    {
-      lat: lats.sum / lats.size.to_f,
-      lon: lons.sum / lons.size.to_f
-    }
+    { lat: values.sum { |v| v[:lat] } / values.size.to_f,
+      lon: values.sum { |v| v[:lon] } / values.size.to_f }
   end
 end

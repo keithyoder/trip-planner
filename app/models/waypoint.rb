@@ -50,6 +50,8 @@ class Waypoint < ApplicationRecord
 
   after_create_commit { assign_boundaries }
   after_update_commit { assign_boundaries if saved_change_to_lonlat? }
+  after_create_commit { recalculate_affected_route }
+  after_update_commit { recalculate_affected_route if saved_change_to_lonlat? }
 
   scope :no_level, lambda { |level|
     where("id not in (SELECT waypoint_id FROM boundaries_waypoints JOIN boundaries ON boundaries_waypoints.boundary_id = boundaries.id WHERE level = #{level})")
@@ -231,9 +233,29 @@ class Waypoint < ApplicationRecord
     prev_waypoint.sequence + (fraction_percent * sequence_range).round
   end
 
+  private 
+
   # Triggers boundary assignment after the waypoint is saved.
   # Kept thin — all logic lives in Waypoints::BoundaryAssigner.
   def assign_boundaries
     Waypoints::BoundaryAssigner.new(self).assign
+  end
+
+  def recalculate_affected_route
+    route = find_affected_route
+    CalculateRouteJob.perform_later(route.id) if route
+  end
+
+  def find_affected_route
+    trip.routes
+        .where(
+          'waypoint_start_id IN (SELECT id FROM waypoints WHERE sequence <= :seq AND trip_id = :trip)',
+          seq: sequence, trip: trip_id
+        )
+        .where(
+          'waypoint_end_id IN (SELECT id FROM waypoints WHERE sequence >= :seq AND trip_id = :trip)',
+          seq: sequence, trip: trip_id
+        )
+        .first
   end
 end

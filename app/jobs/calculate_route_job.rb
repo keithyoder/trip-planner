@@ -9,6 +9,7 @@ class CalculateRouteJob < ApplicationJob
     sleep(2)
     route.reload
     Routing::DurationImporter.new(route).import
+    CalculateFuelJob.perform_later(route.trip_id)
   rescue StandardError => e
     Rails.logger.error("Failed to calculate route for Route ID #{route_id}: #{e.message}")
   end
