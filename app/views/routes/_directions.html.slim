@@ -39,4 +39,7 @@
                                         - if step['duration'] > 0
                                             small = format_speed(Units::Speed.new(step['distance'] / step['duration']))
                                     td.text-end.text-nowrap
-                                        small = (Time.at(route.start_time % 86400.0).utc + route.geom.points[step['way_points'].last].m).strftime("%H:%M")
+                                        - if route.start_time
+                                            small = (Time.at(route.start_time % 86400.0).utc + route.geom.points[step['way_points'].last].m).strftime("%H:%M")
+                                        - else
+                                            small.text-muted —

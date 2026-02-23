@@ -19,7 +19,7 @@
 class Route < ApplicationRecord
   belongs_to :trip
   has_one :route_sequence
-  has_many :elevations, class_name: 'RouteElevation'
+  has_many :elevations, class_name: 'RouteElevation'  
   belongs_to :waypoint_start, class_name: 'Waypoint'
   belongs_to :waypoint_end, class_name: 'Waypoint'
 
@@ -37,10 +37,10 @@ class Route < ApplicationRecord
   scope :with_bbox, lambda { |padding_meters = 5000|
     select(
       '*',
-      "ST_XMin(ST_Expand(geom::geometry, #{padding_meters})) AS bbox_w",
-      "ST_XMax(ST_Expand(geom::geometry, #{padding_meters})) AS bbox_e",
-      "ST_YMin(ST_Expand(geom::geometry, #{padding_meters})) AS bbox_s",
-      "ST_YMax(ST_Expand(geom::geometry, #{padding_meters})) AS bbox_n"
+      "ST_XMin(ST_Envelope(ST_Buffer(geom::geography, #{padding_meters})::geometry)) AS bbox_w",
+      "ST_XMax(ST_Envelope(ST_Buffer(geom::geography, #{padding_meters})::geometry)) AS bbox_e",
+      "ST_YMin(ST_Envelope(ST_Buffer(geom::geography, #{padding_meters})::geometry)) AS bbox_s",
+      "ST_YMax(ST_Envelope(ST_Buffer(geom::geography, #{padding_meters})::geometry)) AS bbox_n"
     )
   }
 
@@ -60,17 +60,17 @@ class Route < ApplicationRecord
 
   # Delegates to Routes::GeometryService — see app/services/routes/geometry_service.rb
   def points
-    Routes::GeometryService.new(self).points
+    Routing::GeometryService.new(self).points
   end
 
   # Delegates to Routes::GeometryService — see app/services/routes/geometry_service.rb
   def boundaries
-    Routes::GeometryService.new(self).boundaries
+    Routing::GeometryService.new(self).boundaries
   end
 
   # Delegates to Routes::GeometryService — see app/services/routes/geometry_service.rb
   def closest_point_info(lat, lon)
-    Routes::GeometryService.new(self).closest_point_info(lat, lon)
+    Routing::GeometryService.new(self).closest_point_info(lat, lon)
   end
 
   def self.find_by_waypoint(waypoint)

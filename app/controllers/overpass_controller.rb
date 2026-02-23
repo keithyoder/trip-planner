@@ -15,8 +15,7 @@ class OverpassController < ApplicationController
 
   def show
     @trip = Trip.find(params[:trip_id])
-    @route = @trip.routes.find(params[:route_id])
-
+    @route = @trip.routes.with_bbox.find(params[:route_id])
     @node_type = params[:type].to_sym
 
     unless Overpass::CATEGORIES.key?(@node_type)
@@ -24,14 +23,19 @@ class OverpassController < ApplicationController
       return
     end
 
+    Rails.logger.debug "BBOX: s=#{@route.bbox_s} n=#{@route.bbox_n} w=#{@route.bbox_w} e=#{@route.bbox_e}"
     @overpass = Overpass.new(@route.id, @node_type)
     @pois = @overpass.close_to_route
 
     cache_key = "overpass_#{@route.id}_#{@node_type}"
     Rails.cache.write(cache_key, @pois, expires_in: 1.hour)
     session[:overpass_cache_key] = cache_key
-  end
 
+  rescue JSON::ParserError
+    Rails.logger.error "Overpass XML response: #{@response.inspect}"
+    raise
+  end
+  
   def import_waypoint
     osm_id = params[:osm_id]
     cache_key = session[:overpass_cache_key]
