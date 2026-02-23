@@ -51,6 +51,8 @@ pt:
     fuel_consumption: "km_per_liter"
     fuel_consumption_abbr: "km/L"
     system: "metric"
+    elevation: "meters"
+    elevation_abbr: "m"
   number:
     format:
       delimiter: "."

@@ -17,9 +17,10 @@
 #  surfaces          :jsonb
 #
 class Route < ApplicationRecord
+  include Routes::ElevationProfile
+
   belongs_to :trip
   has_one :route_sequence
-  has_many :elevations, class_name: 'RouteElevation'  
   belongs_to :waypoint_start, class_name: 'Waypoint'
   belongs_to :waypoint_end, class_name: 'Waypoint'
 

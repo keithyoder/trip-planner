@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_30_173537) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_23_133536) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "ltree"
   enable_extension "plpgsql"
@@ -286,43 +286,5 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_30_173537) do
        LEFT JOIN waypoint_distances ON (((waypoints.sequence >= waypoint_distances.sequence) AND (waypoints.trip_id = waypoint_distances.trip_id))))
     GROUP BY waypoints.id
     ORDER BY waypoints.sequence;
-  SQL
-  create_view "route_elevations", sql_definition: <<-SQL
-      WITH point_data AS (
-           SELECT routes.id AS route_id,
-              (route_points.dp).path[1] AS index,
-              (route_points.dp).geom AS point,
-              st_y((route_points.dp).geom) AS latitude,
-              st_x((route_points.dp).geom) AS longitude,
-              st_z((route_points.dp).geom) AS elevation,
-                  CASE
-                      WHEN ((route_points.dp).path[1] = 1) THEN (0)::double precision
-                      ELSE st_length((st_geometryn(st_split((routes.geom)::geometry, (route_points.dp).geom), 1))::geography)
-                  END AS distance
-             FROM ( SELECT routes_1.id,
-                      st_dumppoints((routes_1.geom)::geometry) AS dp
-                     FROM routes routes_1) route_points,
-              routes
-            WHERE (route_points.id = routes.id)
-          ), bucketed AS (
-           SELECT point_data.route_id,
-              point_data.index,
-              point_data.latitude,
-              point_data.longitude,
-              point_data.elevation,
-              point_data.distance,
-              floor((point_data.distance / (100)::double precision)) AS bucket,
-              row_number() OVER (PARTITION BY point_data.route_id, (floor((point_data.distance / (100)::double precision))) ORDER BY point_data.index) AS rn
-             FROM point_data
-          )
-   SELECT route_id,
-      index,
-      latitude,
-      longitude,
-      elevation,
-      distance
-     FROM bucketed
-    WHERE (rn = 1)
-    ORDER BY route_id, index;
   SQL
 end

@@ -51,6 +51,8 @@ en:
     fuel_consumption: "mpg_us"
     fuel_consumption_abbr: "MPG"
     system: "imperial"
+    elevation: "feet"
+    elevation_abbr: "ft"
   number:
     format:
       delimiter: ","
