@@ -24,7 +24,7 @@ class GasPrice
     Uruguay: Money.from_amount(77, :uyu),
     Chile: Money.from_amount(1175, :clp),
     Bolivia: Money.from_amount(7, :bob),
-    Peru: Money.from_amount(4.0, :pen)
+    Perú: Money.from_amount(4.0, :pen)
   }.freeze
 
   # Returns the gasoline price for a country in its local currency
