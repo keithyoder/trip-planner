@@ -192,3 +192,25 @@ en:
       waypoint_start: "Start Waypoint"
       waypoint_end: "End Waypoint"
       submit: "Save Route"
+  budget:
+    title: Budget
+    detail_heading: Category Breakdown
+    subtotal: Subtotal
+    currency_note: Amounts converted to %{currency}. Exchange rates may vary.
+    items_count:
+      one: "1 item"
+      other: "%{count} items"
+    select_currency: Currency
+    categories:
+      lodging: Lodging
+      meals: Meals
+      tolls: Tolls
+      ferry: Ferry / Crossing
+      attractions: Attractions & Entrance Fees
+      parking: Parking
+      fuel: Fuel
+      other: Other
+    columns:
+      description: Description
+      country: Country
+      amount: Amount

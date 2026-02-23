@@ -188,3 +188,25 @@ es:
       waypoint_start: "Punto de inicio"
       waypoint_end: "Punto final"
       submit: "Guardar Ruta"
+  budget:
+    title: Presupuesto
+    detail_heading: Desglose por Categoría
+    subtotal: Subtotal
+    currency_note: Montos convertidos a %{currency}. Las tasas de cambio pueden variar.
+    items_count:
+      one: "1 elemento"
+      other: "%{count} elementos"
+    select_currency: Moneda
+    categories:
+      lodging: Alojamiento
+      meals: Comidas
+      tolls: Peajes
+      ferry: Ferry / Cruce
+      attractions: Atracciones / Entradas
+      parking: Estacionamiento
+      fuel: Combustible
+      other: Otros
+    columns:
+      description: Descripción
+      country: País
+      amount: Monto

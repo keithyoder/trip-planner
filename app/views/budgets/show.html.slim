@@ -2,13 +2,24 @@
 
 - total = @budget.total
 - percentages = @budget.category_percentages
+- current_currency = @budget.currency.to_s.upcase
 
 .container-fluid.py-4
-  .row.mb-4
+  .row.mb-4.align-items-center
     .col
       h1.h3.fw-light
         | #{@trip.name}
-        span.text-muted.ms-2.fs-6 Orçamento
+        span.text-muted.ms-2.fs-6 = t('budget.title')
+
+    / Currency selector
+    .col-auto
+      form.d-flex.align-items-center.gap-2 method="get"
+        label.small.text-muted.mb-0 for="currency"
+          = t('budget.select_currency')
+        select.form-select.form-select-sm name="currency" id="currency" onchange="this.form.submit()"
+          - %w[BRL USD ARS UYU CLP BOB PEN].each do |code|
+            option value=code.downcase selected=(code == current_currency ? 'selected' : nil)
+              = code
 
   / Summary cards
   .row.g-3.mb-4
@@ -23,7 +34,7 @@
         .card.border-0.bg-light.h-100
           .card-body
             .small.text-muted.text-uppercase.fw-semibold.mb-1
-              = t("budget.categories.#{category}", default: category.to_s.humanize)
+              = t("budget.categories.#{category}")
             .fs-5.fw-semibold = amount.format
             .progress.mt-2.bg-white style="height: 4px"
               .progress-bar style="width: #{percentages[category]}%" role="progressbar"
@@ -31,7 +42,7 @@
   / Category breakdown with collapsible line items
   .card.border-0.shadow-sm
     .card-header.bg-white.border-bottom.py-3
-      h2.h6.mb-0.text-uppercase.fw-semibold.text-muted Detalhamento por Categoria
+      h2.h6.mb-0.text-uppercase.fw-semibold.text-muted = t('budget.detail_heading')
 
     .list-group.list-group-flush
       - @budget.by_category.sort_by { |_, v| -v.fractional }.each_with_index do |(category, amount), index|
@@ -45,10 +56,10 @@
               i.bi.bi-chevron-down.collapse-chevron
 
             span.flex-grow-1.fw-medium
-              = t("budget.categories.#{category}", default: category.to_s.humanize)
+              = t("budget.categories.#{category}")
 
             span.badge.bg-secondary.rounded-pill.me-3.fw-normal
-              = "#{items.size} #{'item'.pluralize(items.size)}"
+              = t('budget.items_count', count: items.size)
 
             span.fw-semibold = amount.format
 
@@ -61,9 +72,9 @@
             table.table.table-sm.table-borderless.mb-0.mt-1
               thead
                 tr.text-muted.small.text-uppercase
-                  th.ps-0 Descrição
-                  th País
-                  th.text-end Valor
+                  th.ps-0 = t('budget.columns.description')
+                  th = t('budget.columns.country')
+                  th.text-end = t('budget.columns.amount')
               tbody
                 - items.each do |item|
                   tr
@@ -72,9 +83,9 @@
                     td.text-end = item.amount.format
               tfoot
                 tr.border-top
-                  td.ps-0.fw-semibold.text-end colspan="2" Subtotal
+                  td.ps-0.fw-semibold.text-end colspan="2" = t('budget.subtotal')
                   td.text-end.fw-semibold = amount.format
 
   / Footer: currency note
   .text-muted.small.mt-3.text-end
-    | Valores convertidos para BRL. Taxas de câmbio podem variar.
+    = t('budget.currency_note', currency: current_currency)

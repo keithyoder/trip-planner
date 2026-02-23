@@ -191,3 +191,25 @@ pt:
       waypoint_start: "Ponto de início"
       waypoint_end: "Ponto final"
       submit: "Salvar Rota"
+  budget:
+    title: Orçamento
+    detail_heading: Detalhamento por Categoria
+    subtotal: Subtotal
+    currency_note: Valores convertidos para %{currency}. Taxas de câmbio podem variar.
+    items_count:
+      one: "1 item"
+      other: "%{count} itens"
+    select_currency: Moeda
+    categories:
+      lodging: Hospedagem
+      meals: Alimentação
+      tolls: Pedágios
+      ferry: Travessia / Ferry
+      attractions: Atrações / Entradas
+      parking: Estacionamento
+      fuel: Combustível
+      other: Outros
+    columns:
+      description: Descrição
+      country: País
+      amount: Valor

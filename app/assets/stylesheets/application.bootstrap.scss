@@ -65,3 +65,10 @@
 .locale-switcher-container .dropdown-menu button.dropdown-item:hover {
   background-color: #f8f9fa;
 }
+
+.collapse-chevron {
+  transition: transform 0.2s ease;
+}
+a[aria-expanded="true"] .collapse-chevron {
+  transform: rotate(-180deg);
+}
