@@ -138,6 +138,8 @@ class Waypoint < ApplicationRecord
       delay = 0
     end
 
+    sequence = sequence + 1 while Trip.find(trip_id).waypoints.where(sequence: sequence).exists?
+
     create_attrs = {
       trip_id: trip_id, # Added: need trip_id
       sequence: sequence,

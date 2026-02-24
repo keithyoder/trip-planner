@@ -1,23 +1,49 @@
 class OsmPoiImporter
   def self.import_from_overpass(poi, node_type)
-    # Normalize to symbol keys for consistency
     poi = poi.deep_symbolize_keys if poi.respond_to?(:deep_symbolize_keys)
 
-    osm_poi = OsmPoi.find_or_initialize_by(osm_id: "#{poi[:type]}_#{poi[:id]}")
+    osm_id = "#{poi[:type]}_#{poi[:id]}"
 
-    osm_poi.update!(
+    attributes = {
+      osm_id:   osm_id,
       osm_type: poi[:type],
-      name: poi.dig(:tags, :name),
-      poi_type: node_type,
-      city: poi.dig(:tags, :'addr:city'),
-      street: poi.dig(:tags, :'addr:street'),
+      name:     poi.dig(:tags, :name),
+      poi_type: OsmPoi.poi_types[node_type.to_sym],
+      city:     poi.dig(:tags, :'addr:city'),
+      street:   poi.dig(:tags, :'addr:street'),
       district: poi.dig(:tags, :'addr:suburb'),
-      geom: create_geometry(poi),
-      metadata: extract_metadata(poi[:tags], node_type)
+      geom:     create_geometry(poi),
+      metadata: extract_metadata(poi[:tags], node_type),
+    }
+
+    OsmPoi.upsert(
+      attributes,
+      unique_by: :osm_id,
+      update_only: attributes.keys - [:osm_id]
     )
 
-    osm_poi
+    OsmPoi.find_by(osm_id: osm_id)
   end
+
+  # def self.import_from_overpass(poi, node_type)
+  #   # Normalize to symbol keys for consistency
+  #   poi = poi.deep_symbolize_keys if poi.respond_to?(:deep_symbolize_keys)
+
+  #   osm_poi = OsmPoi.find_or_initialize_by(osm_id: "#{poi[:type]}_#{poi[:id]}")
+
+  #   osm_poi.update!(
+  #     osm_type: poi[:type],
+  #     name: poi.dig(:tags, :name),
+  #     poi_type: node_type,
+  #     city: poi.dig(:tags, :'addr:city'),
+  #     street: poi.dig(:tags, :'addr:street'),
+  #     district: poi.dig(:tags, :'addr:suburb'),
+  #     geom: create_geometry(poi),
+  #     metadata: extract_metadata(poi[:tags], node_type)
+  #   )
+
+  #   osm_poi
+  # end
 
   private
 
