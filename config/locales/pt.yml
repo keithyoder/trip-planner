@@ -43,6 +43,7 @@ pt:
     back: "Voltar"
     close: "Fechar"
     cancel: "Cancelar"
+    edit: "Editar"
   units:
     distance: "km"
     distance_abbr: "km"
@@ -182,9 +183,9 @@ pt:
       total_time: "Tempo total"
       route_map: "Mapa da rota"
       turn_by_turn_directions: "Direções passo a passo"
-      distance_km: "Distância Km"
+      distance_km: "Distância"
       elevation: "Altitude"
-
+      overpass: "POIs próximos"
     edit:
       title: "Editar Rota"
       calculate_route: "Calcular Rota"

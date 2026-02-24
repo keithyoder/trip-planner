@@ -43,6 +43,7 @@ en:
     back: "Back"
     close: "Close"
     cancel: "Cancel"
+    edit: "Edit"
   units:
     distance: "miles"
     distance_abbr: "mi"
@@ -184,8 +185,9 @@ en:
       total_time: "Total Time"
       route_map: "Route Map"
       turn_by_turn_directions: "Turn-by-Turn Directions"
-      distance_km: "Distance Km"
+      distance_km: "Distance"
       elevation: "Elevation"
+      overpass: "Nearby POIs"
     edit:
       title: "Edit Route"
       calculate_route: "Calculate Route"

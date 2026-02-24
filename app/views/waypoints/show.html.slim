@@ -19,7 +19,7 @@
           = link_to edit_trip_waypoint_path(@trip, @waypoint), class: "btn btn-outline-primary" do
             i.bi.bi-pencil-square.me-2
             | Edit
-          = link_to trip_waypoints_path(@trip), class: "btn btn-outline-secondary" do
+          = link_to @waypoint.route ? trip_route_path(@trip, @waypoint.route) : trip_waypoints_path(@trip), class: "btn btn-outline-secondary" do
             i.bi.bi-arrow-left.me-2
             | Back
   

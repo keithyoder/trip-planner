@@ -26,7 +26,7 @@ class Overpass
     parking: { query: "'amenity'='parking'", distance: 100, types: %i[way relation] },
     park: { query: "'leisure'='park'", distance: 500, types: %i[way relation] },
     rest_area: { query: "'highway'='rest_area'", distance: 100, types: %i[node way] },
-    barrier: { query: "'barrier'='lift_gate'", distance: 10, types: %i[node way] },
+    barrier: { query: ["'barrier'='lift_gate', 'amenity'='shelter'"], distance: 10, types: %i[node way] },
     tourism: {
       query: "'tourism']['tourism'!='hotel']['tourism'!='hostel']['tourism'!='motel']['tourism'!='guest_house'",
       distance: 20_000,
@@ -98,8 +98,12 @@ class Overpass
 
   def build_query
     types = CATEGORIES[@node_type][:types]
-    filter = CATEGORIES[@node_type][:query]
-    queries = types.map { |type| "#{type}[#{filter}]" }
+    queries_list = Array(CATEGORIES[@node_type][:query])
+
+    queries = queries_list.flat_map do |filter|
+      types.map { |type| "#{type}[#{filter}]" }
+    end
+
     "(#{queries.join(';')};);out body geom;"
   end
 
@@ -112,8 +116,9 @@ class Overpass
   end
 
   def handle_parse_error(error, attempt)
-    Rails.logger.warn "[Overpass] XML response on attempt #{attempt + 1}/#{RETRY_ATTEMPTS} " \
-                      "(likely rate limit or server error): #{error.message.truncate(200)}"
+    Rails.logger.warn "[Overpass] XML response on attempt #{attempt + 1}/#{RETRY_ATTEMPTS}: #{error.message}"
+    Rails.logger.warn "[Overpass] Full error: #{error.inspect}"
+    Rails.logger.warn "[Overpass] Backtrace: #{error.backtrace.first(3).join("\n")}"
 
     raise RateLimitError, "Overpass API failed after #{RETRY_ATTEMPTS} attempts" if attempt == RETRY_ATTEMPTS - 1
 

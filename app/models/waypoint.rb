@@ -57,8 +57,12 @@ class Waypoint < ApplicationRecord
     where("id not in (SELECT waypoint_id FROM boundaries_waypoints JOIN boundaries ON boundaries_waypoints.boundary_id = boundaries.id WHERE level = #{level})")
   }
 
+  def route
+    @route ||= Route.find_by_waypoint(self)
+  end
+
   def route_sequence
-    Route.find_by_waypoint(self).route_sequence
+    route&.route_sequence
   end
 
   def country
@@ -137,8 +141,6 @@ class Waypoint < ApplicationRecord
       waypoint_type = :attraction
       delay = 0
     end
-
-    sequence = sequence + 1 while Trip.find(trip_id).waypoints.where(sequence: sequence).exists?
 
     create_attrs = {
       trip_id: trip_id, # Added: need trip_id
@@ -235,8 +237,6 @@ class Waypoint < ApplicationRecord
     prev_waypoint.sequence + (fraction_percent * sequence_range).round
   end
 
-  private 
-
   # Triggers boundary assignment after the waypoint is saved.
   # Kept thin — all logic lives in Waypoints::BoundaryAssigner.
   def assign_boundaries
@@ -244,20 +244,6 @@ class Waypoint < ApplicationRecord
   end
 
   def recalculate_affected_route
-    route = find_affected_route
     CalculateRouteJob.perform_later(route.id) if route
-  end
-
-  def find_affected_route
-    trip.routes
-        .where(
-          'waypoint_start_id IN (SELECT id FROM waypoints WHERE sequence <= :seq AND trip_id = :trip)',
-          seq: sequence, trip: trip_id
-        )
-        .where(
-          'waypoint_end_id IN (SELECT id FROM waypoints WHERE sequence >= :seq AND trip_id = :trip)',
-          seq: sequence, trip: trip_id
-        )
-        .first
   end
 end

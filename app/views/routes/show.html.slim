@@ -18,7 +18,10 @@
         .btn-group role="group"
           = link_to edit_trip_route_path(@route.trip, @route), class: "btn btn-outline-primary" do
             i.bi.bi-pencil-square.me-2
-            = t('routes.show.edit')
+            = t('common.edit')
+          = link_to trip_route_overpass_index_path(@route.trip, @route), class: "btn btn-outline-secondary" do
+            i.bi.bi-geo-alt.me-2
+            = t('routes.show.overpass')
           = link_to trip_routes_path(@route.trip), class: "btn btn-outline-secondary" do
             i.bi.bi-arrow-left.me-2
             = t('routes.show.back_to_routes')

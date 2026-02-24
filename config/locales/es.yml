@@ -43,6 +43,7 @@ es:
     back: "Volver"
     close: "Cerrar"
     cancel: "Cancelar"
+    edit: "Editar"
   units:
     distance: "km"
     distance_abbr: "km"
@@ -182,6 +183,9 @@ es:
       total_time: "Tiempo total"
       route_map: "Mapa de la ruta"
       turn_by_turn_directions: "Indicaciones paso a paso"
+      distance_km: "Distancia"
+      elevation: "Altidud"
+      overpass: "POIs cercanos"
     edit:
       title: "Editar Ruta"
       calculate_route: "Calcular Ruta"
