@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
-class Overpass
-  require 'overpass_api_ruby'
+require 'net/http'
 
+class Overpass
   class RateLimitError < StandardError; end
   class QueryError < StandardError; end
 
   attr_reader :response
 
+  API_URL = URI('https://overpass-api.de/api/interpreter').freeze
   RETRY_ATTEMPTS = 3
   RETRY_DELAY_SECONDS = 15
 
@@ -26,7 +27,7 @@ class Overpass
     parking: { query: "'amenity'='parking'", distance: 100, types: %i[way relation] },
     park: { query: "'leisure'='park'", distance: 500, types: %i[way relation] },
     rest_area: { query: "'highway'='rest_area'", distance: 100, types: %i[node way] },
-    barrier: { query: ["'barrier'='lift_gate', 'amenity'='shelter'"], distance: 10, types: %i[node way] },
+    barrier: { query: ["'barrier'='lift_gate'", "'amenity'='shelter'"], distance: 10, types: %i[node way] },
     tourism: {
       query: "'tourism']['tourism'!='hotel']['tourism'!='hostel']['tourism'!='motel']['tourism'!='guest_house'",
       distance: 20_000,
@@ -42,7 +43,7 @@ class Overpass
     query = build_query
     Rails.logger.debug "[Overpass] Query: #{query}"
 
-    @response = query_with_retry(build_client, query)
+    @response = query_with_retry(query)
   end
 
   def close_to_route
@@ -83,42 +84,52 @@ class Overpass
 
   # -- Query ---------------------------------------------------------------
 
-  def build_client
-    OverpassAPI::QL.new(
-      bbox: {
-        s: @route.bbox_s,
-        n: @route.bbox_n,
-        w: @route.bbox_w,
-        e: @route.bbox_e
-      },
-      timeout: 900,
-      maxsize: 1_073_741_824
-    )
-  end
-
   def build_query
     types = CATEGORIES[@node_type][:types]
     queries_list = Array(CATEGORIES[@node_type][:query])
 
+    # Build bounding box filter — Overpass QL bbox is (s,w,n,e)
+    bbox = "(#{@route.bbox_s},#{@route.bbox_w},#{@route.bbox_n},#{@route.bbox_e})"
+
     queries = queries_list.flat_map do |filter|
-      types.map { |type| "#{type}[#{filter}]" }
+      types.map { |type| "#{type}[#{filter}]#{bbox}" }
     end
 
-    "(#{queries.join(';')};);out body geom;"
+    "[out:json][timeout:90];(#{queries.join(';')};);out body geom;"
   end
 
-  def query_with_retry(client, query)
+  def query_with_retry(query)
     RETRY_ATTEMPTS.times do |attempt|
-      return client.query(query)
+      return perform_request(query)
+    rescue QueryError => e
+      handle_error(e, attempt)
     rescue JSON::ParserError => e
-      handle_parse_error(e, attempt)
+      handle_error(e, attempt)
     end
   end
 
-  def handle_parse_error(error, attempt)
-    Rails.logger.warn "[Overpass] XML response on attempt #{attempt + 1}/#{RETRY_ATTEMPTS}: #{error.message}"
-    Rails.logger.warn "[Overpass] Full error: #{error.inspect}"
-    Rails.logger.warn "[Overpass] Backtrace: #{error.backtrace.first(3).join("\n")}"
+  def perform_request(query)
+    http = Net::HTTP.new(API_URL.host, API_URL.port)
+    http.use_ssl = true
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE if Rails.env.development?
+
+    response = http.post(
+      API_URL.path,
+      "data=#{URI.encode_www_form_component(query)}",
+      'Accept' => 'application/json',
+      'Content-Type' => 'application/x-www-form-urlencoded'
+    )
+
+    unless response.is_a?(Net::HTTPSuccess)
+      Rails.logger.error "[Overpass] HTTP #{response.code}: #{response.body.truncate(500)}"
+      raise QueryError, "Overpass returned HTTP #{response.code}"
+    end
+
+    JSON.parse(response.body, symbolize_names: true)
+  end
+
+  def handle_error(error, attempt)
+    Rails.logger.warn "[Overpass] Error on attempt #{attempt + 1}/#{RETRY_ATTEMPTS}: #{error.message}"
 
     raise RateLimitError, "Overpass API failed after #{RETRY_ATTEMPTS} attempts" if attempt == RETRY_ATTEMPTS - 1
 
@@ -196,7 +207,6 @@ class Overpass
     "#{element[:type]}_#{element[:id]}"
   end
 
-  # Returns lat or lon for any element type, falling back to centroid for ways/relations.
   def coordinate_for_element(element, axis)
     case element[:type]
     when 'node'

@@ -155,20 +155,32 @@ class Waypoint < ApplicationRecord
       delay = 0
     end
 
+    taken = Trip.find(trip_id)
+                .waypoints
+                .where(sequence: sequence..sequence + 50)
+                .pluck(:sequence)
+                .to_set
+
+    sequence = (sequence..sequence + 50).find { |s| !taken.include?(s) } || sequence + 51
+
     create_attrs = {
-      trip_id: trip_id, # Added: need trip_id
+      trip_id: trip_id,
       sequence: sequence,
       waypoint_type: waypoint_type,
       delay: delay,
       name: osm_poi.name || osm_poi.metadata.dig('all_tags', 'note'),
       lonlat: osm_poi.lonlat,
-      osm_poi_id: osm_poi.old_id # Or use osm_id if you changed the FK
+      osm_poi_id: osm_poi.old_id
     }
 
-    # Add toll amount if available
     create_attrs[:toll] = osm_poi.toll_amount if osm_poi.toll_amount
 
     create(create_attrs)
+  rescue ActiveRecord::RecordNotUnique
+    # Race condition fallback — another POI was inserted concurrently,
+    # retry with the next available sequence
+    sequence += 1
+    retry
   end
 
   def latlon=(coordinates)
