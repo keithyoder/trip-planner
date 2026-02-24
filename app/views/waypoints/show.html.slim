@@ -78,6 +78,41 @@
                   i.bi.bi-cash-coin.me-2
                   | Toll / Cost
                 strong.text-success.fs-5 = format_currency(@waypoint)
+
+      / Notes
+      - if @waypoint.notes.present?
+        .card.shadow-sm.mb-4
+          .card-header.bg-white.border-bottom
+            .d-flex.justify-content-between.align-items-center
+              h5.card-title.mb-0
+                i.bi.bi-journal-text.me-2
+                | Notes
+              - if @waypoint.notes.keys.length > 1
+                ul.nav.nav-tabs.card-header-tabs.mb-0 role="tablist"
+                  - @waypoint.notes.each_with_index do |(locale, content), index|
+                    - next if content.blank?
+                    li.nav-item role="presentation"
+                      button.nav-link[
+                        class=("active" if index.zero?)
+                        data-bs-toggle="tab"
+                        data-bs-target="#show-notes-pane-#{locale}"
+                        type="button"
+                        role="tab"
+                      ]
+                        = locale.upcase
+          .card-body
+            - if @waypoint.notes.keys.length > 1
+              .tab-content
+                - @waypoint.notes.each_with_index do |(locale, content), index|
+                  - next if content.blank?
+                  .tab-pane.fade[
+                    class=("show active" if index.zero?)
+                    id="show-notes-pane-#{locale}"
+                    role="tabpanel"
+                  ]
+                    .markdown-preview = @waypoint.rendered_notes(locale)
+            - else
+              .markdown-preview = @waypoint.rendered_notes
       
       / Danger zone for delete action
       .card.shadow-sm.danger-zone-card

@@ -81,7 +81,60 @@
       = form.number_field :toll, class: "form-control", placeholder: "0.00", step: "0.01"
     .form-text
       | Toll cost at this location (if applicable)
-  
+
+  / Notes field - tabbed markdown editor per language
+  .mb-4
+    label.form-label.fw-semibold
+      i.bi.bi-journal-text.me-2
+      | Notes
+    .card[data-controller="waypoint-notes"]
+      .card-header.p-0
+        ul.nav.nav-tabs.card-header-tabs.px-2.pt-2 role="tablist"
+          - %w[en es pt].each_with_index do |locale, index|
+            li.nav-item role="presentation"
+              button.nav-link[
+                class=("active" if index.zero?)
+                id="notes-tab-#{locale}"
+                data-bs-toggle="tab"
+                data-bs-target="#notes-pane-#{locale}"
+                type="button"
+                role="tab"
+              ]
+                = locale.upcase
+      .card-body
+        .tab-content
+          - %w[en es pt].each_with_index do |locale, index|
+            .tab-pane.fade[
+              class=("show active" if index.zero?)
+              id="notes-pane-#{locale}"
+              role="tabpanel"
+            ]
+              .row.g-0
+                .col-6.pe-2
+                  label.form-label.small.text-muted
+                    i.bi.bi-pencil.me-1
+                    | Markdown
+                  = form.text_area "notes[#{locale}]",
+                      name: "waypoint[notes][#{locale}]",
+                      value: waypoint.notes&.dig(locale),
+                      class: "form-control font-monospace",
+                      rows: 8,
+                      placeholder: "Write notes in #{locale.upcase}...",
+                      data: { action: "input->waypoint-notes#preview", locale: locale }
+                .col-6.ps-2
+                  label.form-label.small.text-muted
+                    i.bi.bi-eye.me-1
+                    | Preview
+                  .border.rounded.p-3.bg-light.markdown-preview[
+                    style="min-height: 190px;"
+                    data-waypoint-notes-target="preview"
+                    data-locale=locale
+                  ]
+                    - if waypoint.notes&.dig(locale).present?
+                      = waypoint.rendered_notes(locale)
+    .form-text
+      | Supports Markdown formatting. Content will be shown in the visitor's language.
+
   / Submit button
   .d-grid.gap-2.d-md-flex.justify-content-md-end.mt-4.pt-3.border-top
     = link_to "Cancel", trip_waypoints_path(@trip), class: "btn btn-lg btn-outline-secondary"

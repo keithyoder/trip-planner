@@ -1,0 +1,25 @@
+/* app/assets/stylesheets/markdown.css */
+.markdown-preview h1, .markdown-preview h2, .markdown-preview h3 { 
+  font-size: revert; 
+  font-weight: revert; 
+  margin: revert;
+}
+.markdown-preview ul, .markdown-preview ol { 
+  padding-left: 1.5rem; 
+  margin-bottom: 1rem; 
+}
+.markdown-preview a { 
+  target: _blank;
+}
+.markdown-preview p { margin-bottom: 0.75rem; }
+.markdown-preview p:last-child { margin-bottom: 0; }
+.markdown-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+.markdown-preview th, .markdown-preview td {
+  border: 1px solid #dee2e6;
+  padding: 0.5rem;
+}
+.markdown-preview th { background-color: #f8f9fa; }

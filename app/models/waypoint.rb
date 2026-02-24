@@ -97,6 +97,19 @@ class Waypoint < ApplicationRecord
     @solar_position ||= SolarPosition.new(date, lonlat, timezone)
   end
 
+  def notes_for(locale = I18n.locale)
+    return nil if notes.blank?
+
+    notes[locale.to_s].presence || notes[I18n.default_locale.to_s].presence
+  end
+
+  def rendered_notes(locale = I18n.locale)
+    markdown = notes_for(locale)
+    return nil if markdown.blank?
+
+    MarkdownRenderer.render(markdown)
+  end
+
   def copy_from_osm(osm_poi_id)
     # Just delegate to the class method
     waypoint = self.class.copy_from_osm(osm_poi_id, trip_id, sequence)

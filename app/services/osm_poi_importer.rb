@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class OsmPoiImporter
   def self.import_from_overpass(poi, node_type)
     poi = poi.deep_symbolize_keys if poi.respond_to?(:deep_symbolize_keys)
@@ -5,15 +7,15 @@ class OsmPoiImporter
     osm_id = "#{poi[:type]}_#{poi[:id]}"
 
     attributes = {
-      osm_id:   osm_id,
+      osm_id: osm_id,
       osm_type: poi[:type],
-      name:     poi.dig(:tags, :name),
+      name: poi.dig(:tags, :name),
       poi_type: OsmPoi.poi_types[node_type.to_sym],
-      city:     poi.dig(:tags, :'addr:city'),
-      street:   poi.dig(:tags, :'addr:street'),
+      city: poi.dig(:tags, :'addr:city'),
+      street: poi.dig(:tags, :'addr:street'),
       district: poi.dig(:tags, :'addr:suburb'),
-      geom:     create_geometry(poi),
-      metadata: extract_metadata(poi[:tags], node_type),
+      geom: create_geometry(poi),
+      metadata: extract_metadata(poi[:tags], node_type)
     }
 
     OsmPoi.upsert(
@@ -44,8 +46,6 @@ class OsmPoiImporter
 
   #   osm_poi
   # end
-
-  private
 
   def self.create_geometry(poi)
     case poi[:type]
