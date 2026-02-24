@@ -37,8 +37,11 @@ class OpenRouteService
     req.body = body.to_json unless body.nil?
     req['Authorization'] = @access_token
     req['Content-type'] = 'application/json'
+    http_options = { use_ssl: true }
+    http_options[:verify_mode] = OpenSSL::SSL::VERIFY_NONE if Rails.env.development?
+
     parse_response(
-      Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+      Net::HTTP.start(uri.hostname, uri.port, **http_options) do |http|
         http.request(req)
       end
     )

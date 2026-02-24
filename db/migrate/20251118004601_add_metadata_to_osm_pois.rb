@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddMetadataToOsmPois < ActiveRecord::Migration[7.2]
   def change
     add_column :osm_pois, :metadata, :jsonb, default: {}

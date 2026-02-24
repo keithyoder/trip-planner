@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/holiday.rb
 class Holiday < ApplicationRecord
   belongs_to :boundary

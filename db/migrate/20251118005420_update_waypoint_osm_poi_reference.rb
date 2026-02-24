@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Migration to update foreign key
 class UpdateWaypointOsmPoiReference < ActiveRecord::Migration[7.2]
   def change

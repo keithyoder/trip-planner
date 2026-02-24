@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/budgets_controller.rb
 
 class BudgetsController < ApplicationController

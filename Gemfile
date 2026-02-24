@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
@@ -30,12 +32,13 @@ gem 'pg'
 gem 'puma', '~> 7.0'
 gem 'rails', '~> 7.1'
 gem 'rails-i18n'
+gem 'redcarpet'
 gem 'redis', '~> 5.0'
 gem 'rgeo-geojson'
 gem 'rosemary'
 gem 'rubocop'
 gem 'sassc-rails'
-gem 'scenic', '1.8.0'
+gem 'scenic'
 gem 'slim'
 gem 'sprockets-rails'
 gem 'stimulus-rails'

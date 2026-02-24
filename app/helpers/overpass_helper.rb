@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module OverpassHelper
   def poi_icon(node_type)
     icons = {

@@ -13,7 +13,7 @@
 class Trip < ApplicationRecord
   has_many :routes, dependent: :destroy
   has_many :route_sequences, through: :routes
-  #has_many :elevations, through: :routes, class_name: 'RouteElevation'
+  # has_many :elevations, through: :routes, class_name: 'RouteElevation'
   has_many :waypoints, dependent: :destroy
   has_many :waypoint_distances, foreign_key: :trip_id, primary_key: :id
   has_one :track, class_name: 'TripTrack', foreign_key: :trip_id, primary_key: :id

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/jobs/import_child_boundaries_job.rb
 class ImportChildBoundariesJob < ApplicationJob
   queue_as :default

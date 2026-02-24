@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # db/seeds/brazil_holidays.rb
 # Brazil National Holidays for 2027
 #

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddTripToRoutes < ActiveRecord::Migration[7.1]
   def change
     add_reference :routes, :trip, null: true, foreign_key: true

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ApplicationHelper
   def format_duration(duration)
     return t('common.not_available') if duration.nil?

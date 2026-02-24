@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DropRouteElevationView < ActiveRecord::Migration[7.2]
   def up
     drop_view :route_elevations

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddOsmTypeToOsmPois < ActiveRecord::Migration[7.0]
   def change
     # Add osm_type column to distinguish between nodes, ways, and relations

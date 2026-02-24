@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateOsmPois < ActiveRecord::Migration[7.1]
   def change
     create_table :osm_pois do |t|

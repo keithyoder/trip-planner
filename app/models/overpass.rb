@@ -149,7 +149,8 @@ class Overpass
     coords = element[:geometry]&.map { |n| "#{n[:lon]} #{n[:lat]}" }
     return nil if coords.nil? || coords.size < 2
 
-    first, last = element[:geometry].first, element[:geometry].last
+    first = element[:geometry].first
+    last = element[:geometry].last
     closed = coords.size >= 4 && first[:lat] == last[:lat] && first[:lon] == last[:lon]
 
     closed ? "POLYGON((#{coords.join(', ')}))" : "LINESTRING(#{coords.join(', ')})"

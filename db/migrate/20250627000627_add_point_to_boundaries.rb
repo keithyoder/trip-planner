@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddPointToBoundaries < ActiveRecord::Migration[7.1]
   def change
     add_column :boundaries, :admin_point, :st_point, geographic: true, null: true

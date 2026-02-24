@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/helpers/units_helper.rb
 module UnitsHelper
   # Format distance with proper unit conversion and number formatting

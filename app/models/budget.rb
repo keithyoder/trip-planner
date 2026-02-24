@@ -34,17 +34,17 @@ class Budget
   # Maps waypoint_type -> budget category.
   # nil means the type carries no cost and is excluded from the budget.
   CATEGORY_MAP = {
-    overnight:            :lodging,
-    lunch:                :meals,
-    toll_booth:           :tolls,
-    ferry_boarding:       :ferry,
-    ferry_disembarkment:  nil,
-    attraction:           :attractions,
-    parking:              :parking,
-    gas_station:          :fuel,
-    border_crossing:      nil,
-    routing:              nil,
-    bank:                 nil
+    overnight: :lodging,
+    lunch: :meals,
+    toll_booth: :tolls,
+    ferry_boarding: :ferry,
+    ferry_disembarkment: nil,
+    attraction: :attractions,
+    parking: :parking,
+    gas_station: :fuel,
+    border_crossing: nil,
+    routing: nil,
+    bank: nil
   }.freeze
 
   attr_reader :trip, :currency
@@ -68,8 +68,8 @@ class Budget
   # @return [Money]
   def total
     @total ||= line_items
-      .map { |item| item.amount.exchange_to(currency) }
-      .sum(Money.new(0, currency))
+               .map { |item| item.amount.exchange_to(currency) }
+               .sum(Money.new(0, currency))
   end
 
   # Totals grouped by category, in target currency
@@ -77,12 +77,12 @@ class Budget
   # @return [Hash<Symbol, Money>]
   def by_category
     @by_category ||= line_items
-      .group_by(&:category)
-      .transform_values do |items|
-        items
-          .map { |item| item.amount.exchange_to(currency) }
-          .sum(Money.new(0, currency))
-      end
+                     .group_by(&:category)
+                     .transform_values do |items|
+                       items
+                         .map { |item| item.amount.exchange_to(currency) }
+                         .sum(Money.new(0, currency))
+                     end
   end
 
   # Line items for a specific category

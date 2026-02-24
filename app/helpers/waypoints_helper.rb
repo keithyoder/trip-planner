@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module WaypointsHelper
   def humanize(secs)
     # Convert seconds to a human-readable format
@@ -34,17 +36,17 @@ module WaypointsHelper
     waypoints
       .reject { |waypoint| waypoint.waypoint_type == 'routing' }
       .map do |waypoint|
-      {
-        lat: waypoint.lonlat.y,  # PostGIS point: y = latitude
-        lon: waypoint.lonlat.x,  # PostGIS point: x = longitude
-        type: waypoint.waypoint_type,
-        name: waypoint.name,
-        sequence: waypoint.sequence,
-        toll: waypoint.toll,
-        toll_formatted: waypoint.toll ? format_currency(waypoint) : nil
-        # segment_distance: waypoint.segment_distance ? "#{waypoint.segment_distance.km.round(1)} km" : nil,
-        # trip_distance: waypoint.trip_distance ? "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km" : nil
-      }
+        {
+          lat: waypoint.lonlat.y,  # PostGIS point: y = latitude
+          lon: waypoint.lonlat.x,  # PostGIS point: x = longitude
+          type: waypoint.waypoint_type,
+          name: waypoint.name,
+          sequence: waypoint.sequence,
+          toll: waypoint.toll,
+          toll_formatted: waypoint.toll ? format_currency(waypoint) : nil
+          # segment_distance: waypoint.segment_distance ? "#{waypoint.segment_distance.km.round(1)} km" : nil,
+          # trip_distance: waypoint.trip_distance ? "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km" : nil
+        }
     end.to_json
   end
 

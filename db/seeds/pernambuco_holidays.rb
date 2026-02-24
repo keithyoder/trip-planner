@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # db/seeds/pernambuco_municipal_holidays_hardcoded.rb
 # Pernambuco Municipal Holidays (Hardcoded)
 #

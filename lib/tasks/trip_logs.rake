@@ -19,7 +19,7 @@ namespace :trip_logs do # rubocop:disable Metrics/BlockLength
   end
 
   desc 'Detect and save trips for a date range (safe to re-run)'
-  task :detect_range, %i[start_date end_date] => :environment do |t, args|
+  task :detect_range, %i[start_date end_date] => :environment do |_t, args|
     timezone = TelemetryLog.current_timezone
 
     start_date = Time.find_zone(timezone).parse(args[:start_date] || 1.day.ago.to_s)

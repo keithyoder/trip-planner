@@ -30,12 +30,11 @@ class OverpassController < ApplicationController
     cache_key = "overpass_#{@route.id}_#{@node_type}"
     Rails.cache.write(cache_key, @pois, expires_in: 1.hour)
     session[:overpass_cache_key] = cache_key
-
   rescue JSON::ParserError
     Rails.logger.error "Overpass XML response: #{@response.inspect}"
     raise
   end
-  
+
   def import_waypoint
     osm_id = params[:osm_id]
     cache_key = session[:overpass_cache_key]

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddFieldsToWaypoint < ActiveRecord::Migration[7.0]
   def change
     add_column :waypoints, :type, :integer

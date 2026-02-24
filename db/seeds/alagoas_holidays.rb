@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # db/seeds/alagoas_municipal_holidays.rb
 # Alagoas Municipal Holidays (Hardcoded)
 #
