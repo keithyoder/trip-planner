@@ -14,7 +14,7 @@ pt:
       long: "%d de %B de %Y %H:%M"
       short: "%d de %b %H:%M"
     am: "am"
-    pm: "pm"  
+    pm: "pm"
   datetime:
     distance_in_words:
       about_x_hours:
@@ -62,16 +62,6 @@ pt:
   helpers:
     links:
       back: "Voltar"
-  waypoints:
-    overnight: "Pernoite"
-    lunch: "Almoço"
-    ferry_boarding: "Embarque de Balsa"
-    ferry_disembarkment: "Desembarque de Balsa"
-    toll_booth: "Pedágio"
-    border_crossing: "Controle de Fronteira"
-    gas_station: "Combustível"
-    attraction: "Atração"
-    routing: "Roteamento"
   locale:
     changed: "Idioma alterado com sucesso"
     invalid: "Idioma inválido selecionado"
@@ -91,6 +81,35 @@ pt:
     odometer:
       distance_today: "Distância hoje"
       kilometers: "Quilômetros"
+  budget:
+    title: "Orçamento"
+    detail_heading: "Detalhamento por Categoria"
+    subtotal: "Subtotal"
+    currency_note: "Valores convertidos para %{currency}. Taxas de câmbio podem variar."
+    items_count:
+      one: "1 item"
+      other: "%{count} itens"
+    select_currency: "Moeda"
+    categories:
+      lodging: "Hospedagem"
+      meals: "Alimentação"
+      tolls: "Pedágios"
+      ferry: "Travessia / Ferry"
+      attractions: "Atrações / Entradas"
+      parking: "Estacionamento"
+      fuel: "Combustível"
+      other: "Outros"
+    columns:
+      description: "Descrição"
+      country: "País"
+      amount: "Valor"
+  day_plan:
+    date: "Data"
+    distance: "Distância"
+    driving_time: "Tempo de condução"
+    excluding_stops: "sem contar paradas"
+    google_maps: "Abrir no Google Maps"
+    surfaces: "Tipos de estrada"
   trips:
     index:
       my_trips: "Minhas Viagens"
@@ -158,8 +177,8 @@ pt:
       country: "País"
       currency: "Moeda"
       exchange_rate: "Taxa de Câmbio"
-      rates_updated: "Taxas atualizadas em: %{updated_at}"
       inverse_rate: "Taxa Inversa"
+      rates_updated: "Taxas atualizadas em: %{updated_at}"
       rates_not_updated: "As taxas de câmbio ainda não foram atualizadas"
   routes:
     show:
@@ -172,13 +191,13 @@ pt:
       weather_sun_times: "Clima e horários solares"
       dawn: "Alvorada"
       sunrise: "Nascer do sol"
-      sunset: "Pôr do sol"  
+      sunset: "Pôr do sol"
       dusk: "Crepúsculo"
       day_length: "Duração do dia"
       distance: "Distância"
       speed: "Velocidade"
       time: "Horário"
-      directions: "Direções" 
+      directions: "Direções"
       driving_time: "Tempo de condução"
       stopped_time: "Tempo parado"
       total_time: "Tempo total"
@@ -195,31 +214,15 @@ pt:
       waypoint_start: "Ponto de início"
       waypoint_end: "Ponto final"
       submit: "Salvar Rota"
-  budget:
-    title: Orçamento
-    detail_heading: Detalhamento por Categoria
-    subtotal: Subtotal
-    currency_note: Valores convertidos para %{currency}. Taxas de câmbio podem variar.
-    items_count:
-      one: "1 item"
-      other: "%{count} itens"
-    select_currency: Moeda
-    categories:
-      lodging: Hospedagem
-      meals: Alimentação
-      tolls: Pedágios
-      ferry: Travessia / Ferry
-      attractions: Atrações / Entradas
-      parking: Estacionamento
-      fuel: Combustível
-      other: Outros
-    columns:
-      description: Descrição
-      country: País
-      amount: Valor
-  day_plan:
-    date: "Data"
-    distance: "Distância"
-    driving_time: "Tempo de condução"
-    excluding_stops: "sem contar paradas"
-    google_maps: "Abrir no Google Maps"
+  waypoints:
+    overnight: "Pernoite"
+    lunch: "Almoço"
+    ferry_boarding: "Embarque de Balsa"
+    ferry_disembarkment: "Desembarque de Balsa"
+    toll_booth: "Pedágio"
+    border_crossing: "Controle de Fronteira"
+    gas_station: "Combustível"
+    attraction: "Atração"
+    routing: "Roteamento"
+    parking: "Estacionamento"
+    bank: "Banco"

@@ -62,18 +62,6 @@ en:
   helpers:
     links:
       back: "Back"
-  waypoints:
-    overnight: "Overnight"
-    lunch: "Lunch"
-    ferry_boarding: "Ferry Boarding"
-    ferry_disembarkment: "Ferry Disembark"
-    toll_booth: "Toll"
-    border_crossing: "Boarder Crossing"
-    gas_station: "Gas"
-    attraction: "Attraction"
-    routing: "Routing"
-    parking: "Parking"
-    bank: "Bank"
   locale:
     changed: "Language changed successfully"
     invalid: "Invalid language selected"
@@ -93,6 +81,35 @@ en:
     odometer:
       distance_today: "Distance Today"
       kilometers: "Kilometers"
+  budget:
+    title: "Budget"
+    detail_heading: "Category Breakdown"
+    subtotal: "Subtotal"
+    currency_note: "Amounts converted to %{currency}. Exchange rates may vary."
+    items_count:
+      one: "1 item"
+      other: "%{count} items"
+    select_currency: "Currency"
+    categories:
+      lodging: "Lodging"
+      meals: "Meals"
+      tolls: "Tolls"
+      ferry: "Ferry / Crossing"
+      attractions: "Attractions & Entrance Fees"
+      parking: "Parking"
+      fuel: "Fuel"
+      other: "Other"
+    columns:
+      description: "Description"
+      country: "Country"
+      amount: "Amount"
+  day_plan:
+    date: "Date"
+    distance: "Distance"
+    driving_time: "Driving time"
+    excluding_stops: "excluding stops"
+    google_maps: "Open in Google Maps"
+    surfaces: "Road surfaces"
   trips:
     index:
       my_trips: "My Trips"
@@ -197,31 +214,15 @@ en:
       waypoint_start: "Start Waypoint"
       waypoint_end: "End Waypoint"
       submit: "Save Route"
-  budget:
-    title: Budget
-    detail_heading: Category Breakdown
-    subtotal: Subtotal
-    currency_note: Amounts converted to %{currency}. Exchange rates may vary.
-    items_count:
-      one: "1 item"
-      other: "%{count} items"
-    select_currency: Currency
-    categories:
-      lodging: Lodging
-      meals: Meals
-      tolls: Tolls
-      ferry: Ferry / Crossing
-      attractions: Attractions & Entrance Fees
-      parking: Parking
-      fuel: Fuel
-      other: Other
-    columns:
-      description: Description
-      country: Country
-      amount: Amount
-  day_plan:
-    date: "Date"
-    distance: "Distance"
-    driving_time: "Driving time"
-    excluding_stops: "excluding stops"
-    google_maps: "Open in Google Maps"
+  waypoints:
+    overnight: "Overnight"
+    lunch: "Lunch"
+    ferry_boarding: "Ferry Boarding"
+    ferry_disembarkment: "Ferry Disembark"
+    toll_booth: "Toll"
+    border_crossing: "Border Crossing"
+    gas_station: "Gas"
+    attraction: "Attraction"
+    routing: "Routing"
+    parking: "Parking"
+    bank: "Bank"

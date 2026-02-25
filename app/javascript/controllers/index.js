@@ -24,3 +24,6 @@ application.register("overpass-map", OverpassMapController)
 
 import WaypointNotesController from "./waypoint_notes_controller"
 application.register("waypoint-notes", WaypointNotesController)
+
+import ClipboardController from "./clipboard_controller"
+application.register("clipboard", ClipboardController)

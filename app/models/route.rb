@@ -18,6 +18,8 @@
 #
 class Route < ApplicationRecord
   include Routes::ElevationProfile
+  include Routes::ElevationAnalysis
+  include Routes::SurfaceProfile
 
   belongs_to :trip
   has_one :route_sequence
@@ -78,6 +80,15 @@ class Route < ApplicationRecord
     Route.joins(%i[waypoint_start waypoint_end])
          .where("#{waypoint.sequence} BETWEEN waypoints.sequence AND waypoint_ends_routes.sequence")
          .first
+  end
+
+  # Filters out surface types below a minimum distance threshold.
+  # Threshold is always in meters for consistency regardless of display unit.
+  #
+  # @param min_meters [Float] minimum distance in meters to include (default: 1000m)
+  # @return [Array<SurfaceSummary>]
+  def significant_surfaces(min_meters: 1000)
+    surface_summary.select { |s| s.distance.meters.value >= min_meters }
   end
 
   private

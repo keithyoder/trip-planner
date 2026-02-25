@@ -62,16 +62,6 @@ es:
   helpers:
     links:
       back: "Volver"
-  waypoints:
-    overnight: "Pernoite"
-    lunch: "Almoço"
-    ferry_boarding: "Embarque de Balsa"
-    ferry_disembarkment: "Desembarque de Balsa"
-    toll_booth: "Pedágio"
-    border_crossing: "Controle de Fronteira"
-    gas_station: "Combustível"
-    attraction: "Atração"
-    routing: "Roteamento"
   locale:
     changed: "Idioma cambiado exitosamente"
     invalid: "Idioma no válido seleccionado"
@@ -82,7 +72,7 @@ es:
       longitude: "Longitud"
       altitude: "Altitud"
       satellites: "Satélites"
-      accuracy: "Precisão"
+      accuracy: "Precisión"
     weather:
       temperature: "Temperatura"
       humidity: "Humedad"
@@ -91,6 +81,35 @@ es:
     odometer:
       distance_today: "Distancia hoy"
       kilometers: "Kilómetros"
+  budget:
+    title: "Presupuesto"
+    detail_heading: "Desglose por Categoría"
+    subtotal: "Subtotal"
+    currency_note: "Montos convertidos a %{currency}. Las tasas de cambio pueden variar."
+    items_count:
+      one: "1 elemento"
+      other: "%{count} elementos"
+    select_currency: "Moneda"
+    categories:
+      lodging: "Alojamiento"
+      meals: "Comidas"
+      tolls: "Peajes"
+      ferry: "Ferry / Cruce"
+      attractions: "Atracciones / Entradas"
+      parking: "Estacionamiento"
+      fuel: "Combustible"
+      other: "Otros"
+    columns:
+      description: "Descripción"
+      country: "País"
+      amount: "Monto"
+  day_plan:
+    date: "Fecha"
+    distance: "Distancia"
+    driving_time: "Tiempo de conducción"
+    excluding_stops: "sin contar paradas"
+    google_maps: "Abrir en Google Maps"
+    surfaces: "Tipos de carretera"
   trips:
     index:
       my_trips: "Mis viajes"
@@ -135,17 +154,6 @@ es:
         label: "Consumo de Combustible"
         help: "Consumo promedio de tu vehículo"
       submit: "Guardar Cambios"
-    currencies:
-      title: "Tipos de Cambio para %{trip_name}"
-      back_to_trip: "Volver al Viaje"
-      no_countries: "No se encontraron países para este viaje. Agregue puntos de ruta para ver los tipos de cambio."
-      exchange_rates_header: "Tipos de Cambio (Base: %{default_currency})"
-      country: "País"
-      currency: "Moneda"
-      exchange_rate: "Tipo de Cambio"
-      inverse_rate: "Tipo Inverso"
-      rates_updated: "Tipos actualizadas: %{updated_at}"
-      rates_not_updated: "Los tipos de cambio aún no se han actualizado"
     show:
       trip_details: "Detalles del viaje"
       starting_on: "Comienza el %{date}"
@@ -161,6 +169,17 @@ es:
       duration: "Duración"
       vehicle: "Vehículo"
       fuel_consumption: "Consumo de Combustible"
+    currencies:
+      title: "Tipos de Cambio para %{trip_name}"
+      back_to_trip: "Volver al Viaje"
+      no_countries: "No se encontraron países para este viaje. Agregue puntos de ruta para ver los tipos de cambio."
+      exchange_rates_header: "Tipos de Cambio (Base: %{default_currency})"
+      country: "País"
+      currency: "Moneda"
+      exchange_rate: "Tipo de Cambio"
+      inverse_rate: "Tipo Inverso"
+      rates_updated: "Tipos actualizadas: %{updated_at}"
+      rates_not_updated: "Los tipos de cambio aún no se han actualizado"
   routes:
     show:
       route_details: "Detalles de la ruta"
@@ -185,7 +204,7 @@ es:
       route_map: "Mapa de la ruta"
       turn_by_turn_directions: "Indicaciones paso a paso"
       distance_km: "Distancia"
-      elevation: "Altidud"
+      elevation: "Altitud"
       overpass: "POIs cercanos"
     edit:
       title: "Editar Ruta"
@@ -195,31 +214,15 @@ es:
       waypoint_start: "Punto de inicio"
       waypoint_end: "Punto final"
       submit: "Guardar Ruta"
-  budget:
-    title: Presupuesto
-    detail_heading: Desglose por Categoría
-    subtotal: Subtotal
-    currency_note: Montos convertidos a %{currency}. Las tasas de cambio pueden variar.
-    items_count:
-      one: "1 elemento"
-      other: "%{count} elementos"
-    select_currency: Moneda
-    categories:
-      lodging: Alojamiento
-      meals: Comidas
-      tolls: Peajes
-      ferry: Ferry / Cruce
-      attractions: Atracciones / Entradas
-      parking: Estacionamiento
-      fuel: Combustible
-      other: Otros
-    columns:
-      description: Descripción
-      country: País
-      amount: Monto
-  day_plan:
-    date: "Fecha"
-    distance: "Distancia"
-    driving_time: "Tiempo de conducción"
-    excluding_stops: "sin contar paradas"
-    google_maps: "Abrir en Google Maps"
+  waypoints:
+    overnight: "Alojamiento"
+    lunch: "Almuerzo"
+    ferry_boarding: "Embarque de Ferry"
+    ferry_disembarkment: "Desembarque de Ferry"
+    toll_booth: "Peaje"
+    border_crossing: "Control de Frontera"
+    gas_station: "Combustible"
+    attraction: "Atracción"
+    routing: "Ruta"
+    parking: "Estacionamiento"
+    bank: "Banco"

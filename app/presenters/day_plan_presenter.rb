@@ -8,9 +8,10 @@
 # == Usage
 #
 #   presenter = DayPlanPresenter.new(route, locale: 'en')
-#   presenter.to_markdown   # => "## **Copacabana → Puno**\n\n..."
-#   presenter.empty?        # => false
-#   presenter.present?      # => true
+#   presenter.to_markdown    # => "## **Copacabana → Puno**\n\n..."
+#   presenter.to_whatsapp    # => "*Copacabana → Puno*\n\n..."
+#   presenter.empty?         # => false
+#   presenter.present?       # => true
 #
 # == Notes
 #
@@ -30,6 +31,7 @@
 #     driving_time: "Driving time"
 #     excluding_stops: "excluding stops"
 #     google_maps: "Open in Google Maps"
+#     surfaces: "Road surfaces"
 #
 class DayPlanPresenter
   def initialize(route, locale: I18n.locale.to_s)
@@ -40,11 +42,30 @@ class DayPlanPresenter
   def to_markdown
     return nil if empty?
 
-    ([header, meta] + sections).join("\n\n")
+    ([header, meta, surfaces_table] + sections).compact.join("\n\n")
+  end
+
+  # Converts the day plan to WhatsApp-compatible formatting.
+  #
+  # WhatsApp supports: *bold*, _italic_, ~strikethrough~, `monospace`
+  # It does not support labeled links, so [text](url) becomes "text: url".
+  # Markdown headers are converted to bold text.
+  #
+  def to_whatsapp
+    return nil if empty?
+
+    to_markdown
+      .gsub(/^#{Regexp.escape('## ')}(.+)/) { "*#{::Regexp.last_match(1).gsub(/\*\*(.+?)\*\*/, '\1')}*" }
+      .gsub(/^### (.+)/, '*\1*')
+      .gsub(/\*\*(.+?)\*\*/, '*\1*')
+      .gsub(/\[([^\]]+)\]\(([^)]+)\)/, '\1: \2')
+      .gsub(/^[-*] /, '• ')
+      .gsub(/^\d+\. /, '• ')
+      .strip
   end
 
   def empty?
-    sections.empty?
+    meta.blank? && sections.empty?
   end
 
   def present?
@@ -62,15 +83,40 @@ class DayPlanPresenter
   end
 
   def meta
-    parts = []
-    parts << "**#{t('day_plan.date')}:** #{formatted_date}"          if formatted_date
-    parts << "**#{t('day_plan.distance')}:** ~#{formatted_distance}" if formatted_distance
-    if formatted_driving_time
-      parts << "**#{t('day_plan.driving_time')}:** ~#{formatted_driving_time} (#{t('day_plan.excluding_stops')})"
-    end
-    parts << "[#{t('day_plan.google_maps')}](#{google_maps_url})" if google_maps_url
+    @meta ||= begin
+      parts = []
+      parts << "**#{t('day_plan.date')}:** #{formatted_date}"          if formatted_date
+      parts << "**#{t('day_plan.distance')}:** ~#{formatted_distance}" if formatted_distance
+      if formatted_driving_time
+        parts << "**#{t('day_plan.driving_time')}:** ~#{formatted_driving_time} (#{t('day_plan.excluding_stops')})"
+      end
+      parts << "[#{t('day_plan.google_maps')}](#{google_maps_url})" if google_maps_url
 
-    parts.join(' · ')
+      parts.join(' · ')
+    end
+  end
+
+  # Renders significant surfaces as a small text table below the meta line.
+  # Returns nil if surface data is unavailable or only one surface type exists.
+  #
+  # Example output:
+  #   **Road surfaces**
+  #   Asphalt · 87 mi · 92%
+  #   Unknown · 4 mi · 4%
+  #   Paved · 3 mi · 3%
+  #
+  def surfaces_table
+    surfaces = @route.significant_surfaces
+    return nil if surfaces.size <= 1
+
+    rows = surfaces.map do |s|
+      name    = s.surface_type.to_s.tr('_', ' ').capitalize
+      dist    = s.distance.round(0).to_s(units: true, decimals: 0)
+      percent = s.percent.round
+      "#{name} · #{dist} · #{percent}%"
+    end
+
+    (["**#{t('day_plan.surfaces')}**"] + rows).join("\n")
   end
 
   def formatted_date
@@ -91,7 +137,6 @@ class DayPlanPresenter
     duration = @route.route_sequence&.driving_duration
     return nil unless duration
 
-    # Ceiling to next 15-minute interval
     total_minutes  = (duration.to_i / 60.0).ceil
     ceiled_minutes = (total_minutes / 15.0).ceil * 15
 
