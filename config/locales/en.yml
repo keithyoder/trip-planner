@@ -4,6 +4,7 @@ en:
     formats:
       long: "%B %d, %Y"  # November 05, 2025
       short: "%b %d"
+      day_plan: "%A, %B %-d, %Y"   # Wednesday, April 21, 2027
     month_names: [~, January, February, March, April, May, June, July, August, September, October, November, December]
     abbr_month_names: [~, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec]
     day_names: [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
@@ -223,3 +224,4 @@ en:
     distance: "Distance"
     driving_time: "Driving time"
     excluding_stops: "excluding stops"
+    google_maps: "Open in Google Maps"

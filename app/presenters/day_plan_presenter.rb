@@ -20,11 +20,16 @@
 #
 # == Required i18n keys
 #
+#   date:
+#     formats:
+#       day_plan: "%A, %B %-d, %Y"   # => "Wednesday, April 21, 2027"
+#
 #   day_plan:
-#     date: "Date"           # es: "Fecha",        pt: "Data"
-#     distance: "Distance"   # es: "Distancia",    pt: "Distância"
-#     driving_time: "Driving time"  # es: "Tiempo de conducción", pt: "Tempo de condução"
-#     excluding_stops: "excluding stops"  # es: "sin contar paradas", pt: "sem contar paradas"
+#     date: "Date"
+#     distance: "Distance"
+#     driving_time: "Driving time"
+#     excluding_stops: "excluding stops"
+#     google_maps: "Open in Google Maps"
 #
 class DayPlanPresenter
   def initialize(route, locale: I18n.locale.to_s)
@@ -58,11 +63,13 @@ class DayPlanPresenter
 
   def meta
     parts = []
-    parts << "**#{t('day_plan.date')}:** #{formatted_date}"             if formatted_date
-    parts << "**#{t('day_plan.distance')}:** ~#{formatted_distance}"    if formatted_distance
+    parts << "**#{t('day_plan.date')}:** #{formatted_date}"          if formatted_date
+    parts << "**#{t('day_plan.distance')}:** ~#{formatted_distance}" if formatted_distance
     if formatted_driving_time
       parts << "**#{t('day_plan.driving_time')}:** ~#{formatted_driving_time} (#{t('day_plan.excluding_stops')})"
     end
+    parts << "[#{t('day_plan.google_maps')}](#{google_maps_url})" if google_maps_url
+
     parts.join(' · ')
   end
 
@@ -70,7 +77,7 @@ class DayPlanPresenter
     date = @route.route_sequence&.date
     return nil unless date
 
-    I18n.l(date, format: :long, locale: @locale)
+    I18n.l(date, format: :day_plan, locale: @locale)
   end
 
   def formatted_distance
@@ -98,6 +105,10 @@ class DayPlanPresenter
     else
       "#{minutes}m"
     end
+  end
+
+  def google_maps_url
+    RoutePresenter.new(@route).google_maps_url
   end
 
   def sections
