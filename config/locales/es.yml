@@ -216,3 +216,8 @@ es:
       description: Descripción
       country: País
       amount: Monto
+  day_plan:
+    date: "Fecha"
+    distance: "Distancia"
+    driving_time: "Tiempo de conducción"
+    excluding_stops: "sin contar paradas"

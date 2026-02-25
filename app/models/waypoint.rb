@@ -155,13 +155,23 @@ class Waypoint < ApplicationRecord
       delay = 0
     end
 
-    taken = Trip.find(trip_id)
-                .waypoints
+    trip = Trip.find(trip_id)
+
+    taken = trip.waypoints
                 .where(sequence: sequence..sequence + 50)
                 .pluck(:sequence)
                 .to_set
 
     sequence = (sequence..sequence + 50).find { |s| !taken.include?(s) } || sequence + 51
+
+    # Back up if we've landed on the route's end waypoint sequence
+    route = trip.routes
+                .joins(:waypoint_end)
+                .where('waypoints.sequence >= ?', sequence)
+                .order('waypoints.sequence ASC')
+                .first
+
+    sequence -= 1 if route && sequence == route.waypoint_end.sequence
 
     create_attrs = {
       trip_id: trip_id,

@@ -1,0 +1,28 @@
+- presenter = DayPlanPresenter.new(route)
+
+#day-plan-content
+  .card.shadow-sm.mb-4
+    - if presenter.empty?
+      .card-body.text-center.py-4
+        i.bi.bi-journal-text.text-muted.fs-1.d-block.mb-3
+        p.text-muted.mb-0 Add notes to waypoints to build your day plan.
+
+    - else
+      .card-header.bg-white.border-bottom.d-flex.justify-content-between.align-items-center
+        h5.card-title.mb-0
+          i.bi.bi-journal-text.me-2
+          = t('routes.show.day_plan')
+      .card-body
+        - available_locales = %w[en es pt].select { |l| DayPlanPresenter.new(route, locale: l).present? }
+        - if available_locales.size > 1
+          ul.nav.nav-tabs.mb-3 role="tablist"
+            - available_locales.each_with_index do |locale, i|
+              li.nav-item role="presentation"
+                button.nav-link[id="day-plan-tab-#{locale}" data-bs-toggle="tab" data-bs-target="#day-plan-#{locale}" type="button" role="tab" class=("active" if i == 0)]
+                  = locale.upcase
+          .tab-content
+            - available_locales.each_with_index do |locale, i|
+              div[id="day-plan-#{locale}" class="tab-pane fade#{i == 0 ? ' show active' : ''}" role="tabpanel"]
+                = MarkdownRenderer.render(DayPlanPresenter.new(route, locale: locale).to_markdown).html_safe
+        - else
+          = MarkdownRenderer.render(presenter.to_markdown).html_safe

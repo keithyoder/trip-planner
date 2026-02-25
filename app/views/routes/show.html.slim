@@ -129,3 +129,9 @@
             = t('routes.show.elevation_profile')
         .card-body
           = line_chart(@route.elevations.map { |e| [e.distance.to_f.round(1), e.elevation.round(0)] }, points: false, library: { scales: { x: { title: { display: true, text: t('units.distance_abbr') } }, y: { title: { display: true, text: t('units.elevation_abbr') } } } })
+
+  / Day plan
+  .row.mb-4
+    .col-12
+      = turbo_stream_from "route_#{@route.id}_day_plan"
+      = render 'day_plan', route: @route

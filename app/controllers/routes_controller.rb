@@ -2,7 +2,7 @@
 
 class RoutesController < ApplicationController
   before_action :set_trip
-  before_action :set_route, only: %i[edit update destroy calculate]
+  before_action :set_route, only: %i[edit update destroy calculate generate_day_plan]
   helper WaypointsHelper
 
   # GET /routes or /routes.json
@@ -81,6 +81,21 @@ class RoutesController < ApplicationController
     respond_to do |format|
       format.html { redirect_to edit_trip_route_url(@trip, @route), notice: 'Route calculation has been queued.' }
       format.json { head :no_content }
+    end
+  end
+
+  def generate_day_plan
+    @route.update!(day_plan_status: 'generating')
+    GenerateDayPlanJob.perform_later(@route.id)
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          'day-plan-content',
+          partial: 'routes/day_plan',
+          locals: { route: @route }
+        )
+      end
     end
   end
 

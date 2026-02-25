@@ -218,3 +218,8 @@ en:
       description: Description
       country: Country
       amount: Amount
+  day_plan:
+    date: "Date"
+    distance: "Distance"
+    driving_time: "Driving time"
+    excluding_stops: "excluding stops"

@@ -216,3 +216,8 @@ pt:
       description: Descrição
       country: País
       amount: Valor
+  day_plan:
+    date: "Data"
+    distance: "Distância"
+    driving_time: "Tempo de condução"
+    excluding_stops: "sem contar paradas"
