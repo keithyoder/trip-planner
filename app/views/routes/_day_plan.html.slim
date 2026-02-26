@@ -1,18 +1,17 @@
 - presenter = DayPlanPresenter.new(route)
 
 #day-plan-content
-  .card.shadow-sm.mb-4
+  .card.shadow-sm.mb-4 data-controller="clipboard"
     - if presenter.empty?
       .card-body.text-center.py-4
         i.bi.bi-journal-text.text-muted.fs-1.d-block.mb-3
         p.text-muted.mb-0 Add notes to waypoints to build your day plan.
 
     - else
-      .card-header.bg-white.border-bottom.d-flex.justify-content-between.align-items-center data-controller="clipboard"
+      .card-header.bg-white.border-bottom.d-flex.justify-content-between.align-items-center
         h5.card-title.mb-0
           i.bi.bi-journal-text.me-2
           = t('routes.show.day_plan')
-        span data-clipboard-target="source" data-content=presenter.to_whatsapp
         button.btn.btn-sm.btn-outline-secondary data-clipboard-target="button" data-action="clipboard#copy"
           i.bi.bi-clipboard.me-1 data-clipboard-target="icon"
           = t('routes.show.copy_for_whatsapp')
@@ -25,7 +24,8 @@
                   = locale.upcase
           .tab-content
             - presenter.available_locales.each_with_index do |locale, i|
-              div[id="day-plan-#{locale}" class="tab-pane fade#{i == 0 ? ' show active' : ''}" role="tabpanel"]
+              div[id="day-plan-#{locale}" class="tab-pane fade#{i == 0 ? ' show active' : ''}" role="tabpanel" data-clipboard-target="source" data-content=DayPlanPresenter.new(route, locale: locale).to_whatsapp]
                 = MarkdownRenderer.render(DayPlanPresenter.new(route, locale: locale).to_markdown).html_safe
         - else
-          = MarkdownRenderer.render(presenter.to_markdown).html_safe
+          div data-clipboard-target="source" data-content=presenter.to_whatsapp
+            = MarkdownRenderer.render(presenter.to_markdown).html_safe

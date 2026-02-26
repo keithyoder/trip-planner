@@ -16,7 +16,7 @@ class Overpass
     fuel: { query: "'amenity'='fuel'", distance: 500, types: %i[node way] },
     border_crossing: { query: "'barrier'='border_control'", distance: 10, types: %i[node way] },
     ferry: { query: "'amenity'='ferry_terminal'", distance: 5, types: %i[node way] },
-    restaurant: { query: "'amenity'='restaurant'", distance: 2000, types: %i[node way] },
+    restaurant: { query: "'amenity'~'restaurant|fast_food|pub|ice_cream'", distance: 2000, types: %i[node way] },
     bank: { query: "'amenity'~'bank|money_transfer'", distance: 1000, types: %i[node way] },
     accommodation: {
       query: "'tourism'~'hotel|hostel|motel|guest_house|apartment|chalet|camp_site|caravan_site|wilderness_hut|alpine_hut'",
@@ -176,15 +176,42 @@ class Overpass
     coords = outer_ways.flat_map { |w| w[:geometry]&.map { |n| "#{n[:lon]} #{n[:lat]}" } }.compact
     return nil if coords.size < 4
 
+    # Ensure the ring is closed — OSM relation outer ways concatenated in order
+    # rarely end where they started, so we must explicitly close the ring.
+    # ST_GeomFromText raises a parse error (before ST_MakeValid can help) if
+    # the ring is not closed.
+    coords << coords.first unless coords.first == coords.last
+
     "POLYGON((#{coords.join(', ')}))"
   rescue StandardError
     nil
   end
 
+  def valid_wkt?(wkt)
+    factory = RGeo::Geographic.spherical_factory(srid: 4326)
+    RGeo::WKRep::WKTParser.new(factory, support_ewkt: false).parse(wkt)
+    true
+  rescue StandardError
+    false
+  end
+
   def calculate_distances_batch(elements_with_geom)
     route_geog = "'#{@route.geom.as_text}'::geography"
 
-    geom_cases = elements_with_geom.each_with_index.map do |item, idx|
+    # Pre-filter elements whose WKT is invalid in Ruby before sending to
+    # PostgreSQL. ST_GeomFromText raises a parse error that cannot be caught
+    # from within SQL (ST_MakeValid runs after parsing, not before).
+    valid_elements = elements_with_geom.select do |item|
+      next true if valid_wkt?(item[:geom])
+
+      Rails.logger.warn '[Overpass] Skipping element with invalid WKT ' \
+                        "(#{item.dig(:element, :type)} #{item.dig(:element, :id)})"
+      false
+    end
+
+    return [] if valid_elements.empty?
+
+    geom_cases = valid_elements.each_with_index.map do |item, idx|
       "WHEN #{idx} THEN ST_MakeValid(ST_GeomFromText('#{item[:geom]}', 4326))::geography"
     end.join(' ')
 
@@ -193,11 +220,11 @@ class Overpass
         #{route_geog},
         CASE idx #{geom_cases} END
       ) AS distance
-      FROM generate_series(0, #{elements_with_geom.size - 1}) AS idx
+      FROM generate_series(0, #{valid_elements.size - 1}) AS idx
     SQL
 
     ActiveRecord::Base.connection.select_rows(sql).each_with_object([]) do |(idx, distance), result|
-      result << elements_with_geom[idx.to_i][:element] if distance.to_f < @max_distance
+      result << valid_elements[idx.to_i][:element] if distance.to_f < @max_distance
     end
   end
 
