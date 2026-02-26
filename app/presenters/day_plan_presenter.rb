@@ -51,13 +51,16 @@ class DayPlanPresenter
   # It does not support labeled links, so [text](url) becomes "text: url".
   # Markdown headers are converted to bold text.
   #
-  def to_whatsapp
+  def to_whatsapp # rubocop:disable Metrics/MethodLength
     return nil if empty?
 
     to_markdown
       .gsub(/^#{Regexp.escape('## ')}(.+)/) { "*#{::Regexp.last_match(1).gsub(/\*\*(.+?)\*\*/, '\1')}*" }
-      .gsub(/^### (.+)/, '*\1*')
+      .gsub(/^#{Regexp.escape('#')}+ (.+)/, '*\1*')
       .gsub(/\*\*(.+?)\*\*/, '*\1*')
+      .gsub(/__(.+?)__/, '*\1*')
+      .gsub(/\*(.+?)\*/, '*\1*')      # already bold-formatted, no-op but catches stragglers
+      .gsub(/_(.+?)_/, '_\1_')        # single underscore italic — WhatsApp native
       .gsub(/\[([^\]]+)\]\(([^)]+)\)/, '\1: \2')
       .gsub(/^[-*] /, '• ')
       .gsub(/^\d+\. /, '• ')
@@ -109,11 +112,14 @@ class DayPlanPresenter
     surfaces = @route.significant_surfaces
     return nil if surfaces.size <= 1
 
+    unit = t('units.distance').to_sym
+    abbr = t('units.distance_abbr')
+
     rows = surfaces.map do |s|
       name    = s.surface_type.to_s.tr('_', ' ').capitalize
-      dist    = s.distance.round(0).to_s(units: true, decimals: 0)
+      value   = s.distance.to_units(unit).value.round(0)
       percent = s.percent.round
-      "#{name} · #{dist} · #{percent}%"
+      "#{name} · #{value} #{abbr} · #{percent}%"
     end
 
     (["**#{t('day_plan.surfaces')}**"] + rows).join("\n")
@@ -130,7 +136,11 @@ class DayPlanPresenter
     distance = @route.route_sequence&.distance
     return nil unless distance
 
-    "#{distance.km.value.round} km"
+    unit    = t('units.distance').to_sym          # :miles or :km
+    abbr    = t('units.distance_abbr')            # "mi" or "km"
+    value   = distance.to_units(unit).value.round
+
+    "#{value} #{abbr}"
   end
 
   def formatted_driving_time
