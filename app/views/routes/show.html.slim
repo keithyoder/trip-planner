@@ -64,35 +64,57 @@
                   strong.d-block = humanize(@route.waypoint_start.solar_position(@route.route_sequence.date).day_length)
   
   / Route statistics
+  - ferry_dur   = @route.route_sequence.ferry_duration
+  - hiking_dur  = @route.route_sequence.hiking_duration
+  - has_ferry   = ferry_dur&.to_i&.positive?
+  - has_hiking  = hiking_dur&.to_i&.positive?
+  - col_class   = "col-sm-6 col-lg-#{12 / [4, (has_ferry ? 1 : 0) + (has_hiking ? 1 : 0) + 4].max}"
+
   .row.g-4.mb-4
-    .col-sm-6.col-lg-3
+    div class=col_class
       .card.shadow-sm.h-100
         .card-body.text-center
           i.bi.bi-sign-turn-right.text-primary.fs-1.mb-2
           h6.text-muted.mb-1 = t('routes.show.distance')
           h4.mb-0 = format_distance(@route.route_sequence.distance, decimals: 1)
-    
-    .col-sm-6.col-lg-3
+
+    div class=col_class
       .card.shadow-sm.h-100
         .card-body.text-center
-          i.bi.bi-clock.text-success.fs-1.mb-2
+          i.bi.bi-car-front.text-success.fs-1.mb-2
           h6.text-muted.mb-1 = t('routes.show.driving_time')
           h4.mb-0 = format_duration(@route.route_sequence.driving_duration)
-    
-    .col-sm-6.col-lg-3
+
+    - if has_ferry
+      div class=col_class
+        .card.shadow-sm.h-100
+          .card-body.text-center
+            i.bi.bi-water.text-info.fs-1.mb-2
+            h6.text-muted.mb-1 = t('routes.show.ferry_time')
+            h4.mb-0 = format_duration(ferry_dur)
+
+    - if has_hiking
+      div class=col_class
+        .card.shadow-sm.h-100
+          .card-body.text-center
+            i.bi.bi-person-walking.text-warning.fs-1.mb-2
+            h6.text-muted.mb-1 = t('routes.show.hiking_time')
+            h4.mb-0 = format_duration(hiking_dur)
+
+    div class=col_class
       .card.shadow-sm.h-100
         .card-body.text-center
           i.bi.bi-pause-circle.text-warning.fs-1.mb-2
           h6.text-muted.mb-1 = t('routes.show.stopped_time')
           h4.mb-0 = format_duration(@route.route_sequence.stopped_time)
-    
-    .col-sm-6.col-lg-3
+
+    div class=col_class
       .card.shadow-sm.h-100
         .card-body.text-center
           i.bi.bi-hourglass-split.text-info.fs-1.mb-2
           h6.text-muted.mb-1 = t('routes.show.total_time')
           h4.mb-0 = format_duration(@route.route_sequence.total_duration)
-  
+          
   / Map and directions side by side
   .row.g-4.mb-4
     / Map section

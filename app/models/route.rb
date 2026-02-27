@@ -91,6 +91,27 @@ class Route < ApplicationRecord
     surface_summary.select { |s| s.distance.meters.value >= min_meters }
   end
 
+  # Sums ORS segment durations for legs whose arriving waypoint matches
+  # the given condition. Segments map 1:1 with waypoint-to-waypoint legs
+  # in order, with each segment's duration representing travel time for
+  # that leg excluding stop delays.
+  #
+  # @yield [Waypoint] the arriving waypoint for each leg
+  # @return [Float] total seconds
+  def leg_duration_for(&condition)
+    return 0.0 unless segments.present?
+
+    # Drop the first waypoint — it is the departure point of the route.
+    # The remaining waypoints align 1:1 with segments as arriving waypoints.
+    arriving_waypoints = waypoints.to_a.drop(1)
+
+    segments.zip(arriving_waypoints).sum do |segment, arriving_waypoint|
+      next 0.0 unless arriving_waypoint && condition.call(arriving_waypoint)
+
+      segment['duration'].to_f
+    end
+  end
+
   private
 
   def enqueue_calculate_route

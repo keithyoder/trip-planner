@@ -27,10 +27,37 @@ class RouteSequence < ActiveRecord::Base
     true
   end
 
+  # Driving time only — excludes stops, ferry crossings, and hiking legs.
+  #
+  # @return [ActiveSupport::Duration, nil]
   def driving_duration
-    ActiveSupport::Duration.build(round_duration_to_minute(duration - (stopped_time || 0))) if duration.present?
+    return unless duration.present?
+
+    seconds = duration - (stopped_time || 0) - ferry_duration_seconds - hiking_duration_seconds
+    ActiveSupport::Duration.build(round_duration_to_minute(seconds))
   end
 
+  # Time spent on ferry crossings for this route.
+  #
+  # @return [ActiveSupport::Duration, nil]
+  def ferry_duration
+    return unless duration.present?
+
+    ActiveSupport::Duration.build(round_duration_to_minute(ferry_duration_seconds))
+  end
+
+  # Time spent on foot-hiking legs for this route.
+  #
+  # @return [ActiveSupport::Duration, nil]
+  def hiking_duration
+    return unless duration.present?
+
+    ActiveSupport::Duration.build(round_duration_to_minute(hiking_duration_seconds))
+  end
+
+  # Total duration including driving, stops, ferry, and hiking.
+  #
+  # @return [ActiveSupport::Duration, nil]
   def total_duration
     ActiveSupport::Duration.build(round_duration_to_minute(duration)) if duration.present?
   end
@@ -50,5 +77,15 @@ class RouteSequence < ActiveRecord::Base
   # Override trip method to use manually set trip if available
   def trip
     @trip || super
+  end
+
+  private
+
+  def ferry_duration_seconds
+    @ferry_duration_seconds ||= route.leg_duration_for(&:ferry_disembarkment?)
+  end
+
+  def hiking_duration_seconds
+    @hiking_duration_seconds ||= route.leg_duration_for { |wp| wp.profile.start_with?('foot-') }
   end
 end

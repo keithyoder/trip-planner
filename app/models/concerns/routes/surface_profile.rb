@@ -23,7 +23,10 @@ module Routes
       sand: 15,
       woodchips: 16,
       grass: 17,
-      grass_paver: 18
+      grass_paver: 18,
+      # Synthetic types — not from ORS, assigned during multi-leg merge
+      water: 100, # ferry crossings
+      hiking: 101 # foot-hiking profile legs
     }.freeze
 
     # Groups surfaces into broader categories for simplified display.
@@ -47,7 +50,9 @@ module Routes
       sand: :unpaved,
       woodchips: :unpaved,
       grass: :unpaved,
-      grass_paver: :unpaved
+      grass_paver: :unpaved,
+      water: :water,
+      hiking: :hiking
     }.freeze
 
     # Value object for a single surface segment with its geometry.
