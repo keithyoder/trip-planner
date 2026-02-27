@@ -95,19 +95,21 @@ export class MapManager {
         return marker;
     }
 
-    addWaypointMarker(lat, lon, waypointType, name = null) {
+    addWaypointMarker(lat, lon, waypointType, name = null, url = null) {
         const icon = createWaypointIcon(waypointType);
         const config = WaypointIcons[waypointType] || WaypointIcons.routing;
         let popupContent = null;
 
-        // Add popup with waypoint information
         if (name) {
+            const nameHtml = url
+                ? `<a href="${url}"><strong>${name}</strong></a>`
+                : `<strong>${name}</strong>`;
             popupContent = `
         <div style="text-align: center;">
-          <strong>${name}</strong><br>
-          <small class="text-muted">${config.label}</small>
+            ${nameHtml}<br>
+            <small class="text-muted">${config.label}</small>
         </div>
-      `;
+        `;
         }
 
         return this.addMarker(lat, lon, { icon: icon }, popupContent)

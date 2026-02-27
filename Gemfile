@@ -69,6 +69,7 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem 'annotate'
+  gem 'i18n-tasks'
   gem 'web-console'
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]

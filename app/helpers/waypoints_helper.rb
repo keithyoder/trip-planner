@@ -43,7 +43,8 @@ module WaypointsHelper
           name: waypoint.name,
           sequence: waypoint.sequence,
           toll: waypoint.toll,
-          toll_formatted: waypoint.toll ? format_currency(waypoint) : nil
+          toll_formatted: waypoint.toll ? format_currency(waypoint) : nil,
+          url: trip_waypoint_path(@route.trip, waypoint)
           # segment_distance: waypoint.segment_distance ? "#{waypoint.segment_distance.km.round(1)} km" : nil,
           # trip_distance: waypoint.trip_distance ? "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km" : nil
         }

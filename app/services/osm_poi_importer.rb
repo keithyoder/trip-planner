@@ -111,6 +111,8 @@ class OsmPoiImporter
       extract_hotel_metadata(tags)
     when :tourism
       extract_tourism_metadata(tags)
+    when :park
+      extract_park_metadata(tags)
     else
       extract_generic_metadata(tags)
     end
@@ -209,6 +211,22 @@ class OsmPoiImporter
       website: tags[:website],
       phone: tags[:phone],
       wheelchair: tags[:wheelchair],
+      all_tags: tags
+    }.compact
+  end
+
+  def self.extract_park_metadata(tags)
+    {
+      leisure_type: tags[:leisure],
+      description: tags[:description],
+      wikipedia: tags[:wikipedia],
+      wikidata: tags[:wikidata],
+      website: tags[:website] || tags[:'contact:website'],
+      opening_hours: tags[:opening_hours],
+      fee: tags[:fee],
+      operator: tags[:operator],
+      wheelchair: tags[:wheelchair],
+      dog: tags[:dog],
       all_tags: tags
     }.compact
   end

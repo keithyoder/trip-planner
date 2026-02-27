@@ -45,16 +45,15 @@ export default class extends Controller {
   }
 
   displayWaypoints() {
-    // Display waypoints with custom icons
     this.waypointsValue.forEach((waypoint, index) => {
-      const lat = waypoint.lat;
-      const lon = waypoint.lon;
-      const type = waypoint.type;
-      const name = waypoint.name || `Waypoint ${index + 1}`;
+      const lat      = waypoint.lat;
+      const lon      = waypoint.lon;
+      const type     = waypoint.type;
+      const name     = waypoint.name || `Waypoint ${index + 1}`;
       const sequence = waypoint.sequence;
-      
-      this.mapManager.addWaypointMarker(lat, lon, type, name);
+      const url      = waypoint.url;
 
+      this.mapManager.addWaypointMarker(lat, lon, type, name, url);
     });
   }
 

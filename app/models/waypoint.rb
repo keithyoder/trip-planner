@@ -159,6 +159,9 @@ class Waypoint < ApplicationRecord
     when :barrier
       waypoint_type = :attraction
       delay = 600
+    when :park
+      waypoint_type = :attraction
+      delay = 1800
     else
       waypoint_type = :attraction
       delay = 0

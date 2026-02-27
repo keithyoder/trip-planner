@@ -32,7 +32,8 @@ class OsmPoi < ApplicationRecord
     tourism: 7,
     barrier: 8,
     parking: 9,
-    bank: 10
+    bank: 10,
+    park: 11
   }
 
   def self.import

@@ -168,12 +168,26 @@ GEM
       activesupport (>= 6.1)
     hashie (5.1.0)
       logger
+    highline (3.1.2)
+      reline
     htmlentities (4.4.2)
     httparty (0.10.2)
       multi_json (~> 1.0)
       multi_xml (>= 0.5.2)
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
+    i18n-tasks (1.1.2)
+      activesupport (>= 4.0.2)
+      ast (>= 2.1.0)
+      erubi
+      highline (>= 3.0.0)
+      i18n
+      parser (>= 3.2.2.1)
+      prism
+      rails-i18n
+      rainbow (>= 2.2.2, < 4.0)
+      ruby-progressbar (~> 1.8, >= 1.8.1)
+      terminal-table (>= 1.5.1)
     io-console (0.8.2)
     irb (1.17.0)
       pp (>= 0.6.0)
@@ -444,6 +458,8 @@ GEM
       railties (>= 6.0.0)
     stringio (3.2.0)
     temple (0.10.4)
+    terminal-table (4.0.0)
+      unicode-display_width (>= 1.1.1, < 4)
     thor (1.5.0)
     tilt (2.7.0)
     timeout (0.6.0)
@@ -506,6 +522,7 @@ DEPENDENCIES
   dotenv-rails
   ed25519 (>= 1.2, < 2.0)
   geocoder
+  i18n-tasks
   jbuilder
   jsbundling-rails
   money
