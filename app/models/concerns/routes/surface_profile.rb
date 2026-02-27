@@ -98,6 +98,7 @@ module Routes
       # @return [Array<SurfaceSummary>]
       def surface_summary
         return [] unless surfaces
+        return [] unless surfaces['summary']
 
         distance_unit = I18n.t('units.distance').to_sym
 

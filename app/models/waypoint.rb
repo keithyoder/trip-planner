@@ -41,6 +41,15 @@ class Waypoint < ApplicationRecord
     bank: 11
   }
 
+  PROFILES = %w[
+    driving-car
+    driving-hgv
+    foot-walking
+    foot-hiking
+    cycling-regular
+    cycling-mountain
+  ].freeze
+
   geocoded_by :address do |record, results|
     result = results.first
 
