@@ -104,6 +104,7 @@ es:
       description: "Descripción"
       country: "País"
       amount: "Monto"
+      local_amount: "Monto local"
   day_plan:
     date: "Fecha"
     distance: "Distancia"
@@ -159,6 +160,8 @@ es:
       trip_details: "Detalles del viaje"
       starting_on: "Comienza el %{date}"
       trip_routes: "Rutas del viaje"
+      edit_trip: "Editar viaje"
+      view_currencies: "Ver monedas"
       back: "Volver"
       route_map: "Mapa de la ruta"
       trip_information: "Información del viaje"
@@ -207,6 +210,15 @@ es:
       distance_km: "Distancia"
       elevation: "Altitud"
       overpass: "POIs cercanos"
+      copy_for_whatsapp: "Copiar"
+      day_plan: "Plan del día"
+      directions_short: "Indicaciones"
+      elevation_profile: "Perfil de elevación"
+      ferry: "Balsa"
+      ferry_time: "Tiempo de balsa"
+      hiking: "Senderismo"
+      hiking_time: "Tiempo de senderismo"
+      no_route_calculated: "No se calculó ninguna ruta"
     edit:
       title: "Editar Ruta"
       calculate_route: "Calcular Ruta"
@@ -214,6 +226,7 @@ es:
     form:
       waypoint_start: "Punto de inicio"
       waypoint_end: "Punto final"
+      start_time: "Hora de salida"
       submit: "Guardar Ruta"
   waypoints:
     overnight: "Alojamiento"
@@ -257,4 +270,5 @@ es:
       notes_preview: "Vista previa"
       notes_hint: "Admite formato Markdown. El contenido se mostrará en el idioma del visitante."
       notes_placeholder: "Escribe notas en %{lang}..."
+      cancel: "Cancelar"
       save: "Guardar Punto"

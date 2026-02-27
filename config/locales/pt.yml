@@ -104,6 +104,7 @@ pt:
       description: "Descrição"
       country: "País"
       amount: "Valor"
+      local_amount: "Valor local"
   day_plan:
     date: "Data"
     distance: "Distância"
@@ -159,6 +160,8 @@ pt:
       trip_details: "Detalhes da viagem"
       starting_on: "Inicia em %{date}"
       trip_routes: "Rotas da viagem"
+      edit_trip: "Editar viagem"
+      view_currencies: "Ver moedas"
       back: "Voltar"
       route_map: "Mapa da rota"
       trip_information: "Informações da viagem"
@@ -211,9 +214,10 @@ pt:
       directions_short: "Direções"
       ferry_time: "Tempo de balsa"
       elevation_profile: "Perfil de elevação"
-      copy_for_whatsapp: "Copiar para WhatsApp"
+      copy_for_whatsapp: "Copiar"
       ferry: "Balsa"
       hiking: "Trilha"
+      hiking_time: "Tempo de trilha"
       directions: "Direções"
       distance: "Distância"
       speed: "Velocidade"
@@ -227,6 +231,7 @@ pt:
     form:
       waypoint_start: "Ponto de início"
       waypoint_end: "Ponto final"
+      start_time: "Hora de partida"
       submit: "Salvar Rota"
   waypoints:
     overnight: "Pernoite"
@@ -270,4 +275,5 @@ pt:
       notes_preview: "Pré-visualização"
       notes_hint: "Suporta formatação Markdown. O conteúdo será exibido no idioma do visitante."
       notes_placeholder: "Escreva notas em %{lang}..."
+      cancel: "Cancelar"
       save: "Salvar Ponto"

@@ -104,6 +104,7 @@ en:
       description: "Description"
       country: "Country"
       amount: "Amount"
+      local_amount: "Local Amount"
   day_plan:
     date: "Date"
     distance: "Distance"
@@ -159,6 +160,8 @@ en:
       trip_details: "Trip Details"
       starting_on: "Starting on %{date}"
       trip_routes: "Trip Routes"
+      edit_trip: "Edit Trip"
+      view_currencies: "View Currencies"
       back: "Back"
       route_map: "Route Map"
       trip_information: "Trip Information"
@@ -207,6 +210,15 @@ en:
       distance_km: "Distance"
       elevation: "Elevation"
       overpass: "Nearby POIs"
+      copy_for_whatsapp: "Copy"
+      day_plan: "Day Plan"
+      directions_short: "Directions"
+      elevation_profile: "Elevation Profile"
+      ferry: "Ferry"
+      ferry_time: "Ferry Time"
+      hiking: "Hiking"
+      hiking_time: "Hiking Time"
+      no_route_calculated: "No route calculated"
     edit:
       title: "Edit Route"
       calculate_route: "Calculate Route"
@@ -214,6 +226,7 @@ en:
     form:
       waypoint_start: "Start Waypoint"
       waypoint_end: "End Waypoint"
+      start_time: "Start Time"
       submit: "Save Route"
   waypoints:
     overnight: "Overnight"
