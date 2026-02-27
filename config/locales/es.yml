@@ -13,6 +13,7 @@ es:
     formats:
       long: "%d de %B de %Y %H:%M"
       short: "%d de %b %H:%M"
+      time: "%H:%M"
     am: "am"
     pm: "pm"
   datetime:

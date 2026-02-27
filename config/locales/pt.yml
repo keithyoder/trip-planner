@@ -13,6 +13,7 @@ pt:
     formats:
       long: "%d de %B de %Y %H:%M"
       short: "%d de %b %H:%M"
+      time: "%H:%M"
     am: "am"
     pm: "pm"
   datetime:
@@ -206,6 +207,19 @@ pt:
       distance_km: "Distância"
       elevation: "Altitude"
       overpass: "POIs próximos"
+      day_plan: "Plano do dia"
+      directions_short: "Direções"
+      ferry_time: "Tempo de balsa"
+      elevation_profile: "Perfil de elevação"
+      copy_for_whatsapp: "Copiar para WhatsApp"
+      ferry: "Balsa"
+      hiking: "Trilha"
+      directions: "Direções"
+      distance: "Distância"
+      speed: "Velocidade"
+      time: "Horário"
+      turn_by_turn_directions: "Direções passo a passo"
+      no_route_calculated: "Nenhuma rota calculada"
     edit:
       title: "Editar Rota"
       calculate_route: "Calcular Rota"

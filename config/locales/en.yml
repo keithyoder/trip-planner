@@ -13,6 +13,7 @@ en:
     formats:
       long: "%B %d, %Y %H:%M"
       short: "%d %b %H:%M"
+      time: "%I:%M %p"
     am: "am"
     pm: "pm"
   datetime:

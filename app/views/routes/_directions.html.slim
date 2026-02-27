@@ -1,45 +1,64 @@
-.card.shadow-sm.h-100[data-controller="directions"]
-    .card-header.bg-white.border-bottom
-        h5.card-title.mb-0
-            i.bi.bi-list-ol.me-2
-            = t('routes.show.turn_by_turn_directions')
-    .card-body.p-0[style="max-height: 60vh; overflow-y: auto;"]
-        - if @route.geom
-            table.table.table-sm.table-hover.mb-0
-                thead.sticky-top.bg-white
-                    tr 
-                        th.border-0 = t('routes.show.directions')
-                        th.border-0.text-end = t('routes.show.distance')
-                        th.border-0.text-end = t('routes.show.speed')
-                        th.border-0.text-end = t('routes.show.time')
-                tbody
-                    - coordinates = @route.geom.coordinates
-                    - route.waypoints.each do |waypoint|
-                        -if waypoint.waypoint_type != "routing"
-                            tr.table-success
-                                td[colspan="4"]
-                                    i.bi.bi-geo-alt-fill.me-2
-                                    strong = link_to(waypoint.name, trip_waypoint_path(trip, waypoint))
-                        - if (segment = route.segments&.shift)
-                            - segment['steps'].select { |step| step['distance'] > 50 }.each do |step|
-                                - coord = coordinates[step['way_points'].first]
-                                tr.direction-step[
-                                    data-directions-target="step"
-                                    data-action="click->directions#showOnMap"
-                                    data-lat=coord[1]
-                                    data-lng=coord[0]
-                                    data-instruction=step['instruction']
-                                    style="cursor: pointer;"
-                                ]
-                                    td 
-                                        small = step['instruction']
-                                    td.text-end.text-nowrap
-                                        small = format_distance(Units::Distance.new(step['distance']), decimals: 2)
-                                    td.text-end.text-nowrap
-                                        - if step['duration'] > 0
-                                            small = format_speed(Units::Speed.new(step['distance'] / step['duration']))
-                                    td.text-end.text-nowrap
-                                        - if route.start_time
-                                            small = (Time.at(route.start_time % 86400.0).utc + route.geom.points[step['way_points'].last].m).strftime("%H:%M")
-                                        - else
-                                            small.text-muted —
+div[data-controller="directions"]
+  - if @route.geom
+    table.table.table-sm.table-hover.mb-0
+      thead.sticky-top.bg-white
+        tr
+          th.border-0 = t('routes.show.directions')
+          th.border-0.text-end = t('routes.show.distance')
+          th.border-0.text-end = t('routes.show.speed')
+          th.border-0.text-end = t('routes.show.time')
+      - coordinates = @route.geom.coordinates
+      - all_waypoints = route.waypoints.to_a
+      - segments_for_arrival = route.segments&.dup || []
+      - segments_for_steps   = route.segments&.dup || []
+      - all_waypoints.each_with_index do |waypoint, idx|
+        - segment_id      = "seg-#{waypoint.sequence}"
+        - next_wp         = all_waypoints[idx + 1]
+        - arrival_segment = idx > 0 ? segments_for_arrival[idx - 1] : nil
+        - arrival_time    = waypoint_time_range(route, arrival_segment, coordinates, waypoint)
+        - unless waypoint.waypoint_type == 'routing'
+          tbody
+            tr.collapsed[
+              data-bs-toggle="collapse"
+              data-bs-target="##{segment_id}"
+              style="cursor: pointer; border-left: 3px solid #{waypoint_color(waypoint.waypoint_type)}; background-color: #{waypoint_background_color(waypoint.waypoint_type)};"
+            ]
+              td[colspan="4"]
+                .d-flex.justify-content-between.align-items-center
+                  span
+                    i.bi.me-2[class=waypoint_type_icon(waypoint.waypoint_type) style="color: #{waypoint_color(waypoint.waypoint_type)};"]
+                    strong
+                      = link_to(waypoint.name, trip_waypoint_path(trip, waypoint), class: "text-decoration-none text-reset", data: { turbo: false }, onclick: "event.stopPropagation()")
+                    = waypoint_segment_badge(next_wp)
+                  .d-flex.align-items-center.gap-2
+                    - if arrival_time
+                      small.text-muted.fw-normal = arrival_time
+                    i.bi.bi-chevron-down.text-muted.small[style="transition: transform 0.2s;"]
+        - if (segment = segments_for_steps.shift)
+          tbody.collapse[id=segment_id class=waypoint_segment_class(next_wp)]
+            - segment['steps'].select { |step| step['distance'] > 50 }.each do |step|
+              - coord = coordinates[step['way_points'].first]
+              tr.direction-step[
+                data-directions-target="step"
+                data-action="click->directions#showOnMap"
+                data-lat=coord[1]
+                data-lng=coord[0]
+                data-instruction=step['instruction']
+                style="cursor: pointer;"
+              ]
+                td
+                  small = step['instruction']
+                td.text-end.text-nowrap
+                  small = format_distance(Units::Distance.new(step['distance']), decimals: 2)
+                td.text-end.text-nowrap
+                  - if step['duration'] > 0
+                    small = format_speed(Units::Speed.new(step['distance'] / step['duration']))
+                td.text-end.text-nowrap
+                  - if route.start_time
+                    small = (Time.at(route.start_time % 86400.0).utc + coordinates[step['way_points'].last][3]).strftime("%H:%M")
+                  - else
+                    small.text-muted —
+  - else
+    .p-4.text-center
+      i.bi.bi-map.text-muted.fs-1.d-block.mb-3
+      p.text-muted.mb-0 = t('routes.show.no_route_calculated')

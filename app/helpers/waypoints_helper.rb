@@ -208,4 +208,65 @@ module WaypointsHelper
       }
     ]
   end
+
+  # Get Bootstrap icon class with color for directions partial
+  # Combines icon class with a text color based on waypoint type
+  def waypoint_type_icon(waypoint_type)
+    "#{waypoint_icon_class(waypoint_type)} #{waypoint_text_color_class(waypoint_type)}"
+  end
+
+  # Bootstrap text color class for waypoint type
+  def waypoint_text_color_class(waypoint_type)
+    classes = {
+      'overnight' => 'text-primary',
+      'lunch' => 'text-warning',
+      'ferry_boarding' => 'text-info',
+      'ferry_disembarkment' => 'text-info',
+      'toll_booth' => 'text-secondary',
+      'border_crossing' => 'text-danger',
+      'gas_station' => 'text-warning',
+      'attraction' => 'text-warning',
+      'parking' => 'text-primary',
+      'bank' => 'text-success'
+    }
+    classes[waypoint_type.to_s] || 'text-secondary'
+  end
+
+  # Bootstrap table class for a route segment based on the arriving waypoint
+  def waypoint_segment_class(next_waypoint)
+    return 'table-info'    if next_waypoint&.ferry_disembarkment?
+    return 'table-warning' if next_waypoint&.profile&.start_with?('foot-')
+
+    ''
+  end
+
+  # Badge HTML for ferry or hiking segments
+  def waypoint_segment_badge(next_waypoint)
+    if next_waypoint&.ferry_disembarkment?
+      content_tag(:span, class: 'badge bg-info text-dark ms-2 fw-normal') do
+        content_tag(:i, '', class: 'bi bi-water me-1') + t('routes.show.ferry')
+      end
+    elsif next_waypoint&.profile&.start_with?('foot-')
+      content_tag(:span, class: 'badge bg-warning text-dark ms-2 fw-normal') do
+        content_tag(:i, '', class: 'bi bi-person-walking me-1') + t('routes.show.hiking')
+      end
+    end
+  end
+
+  def waypoint_time_range(route, segment, coordinates, waypoint)
+    return nil unless route.start_time && segment
+
+    last_wp_idx = segment['steps'].last&.dig('way_points', -1)
+    return nil unless last_wp_idx && coordinates[last_wp_idx]&.[](3)
+
+    base      = Time.at(route.start_time % 86_400.0).utc
+    arrival   = base + coordinates[last_wp_idx][3]
+    departure = arrival + waypoint.delay.to_i
+
+    if waypoint.delay.to_i.positive?
+      "#{I18n.l(arrival, format: :time)} – #{I18n.l(departure, format: :time)}"
+    else
+      I18n.l(arrival, format: :time)
+    end
+  end
 end

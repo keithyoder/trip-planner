@@ -112,6 +112,24 @@ class Route < ApplicationRecord
     end
   end
 
+  # Sums segment distances for legs whose arriving waypoint is a driving leg
+  # (excludes ferry crossings and foot-hiking legs).
+  #
+  # @return [Float] driving distance in metres
+  def driving_distance_meters
+    return 0.0 unless segments.present?
+
+    arriving_waypoints = waypoints.to_a.drop(1)
+
+    segments.zip(arriving_waypoints).sum do |segment, arriving_waypoint|
+      next 0.0 unless arriving_waypoint
+      next 0.0 if arriving_waypoint.ferry_disembarkment?
+      next 0.0 if arriving_waypoint.profile.start_with?('foot-')
+
+      segment['distance'].to_f
+    end
+  end
+
   private
 
   def enqueue_calculate_route

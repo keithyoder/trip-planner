@@ -27,3 +27,6 @@ application.register("waypoint-notes", WaypointNotesController)
 
 import ClipboardController from "./clipboard_controller"
 application.register("clipboard", ClipboardController)
+
+import PanelToggleController from "./panel_toggle_controller"
+application.register("panel-toggle", PanelToggleController)
