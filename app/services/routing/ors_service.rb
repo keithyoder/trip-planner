@@ -118,8 +118,9 @@ module Routing
     #
     # Handles coordinate deduplication, way_points index offsetting, and surface
     # values index offsetting. Synthetic surface promotion (water, hiking) is
-    # applied after merging using geometry index ranges derived from waypoint
-    # positions. Surface summary is calculated from promoted values via Haversine.
+    # applied after merging using the fully-offset all_segments array so that
+    # hiking ranges are derived from way_points indices rather than coordinate
+    # snapping. Surface summary is calculated from promoted values via Haversine.
     #
     # @param legs [Array<LegResult>]
     # @return [Hash] with :coordinates, :segments, and :surfaces keys
@@ -129,15 +130,10 @@ module Routing
       surfaces_values = []
 
       legs.each_with_index do |leg, i|
-        # Drop the first coordinate on every leg after the first — it is the
-        # same junction point as the last coordinate of the previous leg.
-        # The offset subtracts 1 for the same reason: leg index 0 maps to the
-        # junction point already present at the end of the previous leg.
         leg_coords = i.zero? ? leg.coordinates : leg.coordinates[1..]
-        offset     = i.zero? ? 0 : coordinates.size - 1
+        offset = i.zero? ? 0 : coordinates.size - 1
         coordinates.concat(leg_coords)
 
-        # Offset way_points indices within each step.
         leg.segments.each do |seg|
           adjusted_steps = seg[:steps].map do |step|
             step.merge(way_points: step[:way_points].map { |idx| idx + offset })
@@ -145,15 +141,24 @@ module Routing
           all_segments << seg.merge(steps: adjusted_steps)
         end
 
-        # Offset surface value index triples.
         leg.surfaces_values.each do |(start_idx, end_idx, code)|
           surfaces_values << [start_idx + offset, end_idx + offset, code]
         end
+
+        next unless leg.profile.start_with?('foot-') && leg.surfaces_values.empty?
+
+        leg_start   = offset + 1 # skip the shared junction point
+        leg_end     = coordinates.size - 1
+        hiking_code = Routes::SurfaceProfile::SURFACE_TYPES[:hiking]
+        surfaces_values << [leg_start, leg_end, hiking_code]
       end
 
-      # Promote synthetic surface codes now that we have the full coordinate
-      # array and can snap waypoint positions to geometry indices precisely.
-      promoted_values = promote_surface_values(surfaces_values, coordinates)
+      # Promote synthetic surface codes using the fully-offset segments array.
+      # Hiking ranges are derived from way_points indices — no coordinate
+      # snapping required, avoiding duplicate-location ambiguity.
+      promoted_values = promote_surface_values(surfaces_values, coordinates, all_segments)
+
+      Rails.logger.debug "[OrsService] promoted_values: #{promoted_values.inspect}"
 
       # Calculate summary from promoted values using Haversine distances.
       # This replaces the ORS-provided summary entirely for consistency.
@@ -186,20 +191,22 @@ module Routing
 
     # -- Surface promotion -------------------------------------------------
 
-    # Promotes unknown surface codes to :water or :hiking based on precise
-    # geometry index ranges derived from waypoint positions, leaving genuine
-    # unknown road surfaces untouched.
+    # Promotes surface codes to :water or :hiking based on geometry index
+    # ranges. Ferry ranges are derived from waypoint coordinate snapping;
+    # hiking ranges are derived from the already-offset segment way_points
+    # indices, which are unambiguous regardless of duplicate coordinates.
     #
-    # @param values [Array] [[start_idx, end_idx, code], ...]
-    # @param coordinates [Array] [[lon, lat, ele], ...]
+    # @param values       [Array] [[start_idx, end_idx, code], ...]
+    # @param coordinates  [Array] [[lon, lat, ele], ...]
+    # @param all_segments [Array] merged segments with adjusted way_points
     # @return [Array] promoted values
-    def promote_surface_values(values, coordinates)
+    def promote_surface_values(values, coordinates, all_segments)
       unknown_code = Routes::SurfaceProfile::SURFACE_TYPES[:unknown]
       water_code   = Routes::SurfaceProfile::SURFACE_TYPES[:water]
       hiking_code  = Routes::SurfaceProfile::SURFACE_TYPES[:hiking]
 
       ferry_ranges  = ferry_index_ranges(coordinates)
-      hiking_ranges = hiking_index_ranges(coordinates)
+      hiking_ranges = hiking_index_ranges(all_segments)
 
       return values if ferry_ranges.empty? && hiking_ranges.empty?
 
@@ -208,7 +215,7 @@ module Routing
         effective_code = if ferry_ranges.any? { |r| r.overlaps?(segment_range) } && code == unknown_code
                            water_code
                          elsif hiking_ranges.any? { |r| r.overlaps?(segment_range) }
-                           hiking_code # promote regardless of original surface code
+                           hiking_code
                          else
                            code
                          end
@@ -223,7 +230,7 @@ module Routing
     # always consistent with the promoted values array.
     #
     # @param promoted_values [Array] [[start_idx, end_idx, code], ...]
-    # @param coordinates [Array] [[lon, lat, ele], ...]
+    # @param coordinates     [Array] [[lon, lat, ele], ...]
     # @return [Array<Hash>] sorted by descending distance percentage
     def build_surfaces_summary(promoted_values, coordinates)
       totals = Hash.new(0.0)
@@ -252,6 +259,8 @@ module Routing
 
     # Snaps ferry_boarding and ferry_disembarkment waypoint pairs to geometry
     # indices and returns the index ranges between them.
+    # Coordinate snapping is acceptable here because ferry boarding/disembarkment
+    # waypoints are at distinct locations with no ambiguity.
     #
     # @param coordinates [Array] [[lon, lat, ...], ...]
     # @return [Array<Range>]
@@ -269,21 +278,26 @@ module Routing
       end
     end
 
-    # Returns geometry index ranges for foot- profile legs, spanning from
-    # the departure waypoint to the arrival waypoint of each hiking leg.
+    # Returns geometry index ranges for foot- profile legs using the
+    # already-offset way_points indices from the merged segments array.
+    # Each merged segment aligns 1:1 with an arriving waypoint (waypoints[1..]).
+    # No coordinate snapping — avoids duplicate-location ambiguity entirely.
     #
-    # @param coordinates [Array] [[lon, lat, ...], ...]
+    # @param all_segments [Array] merged segments with adjusted way_points
     # @return [Array<Range>]
-    def hiking_index_ranges(coordinates)
-      waypoints
-        .each_cons(2)
-        .filter_map do |a, b|
-          next unless b.profile.start_with?('foot-')
+    def hiking_index_ranges(all_segments)
+      arriving_waypoints = waypoints.drop(1)
 
-          start_idx = closest_coordinate_index(coordinates, a.lonlat.x, a.lonlat.y)
-          end_idx   = closest_coordinate_index(coordinates, b.lonlat.x, b.lonlat.y)
-          start_idx..end_idx
-        end
+      all_segments.zip(arriving_waypoints).filter_map do |segment, arriving_wp|
+        next unless arriving_wp&.profile&.start_with?('foot-')
+
+        steps     = segment[:steps] || segment['steps'] || []
+        start_idx = steps.first&.dig(:way_points, 0) || steps.first&.dig('way_points', 0)
+        end_idx   = steps.last&.dig(:way_points, -1) || steps.last&.dig('way_points', -1)
+        next unless start_idx && end_idx
+
+        (start_idx + 1)..end_idx # +1 to skip the shared junction point
+      end
     end
 
     # Finds the index of the closest coordinate to the given lon/lat using

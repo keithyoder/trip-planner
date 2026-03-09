@@ -90,7 +90,7 @@ module Routes
         geometry_points = geom.points
 
         surfaces['values'].map do |start_idx, end_idx, surface_code|
-          type     = SURFACE_TYPES.key(surface_code) || :other
+          type     = SURFACE_TYPES.key(surface_code) || :unknown
           category = SURFACE_CATEGORIES.fetch(type, :unknown)
 
           SurfaceSegment.new(

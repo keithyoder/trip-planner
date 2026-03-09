@@ -29,12 +29,15 @@ div[data-controller="directions"]
                     i.bi.me-2[class=waypoint_type_icon(waypoint.waypoint_type) style="color: #{waypoint_color(waypoint.waypoint_type)};"]
                     strong
                       = link_to(waypoint.name, trip_waypoint_path(trip, waypoint), class: "text-decoration-none text-reset", data: { turbo: false }, onclick: "event.stopPropagation()")
-                    = waypoint_segment_badge(next_wp)
+                    / Badge shows how we ARRIVED at this waypoint (profile is the arrival profile)
+                    - if idx > 0
+                      = waypoint_segment_badge(waypoint)
                   .d-flex.align-items-center.gap-2
                     - if arrival_time
                       small.text-muted.fw-normal = arrival_time
                     i.bi.bi-chevron-down.text-muted.small[style="transition: transform 0.2s;"]
         - if (segment = segments_for_steps.shift)
+          / Steps are the outgoing leg toward next_wp; colour them by next_wp's arrival profile
           tbody.collapse[id=segment_id class=waypoint_segment_class(next_wp)]
             - segment['steps'].select { |step| step['distance'] > 50 }.each do |step|
               - coord = coordinates[step['way_points'].first]
