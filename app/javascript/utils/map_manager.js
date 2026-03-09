@@ -2,6 +2,43 @@
 import L from "leaflet"
 import { WaypointIcons } from "./waypoint_icons";
 
+// Surface category colours — used for colour-coded route polylines.
+// Must stay in sync with Routes::SurfaceProfile::SURFACE_CATEGORIES in surface_profile.rb.
+const SURFACE_CATEGORY_COLORS = {
+  paved:       '#3388ff',  // blue       — asphalt, concrete, metal
+  cobblestone: '#9c6b00',  // dark gold  — cobblestone, paving_stones, sett
+  unpaved:     '#e07800',  // amber      — gravel, dirt, sand, grass …
+  water:       '#00aacc',  // teal       — ferry crossings
+  hiking:      '#7b2d8b',  // purple     — foot-hiking legs
+  unknown:     '#888888',  // grey
+};
+
+// Per-type colour overrides for surfaces that benefit from a distinct shade
+// within their category. cobblestone/paving_stones/sett are handled by the
+// :cobblestone category colour above and do not need entries here.
+const SURFACE_TYPE_COLORS = {
+  gravel:      '#cc5500',
+  dirt:        '#8b5e3c',
+  sand:        '#c2a000',
+  ice:         '#aaddff',
+  grass:       '#4caf50',
+  grass_paver: '#4caf50',
+  wood:        '#795548',
+  woodchips:   '#795548',
+};
+
+/**
+ * Returns the display colour for a surface segment.
+ * Checks per-type overrides first, then falls back to category colour.
+ * @param {string} surfaceType  e.g. "gravel", "sett"
+ * @param {string} category     "paved" | "cobblestone" | "unpaved" | "water" | "hiking" | "unknown"
+ */
+function surfaceColor(surfaceType, category) {
+  return SURFACE_TYPE_COLORS[surfaceType]
+    || SURFACE_CATEGORY_COLORS[category]
+    || SURFACE_CATEGORY_COLORS.unknown;
+}
+
 function createWaypointIcon(waypointType, size = 32) {
     const config = WaypointIcons[waypointType] || WaypointIcons.routing;
 
@@ -115,7 +152,7 @@ export class MapManager {
         return this.addMarker(lat, lon, { icon: icon }, popupContent)
     }
 
-    // Add a polyline to the map
+    // Add a plain polyline to the map (single colour, no surface data)
     addPolyline(coordinates, options = {}) {
         const defaultOptions = {
             color: '#3388ff',
@@ -132,6 +169,79 @@ export class MapManager {
             const polyline = L.polyline(coordinates, { ...defaultOptions, ...options }).addTo(this.map);
             this.polylines.push(polyline);
         }
+    }
+
+    /**
+     * Render a route as colour-coded polylines based on surface type.
+     *
+     * Each segment object must have:
+     *   { surface_type: String, category: String, points: [[lat, lon], ...] }
+     *
+     * These map directly to the SurfaceSegment value objects produced by
+     * Routes::SurfaceProfile#surface_segments (serialised to JSON).
+     *
+     * @param {Array}   segments     Array of surface segment objects
+     * @param {Object}  options      Extra Leaflet polyline options (weight, opacity …)
+     * @param {boolean} withTooltip  Show a tooltip with the surface type on hover
+     */
+    addSurfacePolylines(segments, options = {}, withTooltip = true) {
+        if (!segments || segments.length === 0) return;
+
+        for (const segment of segments) {
+            const color = surfaceColor(segment.surface_type, segment.category);
+            const label = (segment.surface_type || 'unknown').replace(/_/g, ' ');
+
+            const polyline = L.polyline(segment.points, {
+                color,
+                weight:  options.weight  ?? 5,
+                opacity: options.opacity ?? 0.85,
+                ...options,
+            }).addTo(this.map);
+
+            if (withTooltip) {
+                polyline.bindTooltip(
+                    `<span style="text-transform:capitalize;">${label}</span>`,
+                    { sticky: true, direction: 'top', offset: [0, -4] }
+                );
+            }
+
+            this.polylines.push(polyline);
+        }
+    }
+
+    /**
+     * Add a surface legend control to the map.
+     * Only shows categories that are actually present in the rendered segments,
+     * so ferry-only or hiking-only routes don't clutter the legend.
+     * Call after addSurfacePolylines.
+     *
+     * @param {Array} segments  The same segments array passed to addSurfacePolylines
+     */
+    addSurfaceLegend(segments = []) {
+        // Collect only the categories present in this route
+        const activeCategories = segments.length > 0
+            ? [...new Set(segments.map(s => s.category))]
+            : Object.keys(SURFACE_CATEGORY_COLORS);
+
+        const LegendControl = L.Control.extend({
+            options: { position: 'bottomright' },
+            onAdd() {
+                const div = L.DomUtil.create('div', 'leaflet-control leaflet-bar surface-legend');
+                div.style.cssText = 'background:#fff;padding:8px 10px;font-size:12px;line-height:1.6;';
+                div.innerHTML = activeCategories
+                    .filter(cat => SURFACE_CATEGORY_COLORS[cat])
+                    .map(cat =>
+                        `<div>` +
+                        `<span style="display:inline-block;width:14px;height:14px;border-radius:3px;` +
+                        `background:${SURFACE_CATEGORY_COLORS[cat]};margin-right:6px;vertical-align:middle;"></span>` +
+                        `<span style="text-transform:capitalize;">${cat}</span>` +
+                        `</div>`
+                    ).join('');
+                return div;
+            }
+        });
+        this.map.addControl(new LegendControl());
+        return this;
     }
 
     // Fit map bounds to show all markers

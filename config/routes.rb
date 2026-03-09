@@ -21,6 +21,7 @@ Rails.application.routes.draw do
     resources :routes do
       member do
         post :calculate
+        post :generate_day_plan
       end
       resources :overpass, param: :type, only: %i[index show] do
         collection do

@@ -20,7 +20,7 @@ class Overpass
     bank: { query: "'amenity'~'bank|money_transfer'", distance: 1000, types: %i[node way] },
     accommodation: {
       query: "'tourism'~'hotel|hostel|motel|guest_house|apartment|chalet|camp_site|caravan_site|wilderness_hut|alpine_hut'",
-      distance: 500,
+      distance: 20_000,
       types: %i[node way]
     },
     toll: { query: "'barrier'='toll_booth'", distance: 5, types: %i[node way] },
@@ -32,6 +32,11 @@ class Overpass
       query: "'tourism']['tourism'!='hotel']['tourism'!='hostel']['tourism'!='motel']['tourism'!='guest_house'",
       distance: 20_000,
       types: %i[node way relation]
+    },
+    place: {
+      query: "'place'~'city|town|village|hamlet'",
+      distance: 40_000,
+      types: %i[node]
     }
   }.freeze
 

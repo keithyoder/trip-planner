@@ -24,6 +24,7 @@ module Routes
       woodchips: 16,
       grass: 17,
       grass_paver: 18,
+      sett: 19,
       # Synthetic types — not from ORS, assigned during multi-leg merge
       water: 100, # ferry crossings
       hiking: 101 # foot-hiking profile legs
@@ -31,13 +32,17 @@ module Routes
 
     # Groups surfaces into broader categories for simplified display.
     # Useful for colour-coding the map without needing 19 different colours.
+    #
+    # :cobblestone groups cobblestone, paving_stones, and sett — all hard-set
+    # stone surfaces that share similar driving characteristics and warrant their
+    # own colour distinct from smooth tarmac (:paved).
     SURFACE_CATEGORIES = {
       unknown: :unknown,
       paved: :paved,
       unpaved: :unpaved,
       asphalt: :paved,
       concrete: :paved,
-      cobblestone: :paved,
+      cobblestone: :cobblestone,
       metal: :paved,
       wood: :unpaved,
       compacted_gravel: :unpaved,
@@ -46,11 +51,12 @@ module Routes
       dirt: :unpaved,
       ground: :unpaved,
       ice: :unpaved,
-      paving_stones: :paved,
+      paving_stones: :cobblestone,
       sand: :unpaved,
       woodchips: :unpaved,
       grass: :unpaved,
       grass_paver: :unpaved,
+      sett: :cobblestone,
       water: :water,
       hiking: :hiking
     }.freeze
@@ -59,7 +65,7 @@ module Routes
     # points is an array of [lat, lon] pairs following the road.
     SurfaceSegment = Data.define(
       :surface_type,    # Symbol  — e.g. :asphalt, :gravel
-      :category,        # Symbol  — :paved | :unpaved | :unknown
+      :category,        # Symbol  — :paved | :cobblestone | :unpaved | :water | :hiking | :unknown
       :start_index,     # Integer — index into route geometry
       :end_index,       # Integer — index into route geometry
       :points           # Array<Array<Float>> — [[lat, lon], ...] for map rendering
@@ -68,7 +74,7 @@ module Routes
     # Value object for the overall surface summary.
     SurfaceSummary = Data.define(
       :surface_type,    # Symbol
-      :category,        # Symbol
+      :category,        # Symbol  — :paved | :cobblestone | :unpaved | :water | :hiking | :unknown
       :distance,        # Units::Distance
       :percent          # Float
     )
@@ -123,7 +129,8 @@ module Routes
       end
 
       # Convenience grouping of segments by category for map rendering.
-      # Returns a hash of :paved, :unpaved, :unknown each with their segments.
+      # Returns a hash of :paved, :cobblestone, :unpaved, :water, :hiking, :unknown
+      # each mapped to their segments.
       #
       # @return [Hash<Symbol, Array<SurfaceSegment>>]
       def surface_segments_by_category

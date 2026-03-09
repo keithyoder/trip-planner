@@ -14,9 +14,10 @@ export default class extends Controller {
     console.log("Routes controller connected");
     
     // Get data attributes from the target element
-    const lon = parseFloat(this.containerTarget.dataset.lon)
-    const lat = parseFloat(this.containerTarget.dataset.lat)
-    const routeData = this.containerTarget.dataset.route
+    const lon             = parseFloat(this.containerTarget.dataset.lon)
+    const lat             = parseFloat(this.containerTarget.dataset.lat)
+    const routeData       = this.containerTarget.dataset.route
+    const surfaceData     = this.containerTarget.dataset.surfaceSegments
         
     this.mapManager = new MapManager(this.containerTarget, {
       center: [lat, lon],
@@ -28,8 +29,16 @@ export default class extends Controller {
       directionsController.mapManager = this.mapManager;
     }
     
-    // If route data exists, parse and display it
-    if (routeData && routeData.trim() !== '' && routeData !== 'null' && routeData !== 'undefined') {
+    // Prefer surface-coded polylines; fall back to a plain blue polyline
+    if (surfaceData && surfaceData.trim() !== '' && surfaceData !== 'null') {
+      const segments = JSON.parse(surfaceData);
+      if (segments.length > 0) {
+        this.mapManager.addSurfacePolylines(segments);
+        this.mapManager.addSurfaceLegend(segments);
+      } else if (routeData && routeData.trim() !== '' && routeData !== 'null' && routeData !== 'undefined') {
+        this.mapManager.addPolyline(JSON.parse(routeData));
+      }
+    } else if (routeData && routeData.trim() !== '' && routeData !== 'null' && routeData !== 'undefined') {
       this.mapManager.addPolyline(JSON.parse(routeData));
     } else {
       console.warn("No route data available");
