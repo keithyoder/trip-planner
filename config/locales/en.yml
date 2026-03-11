@@ -219,6 +219,9 @@ en:
       hiking: "Hiking"
       hiking_time: "Hiking Time"
       no_route_calculated: "No route calculated"
+      walking: "Walking"
+      transit: "Transit"
+      transit_no_directions: "No turn-by-turn directions — transit leg"
     edit:
       title: "Edit Route"
       calculate_route: "Calculate Route"
@@ -243,10 +246,10 @@ en:
     profiles:
       driving-car: "Driving (Car)"
       driving-hgv: "Driving (Truck/RV)"
-      foot-walking: "Walking"
-      foot-hiking: "Hiking"
+      foot-hiking: "Walking"
       cycling-regular: "Cycling"
       cycling-mountain: "Mountain Bike"
+      transit: "Transit"
     form:
       name_label: "Name"
       name_placeholder: "Enter waypoint name"

@@ -241,17 +241,26 @@ module WaypointsHelper
     ''
   end
 
-  # Badge HTML for ferry or hiking segments
-  def waypoint_segment_badge(next_waypoint)
-    if next_waypoint&.ferry_disembarkment?
-      content_tag(:span, class: 'badge bg-info text-dark ms-2 fw-normal') do
-        content_tag(:i, '', class: 'bi bi-water me-1') + t('routes.show.ferry')
-      end
-    elsif next_waypoint&.profile&.start_with?('foot-')
-      content_tag(:span, class: 'badge bg-warning text-dark ms-2 fw-normal') do
-        content_tag(:i, '', class: 'bi bi-person-walking me-1') + t('routes.show.hiking')
-      end
-    end
+  def waypoint_segment_badge(waypoint)
+    return nil unless waypoint.profile.present?
+    return nil if waypoint.profile == 'driving-car' # default profile, no badge needed
+
+    profile = waypoint.profile
+    label   = I18n.t("waypoints.profiles.#{profile}", default: profile)
+
+    css_class = case profile
+                when 'transit'           then 'bg-info text-dark'
+                when /\Afoot-/           then 'bg-success'
+                when /\Acycling-/        then 'bg-warning text-dark'
+                when 'driving-hgv'       then 'bg-secondary'
+                else                          'bg-secondary'
+                end
+
+    content_tag(:span, label, class: "badge #{css_class} ms-2 fw-normal")
+  end
+
+  def arriving_profile_badge(profile)
+    waypoint_segment_badge(Struct.new(:profile).new(profile))
   end
 
   def waypoint_time_range(route, segment, coordinates, waypoint)

@@ -113,7 +113,7 @@ class Route < ApplicationRecord
   end
 
   # Sums segment distances for legs whose arriving waypoint is a driving leg
-  # (excludes ferry crossings and foot-hiking legs).
+  # (excludes ferry crossings, foot-hiking legs, and transit legs).
   #
   # @return [Float] driving distance in metres
   def driving_distance_meters
@@ -125,6 +125,7 @@ class Route < ApplicationRecord
       next 0.0 unless arriving_waypoint
       next 0.0 if arriving_waypoint.ferry_disembarkment?
       next 0.0 if arriving_waypoint.profile.start_with?('foot-')
+      next 0.0 if arriving_waypoint.transit?
 
       segment['distance'].to_f
     end

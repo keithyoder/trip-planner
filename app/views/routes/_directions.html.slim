@@ -1,5 +1,7 @@
+- presenter = DirectionsPresenter.new(route)
+
 div[data-controller="directions"]
-  - if @route.geom
+  - if presenter.has_geometry?
     table.table.table-sm.table-hover.mb-0
       thead.sticky-top.bg-white
         tr
@@ -7,60 +9,60 @@ div[data-controller="directions"]
           th.border-0.text-end = t('routes.show.distance')
           th.border-0.text-end = t('routes.show.speed')
           th.border-0.text-end = t('routes.show.time')
-      - coordinates = @route.geom.coordinates
-      - all_waypoints = route.waypoints.to_a
-      - segments_for_arrival = route.segments&.dup || []
-      - segments_for_steps   = route.segments&.dup || []
-      - all_waypoints.each_with_index do |waypoint, idx|
-        - segment_id      = "seg-#{waypoint.sequence}"
-        - next_wp         = all_waypoints[idx + 1]
-        - arrival_segment = idx > 0 ? segments_for_arrival[idx - 1] : nil
-        - arrival_time    = waypoint_time_range(route, arrival_segment, coordinates, waypoint)
-        - unless waypoint.waypoint_type == 'routing'
-          tbody
-            tr.collapsed[
-              data-bs-toggle="collapse"
-              data-bs-target="##{segment_id}"
-              style="cursor: pointer; border-left: 3px solid #{waypoint_color(waypoint.waypoint_type)}; background-color: #{waypoint_background_color(waypoint.waypoint_type)};"
-            ]
-              td[colspan="4"]
-                .d-flex.justify-content-between.align-items-center
-                  span
-                    i.bi.me-2[class=waypoint_type_icon(waypoint.waypoint_type) style="color: #{waypoint_color(waypoint.waypoint_type)};"]
-                    strong
-                      = link_to(waypoint.name, trip_waypoint_path(trip, waypoint), class: "text-decoration-none text-reset", data: { turbo: false }, onclick: "event.stopPropagation()")
-                    / Badge shows how we ARRIVED at this waypoint (profile is the arrival profile)
-                    - if idx > 0
-                      = waypoint_segment_badge(waypoint)
-                  .d-flex.align-items-center.gap-2
-                    - if arrival_time
-                      small.text-muted.fw-normal = arrival_time
-                    i.bi.bi-chevron-down.text-muted.small[style="transition: transform 0.2s;"]
-        - if (segment = segments_for_steps.shift)
-          / Steps are the outgoing leg toward next_wp; colour them by next_wp's arrival profile
-          tbody.collapse[id=segment_id class=waypoint_segment_class(next_wp)]
-            - segment['steps'].select { |step| step['distance'] > 50 }.each do |step|
-              - coord = coordinates[step['way_points'].first]
+
+      - presenter.rows.each do |row|
+        - segment_id = "seg-#{row.waypoint.sequence}"
+
+        tbody
+          tr.collapsed[
+            data-bs-toggle="collapse"
+            data-bs-target="##{segment_id}"
+            style="cursor: pointer; border-left: 3px solid #{waypoint_color(row.waypoint.waypoint_type)}; background-color: #{waypoint_background_color(row.waypoint.waypoint_type)};"
+          ]
+            td[colspan="4"]
+              .d-flex.justify-content-between.align-items-center
+                span
+                  i.bi.me-2[class=waypoint_type_icon(row.waypoint.waypoint_type) style="color: #{waypoint_color(row.waypoint.waypoint_type)};"]
+                  strong
+                    = link_to(row.waypoint.name, trip_waypoint_path(trip, row.waypoint), class: "text-decoration-none text-reset", data: { turbo: false }, onclick: "event.stopPropagation()")
+                  - unless row.first?
+                    = arriving_profile_badge(row.arriving_profile)
+                .d-flex.align-items-center.gap-2
+                  - if row.arrival_time
+                    small.text-muted.fw-normal = row.arrival_time
+                  i.bi.bi-chevron-down.text-muted.small[style="transition: transform 0.2s;"]
+
+        - if row.next_is_transit?
+          tbody.collapse[id=segment_id]
+            tr
+              td.text-center.text-muted.py-3[colspan="4"]
+                i.bi.bi-train-front.me-2
+                = t('routes.show.transit_no_directions')
+
+        - elsif row.steps.any?
+          tbody.collapse[id=segment_id class=row.segment_class]
+            - row.steps.each do |step|
               tr.direction-step[
                 data-directions-target="step"
                 data-action="click->directions#showOnMap"
-                data-lat=coord[1]
-                data-lng=coord[0]
-                data-instruction=step['instruction']
+                data-lat=step.lat
+                data-lng=step.lon
+                data-instruction=step.instruction
                 style="cursor: pointer;"
               ]
                 td
-                  small = step['instruction']
+                  small = step.instruction
                 td.text-end.text-nowrap
-                  small = format_distance(Units::Distance.new(step['distance']), decimals: 2)
+                  small = format_distance(step.distance, decimals: 2)
                 td.text-end.text-nowrap
-                  - if step['duration'] > 0
-                    small = format_speed(Units::Speed.new(step['distance'] / step['duration']))
+                  - if step.speed
+                    small = format_speed(step.speed)
                 td.text-end.text-nowrap
-                  - if route.start_time
-                    small = (Time.at(route.start_time % 86400.0).utc + coordinates[step['way_points'].last][3]).strftime("%H:%M")
+                  - if step.time
+                    small = step.time
                   - else
                     small.text-muted —
+
   - else
     .p-4.text-center
       i.bi.bi-map.text-muted.fs-1.d-block.mb-3

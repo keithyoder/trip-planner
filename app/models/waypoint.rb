@@ -44,11 +44,17 @@ class Waypoint < ApplicationRecord
   PROFILES = %w[
     driving-car
     driving-hgv
-    foot-walking
     foot-hiking
     cycling-regular
     cycling-mountain
+    transit
   ].freeze
+
+  # Returns true when the waypoint is arriving via transit (bus, train, etc.).
+  # Transit legs have no ORS route — geometry and directions are omitted.
+  def transit?
+    profile == 'transit'
+  end
 
   geocoded_by :address do |record, results|
     result = results.first

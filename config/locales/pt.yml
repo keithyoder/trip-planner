@@ -248,10 +248,10 @@ pt:
     profiles:
       driving-car: "Carro"
       driving-hgv: "Caminhão/RV"
-      foot-walking: "Caminhada"
-      foot-hiking: "Trilha"
+      foot-hiking: "Caminhada"
       cycling-regular: "Bicicleta"
       cycling-mountain: "Bicicleta de montanha"
+      transit: "Transit"
     form:
       name_label: "Nome"
       name_placeholder: "Digite o nome do ponto"

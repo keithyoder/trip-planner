@@ -126,6 +126,7 @@
         .card-body.p-0
           - if @route.geom
             - surface_segments_json = @route.surface_segments.map { |s| { surface_type: s.surface_type, category: s.category, points: s.points } }.to_json
+            - Rails.logger.debug @route.surface_segments.map { |s| "#{s.surface_type}/#{s.category}" }.inspect
             div[
               data-controller="routes"
               data-routes-waypoints-value="#{waypoints_map_data(@route.waypoints)}"

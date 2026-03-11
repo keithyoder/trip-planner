@@ -96,7 +96,18 @@ module Routing
       end
     end
 
-    # Groups consecutive waypoint pairs by the arriving waypoint's profile.
+    # Groups consecutive waypoint pairs into ORS legs by profile.
+    #
+    # Transit waypoints are excluded from ORS routing entirely and also act as
+    # chunk boundaries — pairs on either side of a transit gap must not be
+    # merged into a single leg even if they share the same profile, because
+    # the gap means they are not contiguous on the ground.
+    #
+    # Algorithm: chunk_while continues a group as long as the arriving waypoint
+    # of both pairs is non-transit AND they share the same profile. Any pair
+    # whose destination is transit breaks the chunk, and transit-destination
+    # chunks are then filtered out entirely.
+    #
     # The first waypoint is always the departure point — its profile belongs
     # to the previous route's final leg and is intentionally ignored here.
     #
@@ -104,8 +115,10 @@ module Routing
     def waypoint_legs
       waypoints
         .each_cons(2)
-        .chunk { |_a, b| b.profile }
-        .map do |profile, pairs|
+        .chunk_while { |(_a1, b1), (_a2, b2)| !b1.transit? && !b2.transit? && b1.profile == b2.profile }
+        .reject { |pairs| pairs.first[1].transit? }
+        .map do |pairs|
+          profile       = pairs.first[1].profile
           leg_waypoints = [pairs.first.first, *pairs.map(&:last)]
           {
             profile: profile,
@@ -131,7 +144,7 @@ module Routing
 
       legs.each_with_index do |leg, i|
         leg_coords = i.zero? ? leg.coordinates : leg.coordinates[1..]
-        offset = i.zero? ? 0 : coordinates.size - 1
+        offset     = i.zero? ? 0 : coordinates.size - 1
         coordinates.concat(leg_coords)
 
         leg.segments.each do |seg|
@@ -157,8 +170,6 @@ module Routing
       # Hiking ranges are derived from way_points indices — no coordinate
       # snapping required, avoiding duplicate-location ambiguity.
       promoted_values = promote_surface_values(surfaces_values, coordinates, all_segments)
-
-      Rails.logger.debug "[OrsService] promoted_values: #{promoted_values.inspect}"
 
       # Calculate summary from promoted values using Haversine distances.
       # This replaces the ORS-provided summary entirely for consistency.
@@ -230,7 +241,7 @@ module Routing
     # always consistent with the promoted values array.
     #
     # @param promoted_values [Array] [[start_idx, end_idx, code], ...]
-    # @param coordinates     [Array] [[lon, lat, ele], ...]
+    # @param coordinates [Array] [[lon, lat, ele], ...]
     # @return [Array<Hash>] sorted by descending distance percentage
     def build_surfaces_summary(promoted_values, coordinates)
       totals = Hash.new(0.0)
@@ -280,13 +291,19 @@ module Routing
 
     # Returns geometry index ranges for foot- profile legs using the
     # already-offset way_points indices from the merged segments array.
-    # Each merged segment aligns 1:1 with an arriving waypoint (waypoints[1..]).
+    #
+    # all_segments maps 1:1 to non-transit arriving waypoints — transit
+    # waypoints are never routed by ORS and produce no segment. We therefore
+    # zip segments against the non-transit arriving waypoints only.
+    #
     # No coordinate snapping — avoids duplicate-location ambiguity entirely.
     #
     # @param all_segments [Array] merged segments with adjusted way_points
     # @return [Array<Range>]
     def hiking_index_ranges(all_segments)
-      arriving_waypoints = waypoints.drop(1)
+      # Non-transit arriving waypoints: skip first (it's the departure),
+      # then reject any transit waypoints (they have no corresponding segment).
+      arriving_waypoints = waypoints.drop(1).reject(&:transit?)
 
       all_segments.zip(arriving_waypoints).filter_map do |segment, arriving_wp|
         next unless arriving_wp&.profile&.start_with?('foot-')

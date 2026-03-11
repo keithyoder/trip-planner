@@ -243,10 +243,10 @@ es:
     profiles:
       driving-car: "Auto"
       driving-hgv: "Camión/RV"
-      foot-walking: "A pie"
-      foot-hiking: "Senderismo"
+      foot-hiking: "A pie"  
       cycling-regular: "Bicicleta"
       cycling-mountain: "Bicicleta de montaña"
+      transit: "Transit"
     form:
       name_label: "Nombre"
       name_placeholder: "Ingresa el nombre del punto"

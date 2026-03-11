@@ -105,56 +105,34 @@ class DayPlanTranslator
       Preserve the facts, the historical detail, and the editorial judgement. Change whatever
       is needed at the level of phrasing, sentence structure, and idiom to make it read well.
 
-      ## Sayings and idioms
+      ## Idioms and set phrases — the most common failure mode
 
-      When the source text contains an idiom, colloquial expression, or culturally-specific
-      saying, do not translate it word-for-word. Instead:
+      English travel writing uses idioms and metaphorical expressions that do not translate
+      literally. When you encounter one, do not translate the words — translate the idea.
+      Find the construction a native writer would actually use, or rephrase as plain descriptive
+      prose if no clean equivalent exists.
 
-      1. Identify the meaning or effect the expression carries in context (e.g. conveying
-         inevitability, a shrug of acceptance, a wry observation about distance or hardship).
-      2. Find a natural equivalent in the target language that carries the same connotation
-         and register — ideally one that a native speaker would reach for naturally in the
-         same situation.
-      3. If no clean equivalent exists, rephrase to convey the underlying meaning in plain,
-         idiomatic prose rather than forcing a translation of the original words.
+      Examples of what NOT to do:
 
-      Examples of the kind of transformations expected:
-      - "it is what it is" → "así es la vida" (es) / "é o que é" or "não tem jeito" (pt)
-      - "make the most of" → "aprovechar al máximo" (es) / "aproveitar ao máximo" (pt)
-      - "the road ahead" used metaphorically → adapt the metaphor, don't translate the words
-      - a dry, understated English observation → find the equivalent deadpan register in
-        Spanish or Portuguese rather than a literal rendering that loses the tone
+      - "on the waterfront" → "na beira da água" is wrong. Use "à beira do rio", "à beira-mar",
+        "no cais", or simply name the place ("no porto", "na orla") depending on context.
+      - "the distance feels both smaller and larger than that" → "a distância se sente ao mesmo
+        tempo menor e maior" is wrong. "Sentir" used this way is an English calque. Rephrase:
+        "a travessia parece mais curta do que é — e ao mesmo tempo mais significativa",
+        or simply cut the observation if it cannot be expressed naturally.
+      - "it feels like..." → never translate as "parece que se sente" or "se sente como".
+        Use "parece", "dá a sensação de", or restructure the sentence entirely.
+      - "worth the time" → "vale a pena" in Portuguese/Spanish, not "merece o tempo".
 
-      The test: would a native speaker read this and think "this sounds translated"? If yes,
-      find a better phrasing. Natural prose in the target language always wins over fidelity
-      to the source's exact words.
-
-      ## Spatial and directional idioms
-
-      Phrases like "across the water," "on the other side," "beyond the ridge" often have
-      idiomatic equivalents that don't map word-for-word. "Do outro lado da água", for example,
-      sounds like a translation in Portuguese — prefer "do outro lado do rio", "na margem
-      oposta", or simply restructure the sentence to avoid the construction altogether. When
-      in doubt, rephrase rather than translate spatially.
+      The test: would a native Brazilian or Latin American writer actually write this sentence?
+      If the answer is no, rewrite it until the answer is yes. When in doubt, simpler and more
+      direct is better than an attempt at a clever construction that lands awkwardly.
 
       ## Style conventions to preserve exactly
 
       **Place name formatting**: Any place name wrapped in __double underscores__ (e.g. __Diamantina__,
       __Posto da Palha__) must remain wrapped in __double underscores__ in every translation.
       Do not remove, replace, or reformat them.
-
-      **Proper names**: Do not translate proper nouns (place names, landmark names, street names)
-      from Spanish into Portuguese or vice versa unless the translation is clearly established
-      and widely used (e.g. Rio de Janeiro, Buenos Aires). If a Spanish name is nearly identical
-      in Portuguese, leave it as-is. Changing "Portón de Campo" to "Portão do Campo", for
-      example, is unnecessary and potentially confusing — a reader who looks it up will find
-      the Spanish original, not the Portuguese invention.
-
-      **Avoid word repetition within close proximity**: Read each paragraph for repeated words
-      and rephrase to vary them. If the same word or root appears twice within two or three
-      sentences, one instance should be replaced with a synonym, restructured, or cut. This
-      applies even when the repetition is not present in the source text — the translation is
-      an opportunity to correct it, not reproduce it.
 
       **Prose only**: No bullet points, no numbered lists, no tables. All content is written
       in flowing paragraphs. Preserve this structure exactly.
@@ -167,6 +145,10 @@ class DayPlanTranslator
       **Tone — editorial, not promotional**: Informed, specific, unhurried. Not enthusiastic or
       marketing-driven. Do NOT use words like "breathtaking", "stunning", "impresionante" (in that
       sense), "deslumbrante", "pristine", "incredible", "incrível", or their equivalents.
+
+      **No personal pronouns**: No "I", "we", "our", "the group", "travelers", "visitors",
+      or their equivalents (nosotros, viajeros, visitantes, nós, viajantes, visitantes).
+      Narrate the day directly — what exists, what happens, what there is to see.
 
       **Times as anchors, not schedules**: Use loose, natural phrasing for times. In Spanish,
       prefer "a media mañana", "bien antes del mediodía", "al caer la tarde". In Portuguese,
@@ -210,7 +192,7 @@ class DayPlanTranslator
       Do not wrap the JSON in markdown code fences.
 
       Example structure (if translating into es and pt):
-      {"es": "## El Camino\n\n...", "pt": "## A Estrada\n\n..."}
+      {"es": "El Camino\n\n...", "pt": "A Estrada\n\n..."}
     PROMPT
   end
 
