@@ -27,7 +27,9 @@ module Routes
       sett: 19,
       # Synthetic types — not from ORS, assigned during multi-leg merge
       water: 100, # ferry crossings
-      hiking: 101 # foot-hiking profile legs
+      hiking: 101, # foot-hiking profile legs
+      rail: 102, # transit rail (train, metro, tram)
+      bus: 103 # transit bus
     }.freeze
 
     # Groups surfaces into broader categories for simplified display.
@@ -58,7 +60,9 @@ module Routes
       grass_paver: :unpaved,
       sett: :cobblestone,
       water: :water,
-      hiking: :hiking
+      hiking: :hiking,
+      rail: :rail,
+      bus: :bus
     }.freeze
 
     # Value object for a single surface segment with its geometry.

@@ -33,7 +33,7 @@ class RouteSequence < ActiveRecord::Base
   def driving_duration
     return unless duration.present?
 
-    seconds = duration - (stopped_time || 0) - ferry_duration_seconds - hiking_duration_seconds
+    seconds = duration - (stopped_time || 0) - ferry_duration_seconds - hiking_duration_seconds - transit_duration_seconds
     ActiveSupport::Duration.build(round_duration_to_minute(seconds))
   end
 
@@ -55,7 +55,16 @@ class RouteSequence < ActiveRecord::Base
     ActiveSupport::Duration.build(round_duration_to_minute(hiking_duration_seconds))
   end
 
-  # Total duration including driving, stops, ferry, and hiking.
+  # Time spent on transit legs for this route.
+  #
+  # @return [ActiveSupport::Duration, nil]
+  def transit_duration
+    return unless duration.present?
+
+    ActiveSupport::Duration.build(round_duration_to_minute(transit_duration_seconds))
+  end
+
+  # Total duration including driving, stops, ferry, hiking, and transit.
   #
   # @return [ActiveSupport::Duration, nil]
   def total_duration
@@ -87,5 +96,9 @@ class RouteSequence < ActiveRecord::Base
 
   def hiking_duration_seconds
     @hiking_duration_seconds ||= route.leg_duration_for { |wp| wp.profile.start_with?('foot-') }
+  end
+
+  def transit_duration_seconds
+    @transit_duration_seconds ||= route.leg_duration_for(&:transit?)
   end
 end

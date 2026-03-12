@@ -15,15 +15,13 @@ class DirectionsPresenter
     :first,           # Boolean — true for the first displayed row
     :arrival_time,    # String or nil — when you arrived here
     :transit,         # Boolean — this waypoint is a transit stop
-    :next_is_transit, # Boolean — the departing leg is transit (no walking steps)
     :arriving_profile, # String or nil — profile of the leg that arrived here
     :segment,         # Hash or nil — outgoing ORS segment
     :steps,           # Array<Step> — walking steps departing here
     :segment_class    # String — Bootstrap table class
   ) do
-    def transit?         = transit
-    def next_is_transit? = next_is_transit
-    def first?           = first
+    def transit? = transit
+    def first?   = first
   end
 
   Step = Data.define(
@@ -60,14 +58,14 @@ class DirectionsPresenter
     # departing_seg_for[sequence] → segment index (steps shown under departure)
     # arriving_seg_for[sequence]  → segment index (arrival time shown here)
     #
-    # Every consecutive pair where the destination is NOT transit produces one
-    # ORS segment.
+    # Every consecutive non-routing pair produces one segment — ORS for
+    # driving/walking legs, GoogleMaps for transit legs.
     departing_seg_for = {}
     arriving_seg_for  = {}
     seg_idx = 0
 
     all_waypoints.each_cons(2) do |a, b|
-      next if b.transit?
+      next if a.routing? || b.routing?
 
       departing_seg_for[a.sequence] = seg_idx
       arriving_seg_for[b.sequence]  = seg_idx
@@ -93,15 +91,7 @@ class DirectionsPresenter
 
       # arriving_profile drives the badge shown on this row.
       # - nil if this is the first waypoint (no leg arrived here)
-      # - 'transit' if the previous leg was a transit gap (no ORS segment)
-      # - waypoint.profile if an ORS segment arrived here (walking/driving)
-      arriving_profile = if prev_wp.nil?
-                           nil
-                         elsif incoming_segment
-                           waypoint.profile
-                         else
-                           'transit'
-                         end
+      # - waypoint.profile if a segment arrived here (walking/driving/transit)
 
       Row.new(
         waypoint: waypoint,
@@ -109,8 +99,7 @@ class DirectionsPresenter
         first: is_first,
         arrival_time: build_arrival_time(incoming_segment, waypoint),
         transit: waypoint.transit?,
-        next_is_transit: next_wp&.transit? || false,
-        arriving_profile: prev_wp&.profile,
+        arriving_profile: prev_wp.nil? ? nil : waypoint.profile,
         segment: outgoing_segment,
         steps: outgoing_segment ? build_steps(outgoing_segment) : [],
         segment_class: segment_class_for(next_wp)
@@ -137,13 +126,15 @@ class DirectionsPresenter
 
   def build_steps(segment)
     segment['steps']
-      .select { |step| step['distance'] > MIN_STEP_DISTANCE }
+      .select { |step| step['distance'].to_f > MIN_STEP_DISTANCE || step['distance'].to_f.zero? }
       .map do |step|
-        coord = coordinates[step['way_points'].first]
+        coord    = coordinates[step['way_points'].first]
+        distance = step['distance'].to_f
+        duration = step['duration'].to_f
         Step.new(
           instruction: step['instruction'],
-          distance: Units::Distance.new(step['distance']),
-          speed: step['duration'].to_f > 0 ? Units::Speed.new(step['distance'] / step['duration']) : nil,
+          distance: distance > 0 ? Units::Distance.new(distance) : nil,
+          speed: distance > 0 && duration > 0 ? Units::Speed.new(distance / duration) : nil,
           time: step_time(step),
           lat: coord[1],
           lon: coord[0]

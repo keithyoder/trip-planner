@@ -10,6 +10,8 @@ const SURFACE_CATEGORY_COLORS = {
   unpaved:     '#e07800',  // amber      — gravel, dirt, sand, grass …
   water:       '#00aacc',  // teal       — ferry crossings
   hiking:      '#7b2d8b',  // purple     — foot-hiking legs
+  rail:        '#e53935',  // red        — train, metro, tram
+  bus:         '#f57c00',  // orange     — bus, trolleybus
   unknown:     '#888888',  // grey
 };
 

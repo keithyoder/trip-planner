@@ -32,14 +32,7 @@ div[data-controller="directions"]
                     small.text-muted.fw-normal = row.arrival_time
                   i.bi.bi-chevron-down.text-muted.small[style="transition: transform 0.2s;"]
 
-        - if row.next_is_transit?
-          tbody.collapse[id=segment_id]
-            tr
-              td.text-center.text-muted.py-3[colspan="4"]
-                i.bi.bi-train-front.me-2
-                = t('routes.show.transit_no_directions')
-
-        - elsif row.steps.any?
+        - if row.steps.any?
           tbody.collapse[id=segment_id class=row.segment_class]
             - row.steps.each do |step|
               tr.direction-step[
@@ -53,7 +46,10 @@ div[data-controller="directions"]
                 td
                   small = step.instruction
                 td.text-end.text-nowrap
-                  small = format_distance(step.distance, decimals: 2)
+                  - if step.distance
+                    small = format_distance(step.distance, decimals: 2)
+                  - else
+                    small.text-muted —
                 td.text-end.text-nowrap
                   - if step.speed
                     small = format_speed(step.speed)
