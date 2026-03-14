@@ -19,6 +19,8 @@ module Routing
   #   Routing::MergeService.new(route, legs).call
   #
   class MergeService
+    GEO_FACTORY = RGeo::Geographic.spherical_factory(srid: 4326)
+
     def initialize(route, legs)
       @route = route
       @legs  = legs
@@ -47,6 +49,10 @@ module Routing
     # - Surface value offsetting: same offset applied to surface value ranges.
     # - Synthetic hiking surfaces: injected for foot- legs that ORS didn't
     #   return surface data for.
+    # - ORS sometimes returns way_points indices that reference coordinates
+    #   beyond the end of the geometry (off-by-one in the last step). These are
+    #   clamped to max_local_idx before offsetting to prevent out-of-bounds
+    #   access in DurationImporter and DirectionsPresenter.
     #
     # @return [Hash] with :coordinates, :segments, :surfaces keys
     def merge_legs
@@ -60,8 +66,10 @@ module Routing
         coordinates.concat(leg_coords)
 
         leg.segments.each do |seg|
+          max_local_idx  = leg.coordinates.size - 1
           adjusted_steps = seg[:steps].map do |step|
-            step.merge(way_points: step[:way_points].map { |idx| idx + offset })
+            clamped = step[:way_points].map { |idx| [idx, max_local_idx].min + offset }
+            step.merge(way_points: clamped)
           end
           all_segments << seg.merge(steps: adjusted_steps)
         end
@@ -144,7 +152,7 @@ module Routing
       end
     end
 
-    # Builds surface summary by summing Haversine distances per surface code.
+    # Builds surface summary by summing geodesic distances per surface code.
     #
     # @param promoted_values [Array] [[start_idx, end_idx, code], ...]
     # @param coordinates     [Array] [[lon, lat, ele], ...]
@@ -154,10 +162,8 @@ module Routing
 
       promoted_values.each do |(start_idx, end_idx, code)|
         distance = (start_idx...end_idx).sum do |i|
-          haversine_distance(
-            coordinates[i][1],     coordinates[i][0],
-            coordinates[i + 1][1], coordinates[i + 1][0]
-          )
+          GEO_FACTORY.point(coordinates[i][0], coordinates[i][1])
+                     .distance(GEO_FACTORY.point(coordinates[i + 1][0], coordinates[i + 1][1]))
         end
         totals[code] += distance
       end
@@ -200,7 +206,7 @@ module Routing
     def hiking_index_ranges(all_segments)
       # Build leg profiles from consecutive non-routing pairs, matching the
       # order legs were fetched. Each pair (a, b) produces one segment whose
-      # profile is a.profile (the departing waypoint's outgoing profile).
+      # profile is b.profile (the arriving waypoint's profile).
       leg_profiles = waypoints
                      .reject(&:routing?)
                      .each_cons(2)
@@ -223,17 +229,6 @@ module Routing
         .each_with_index
         .min_by { |c, _| (c[0] - lon)**2 + (c[1] - lat)**2 }
         .last
-    end
-
-    def haversine_distance(lat1, lon1, lat2, lon2)
-      r    = 6_371_000.0
-      dlat = (lat2 - lat1) * Math::PI / 180
-      dlon = (lon2 - lon1) * Math::PI / 180
-      a    = Math.sin(dlat / 2)**2 +
-             Math.cos(lat1 * Math::PI / 180) *
-             Math.cos(lat2 * Math::PI / 180) *
-             Math.sin(dlon / 2)**2
-      r * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     end
 
     def waypoints

@@ -133,11 +133,11 @@ class DirectionsPresenter
         duration = step['duration'].to_f
         Step.new(
           instruction: step['instruction'],
-          distance: distance > 0 ? Units::Distance.new(distance) : nil,
-          speed: distance > 0 && duration > 0 ? Units::Speed.new(distance / duration) : nil,
+          distance: distance.positive? ? Units::Distance.new(distance) : nil,
+          speed: distance.positive? && duration.positive? ? Units::Speed.new(distance / duration) : nil,
           time: step_time(step),
-          lat: coord[1],
-          lon: coord[0]
+          lat: coord&.[](1),
+          lon: coord&.[](0)
         )
       end
   end

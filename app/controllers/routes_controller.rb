@@ -76,7 +76,7 @@ class RoutesController < ApplicationController
 
   # POST /routes/1/calculate
   def calculate
-    CalculateRouteJob.perform_now(@route.id)
+    CalculateRouteJob.perform_later(@route.id)
 
     respond_to do |format|
       format.html { redirect_to edit_trip_route_url(@trip, @route), notice: 'Route calculation has been queued.' }

@@ -19,15 +19,17 @@ module Routing
   #      distance / velocity and accumulating it into the M value of each point.
   #
   # Single-point steps (way_points.first == way_points.last) are skipped because
-  # there is no preceding point to measure distance from.
+  # there is no preceding point to measure distance from — except for the final
+  # arrival step, which is stamped with the current elapsed time so that
+  # build_arrival_time can read the M value of the last coordinate.
   #
   # == Usage
   #
-  #   Routes::DurationImporter.new(route).import
+  #   Routing::DurationImporter.new(route).import
   #
   # The route must have:
-  #   - +geom+     a 3D LineString (populated by OrsService#calculate)
-  #   - +segments+ the ORS segments JSON (populated by OrsService#calculate)
+  #   - +geom+     a 3D LineString (populated by MergeService)
+  #   - +segments+ the ORS segments JSON (populated by MergeService)
   #   - +waypoints+ ordered waypoints with optional +delay+ values (seconds)
   #
   class DurationImporter
@@ -51,28 +53,41 @@ module Routing
     # Walks segments and steps, returning the full coordinate array with M values
     # set to cumulative elapsed seconds.
     #
+    # Coordinates are read directly from PostGIS via ST_AsGeoJSON rather than
+    # through RGeo, which drops points on 4D geometries.
+    #
     # @return [Array<Array<Numeric>>] coordinate tuples [x, y, z, m]
     def stamp_coordinates
-      line = RGeo::GeoJSON.encode(@route.geom)
-      coords = line['coordinates']
-      waypoints = @route.waypoints.to_a
-      elapsed = 0.0
+      result = Route.connection.exec_query(
+        Route.sanitize_sql(
+          ['SELECT ST_AsGeoJSON(geom) AS geojson FROM routes WHERE id = :id', { id: @route.id }]
+        )
+      ).first
+      coords    = JSON.parse(result['geojson'])['coordinates']
+      waypoints = @route.waypoints.reject(&:routing?).to_a
+      elapsed   = 0.0
 
-      @route.segments.each do |segment|
-        # Each segment starts at a waypoint; accumulate any stop delay there.
-        waypoint = waypoints.shift
+      @route.segments.each_with_index do |segment, i|
+        # Apply the departing waypoint's stop delay before walking this segment.
+        waypoint = waypoints[i]
         elapsed += waypoint.delay.to_f if waypoint
 
         segment['steps'].each do |step|
           first_idx = step['way_points'].first
           last_idx  = step['way_points'].last
 
-          # A step covering only one point has no distance to calculate from.
-          next if first_idx >= last_idx
+          # Stamp the arrival step's coordinate with current elapsed time even
+          # though it covers no distance — this is what build_arrival_time reads.
+          if first_idx >= last_idx
+            coords[first_idx][3] = elapsed if first_idx < coords.size
+            next
+          end
 
           velocity = step_velocity(step)
 
           (first_idx + 1..last_idx).each do |idx|
+            next if idx >= coords.size
+
             dist = distance_between(coords[idx], coords[idx - 1])
             elapsed += dist / velocity unless velocity.nan? || velocity.zero?
             coords[idx][3] = elapsed
@@ -85,8 +100,7 @@ module Routing
 
     # Persists the stamped coordinates as a LINESTRING ZM geography.
     #
-    # We write raw SQL rather than assigning to geom so that PostGIS handles
-    # the geometry parsing — RGeo does not support 4D geometries natively.
+    # Written as raw SQL because RGeo does not support 4D geometries natively.
     #
     # @param coordinates [Array<Array<Numeric>>]
     # @return [void]
@@ -122,10 +136,16 @@ module Routing
                  .distance(GEO_FACTORY.point(pt2[0], pt2[1]))
     end
 
+    # Builds a LINESTRING ZM WKT string from a coordinate array.
+    # Ensures every point has X, Y, Z, M — defaulting Z and M to 0 if missing.
+    #
     # @param coordinates [Array<Array<Numeric>>]
     # @return [String] WKT LINESTRING ZM (...)
     def build_linestring_zm(coordinates)
-      points = coordinates.map { |c| c.join(' ') }.join(', ')
+      points = coordinates.map do |c|
+        x, y, z, m = c
+        "#{x} #{y} #{z || 0} #{m || 0}"
+      end.join(', ')
       "LINESTRING ZM (#{points})"
     end
   end
