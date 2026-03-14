@@ -90,6 +90,7 @@ module Routes
       # @return [Array<SurfaceSegment>]
       def surface_segments
         return [] unless surfaces && geom
+        return [] unless surfaces['values']
 
         geometry_points = geom.points
 

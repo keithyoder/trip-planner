@@ -73,8 +73,6 @@ module Routing
 
       Route.connection.exec_update(sql)
 
-      # The elevation API occasionally drops points. Re-clamp segments to the
-      # actual stored coordinate count so way_points indices stay in bounds.
       stored_count = Route.connection.exec_query(
         Route.sanitize_sql(
           ['SELECT ST_NPoints(geom::geometry) AS n FROM routes WHERE id = :id', { id: @route.id }]
@@ -84,16 +82,24 @@ module Routing
       expected_count = @route.geom.num_points
       return if stored_count >= expected_count
 
-      Rails.logger.debug "[OrsService] Elevation import dropped #{expected_count - stored_count} points for route #{@route.id}, clamping segments"
+      Rails.logger.debug "[OrsService] Elevation import dropped #{expected_count - stored_count} points for route #{@route.id}, clamping segments and surfaces"
 
-      clamped = @route.segments.map do |seg|
+      max_idx = stored_count - 1
+
+      clamped_segments = @route.segments.map do |seg|
         clamped_steps = seg['steps'].map do |step|
-          step.merge('way_points' => step['way_points'].map { |idx| [idx, stored_count - 1].min })
+          step.merge('way_points' => step['way_points'].map { |idx| [idx, max_idx].min })
         end
         seg.merge('steps' => clamped_steps)
       end
 
-      @route.update!(segments: clamped)
+      clamped_surfaces = @route.surfaces.merge(
+        'values' => @route.surfaces['values'].map do |start_idx, end_idx, code|
+          [[start_idx, max_idx].min, [end_idx, max_idx].min, code]
+        end
+      )
+
+      @route.update!(segments: clamped_segments, surfaces: clamped_surfaces)
     end
 
     private
