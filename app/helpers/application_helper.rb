@@ -13,4 +13,14 @@ module ApplicationHelper
 
     parts.join(" #{t('common.and')} ")
   end
+
+  def precip_color_class(prob)
+    case prob
+    when 0..15  then 'text-success'
+    when 16..35 then 'text-success'
+    when 36..55 then 'text-warning'
+    when 56..75 then 'text-warning'
+    else             'text-danger'
+    end
+  end
 end

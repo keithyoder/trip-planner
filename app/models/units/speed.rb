@@ -62,6 +62,19 @@ module Units
       end
     end
 
+    # In Units::Speed
+    def self.locale_unit
+      I18n.t('units.speed').to_sym
+    end
+
+    def self.locale_abbr
+      I18n.t('units.speed_abbr')
+    end
+
+    def locale
+      to_units(self.class.locale_unit)
+    end
+
     # ActiveRecord Type specific to Speed
     class Type < Unit::Type
       def initialize(opts = {})

@@ -56,6 +56,8 @@ pt:
     system: "metric"
     elevation: "meters"
     elevation_abbr: "m"
+    temperature: "celsius"
+    temperature_abbr: "°C"
   number:
     format:
       delimiter: "."
@@ -310,6 +312,7 @@ pt:
       almost_certain: "Quase certo"
  
     humidity_summary: "%{pct}% umidade — %{label}"
+    humidity_label: "Humidade"
     humidity:
       very_dry: "muito seco"
       dry: "seco"

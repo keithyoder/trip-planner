@@ -33,6 +33,17 @@ module Units
         :celsius
       end
 
+      # The preferred temperature unit for the current I18n locale.
+      # Reads from units.temperature in the locale file.
+      def locale_unit
+        I18n.t('units.temperature').to_sym
+      end
+
+      # The abbreviated string for the current locale's temperature unit.
+      def locale_abbr
+        I18n.t('units.temperature_abbr')
+      end
+
       # Override multiplicative convert with offset-aware temperature conversion.
       def convert(value, from_units, to_units)
         validate_unit!(from_units)
@@ -60,6 +71,11 @@ module Units
       to_units(:fahrenheit)
     end
 
+    # Convert to the current locale's preferred unit
+    def locale
+      to_units(self.class.locale_unit)
+    end
+
     # ActiveRecord Type specific to Temperature
     class Type < Unit::Type
       def initialize(opts = {})
@@ -69,3 +85,6 @@ module Units
     end
   end
 end
+
+# Backward compatibility: expose at top level
+Temperature = Units::Temperature

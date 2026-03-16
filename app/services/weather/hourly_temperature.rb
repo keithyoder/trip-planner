@@ -7,15 +7,19 @@
 #
 # The curve has three phases:
 #
-#   1. Pre-sunrise  — exponential decay from the previous day's peak toward min
-#   2. Rising       — sine curve from min (at sunrise) to max (at peak hour)
-#   3. Falling      — exponential decay from max onward
+#   1. Pre-dawn     — exponential decay from t_dusk toward t_min, timed to
+#                     arrive at t_min by dawn
+#   2. Dawn → dusk  — sine curve rising from t_min at dawn to t_max at peak,
+#                     then descending symmetrically back down through dusk
+#   3. Post-dusk    — exponential decay from t_dusk toward t_min
 #
-# Peak temperature lags behind solar noon by a fraction of the noon-to-sunset
-# window (PEAK_LAG_FRACTION). This is physically motivated: the surface
-# continues absorbing more energy than it radiates well into the afternoon.
-# Using actual solar geometry from SolarPosition makes the curve location- and
-# season-aware rather than relying on a fixed offset.
+# Using dawn/dusk (civil twilight) rather than sunrise/sunset means the
+# temperature starts rising and falling slightly before/after the sun
+# crosses the horizon, which better reflects how the atmosphere actually
+# responds to changing insolation.
+#
+# Peak temperature lags behind solar noon by PEAK_LAG_FRACTION of the
+# noon-to-dusk window.
 #
 # Not waypoint-specific — takes any Weather::Result and SolarPosition.
 #
@@ -25,21 +29,21 @@
 #   result = Weather::Historical.new(lat:, lon:, date:).fetch
 #   curve  = Weather::HourlyTemperature.new(result, solar)
 #
-#   curve.at(14)            # => 22.4  (°C at 14:00 local time)
-#   curve.at(14, unit: :f)  # => 72.3  (°F)
-#   curve.all               # => { 0 => 8.1, 1 => 7.4, ..., 23 => 10.2 }
-#   curve.peak_hour         # => 15.67 (fractional hour of peak temperature)
+#   curve.at(14)             # => 22.4  (°C at 14:00 local time)
+#   curve.at(14, unit: :f)   # => 72.3  (°F)
+#   curve.all                # => { 0 => 8.1, 1 => 7.4, ..., 23 => 10.2 }
+#   curve.peak_hour          # => 13.84 (fractional hour of peak temperature)
+#   curve.t_dusk             # => 25.1  (°C at dusk — decay start point)
 #
 module Weather
   class HourlyTemperature
-    # Fraction of the solar-noon-to-sunset window after which peak temperature
-    # occurs. 0.35 ≈ 35% of the way from noon to sunset.
-    # For a 4.5h noon-to-sunset window, peak falls ~1.6h after noon.
+    # Fraction of the solar-noon-to-dusk window after which peak temperature
+    # occurs. 0.35 ≈ 35% of the way from noon to dusk.
     PEAK_LAG_FRACTION = 0.35
 
-    # Exponential decay rate per hour for the falling and pre-sunrise phases.
-    # Lower = slower overnight cooling; higher = faster post-peak drop.
-    DECAY_RATE = 0.1
+    # Decay completeness by next dawn — 3.0 means ~95% of the way to t_min.
+    # Higher values steepen the overnight cooling curve.
+    DECAY_COMPLETENESS = 3.0
 
     # @param result [Weather::Result]
     # @param solar  [SolarPosition]
@@ -72,11 +76,21 @@ module Weather
     end
 
     # Fractional hour of the predicted temperature peak.
-    # Exposed for display (e.g. "peak around 15:30").
     #
     # @return [Float]
     def peak_hour
-      @peak_hour ||= solar_noon_hour + (sunset_hour - solar_noon_hour) * PEAK_LAG_FRACTION
+      @peak_hour ||= solar_noon_hour + (dusk_hour - solar_noon_hour) * PEAK_LAG_FRACTION
+    end
+
+    # Temperature at dusk — the starting point for overnight exponential decay.
+    # Derived from the sine curve at dusk_hour.
+    #
+    # @return [Float, nil]
+    def t_dusk
+      return nil unless (t_min = @result.temp_min&.celsius&.value&.to_f)
+      return nil unless (t_max = @result.temp_max&.celsius&.value&.to_f)
+
+      sine_temp(dusk_hour, t_min, t_max).round(1)
     end
 
     private
@@ -86,26 +100,39 @@ module Weather
       t_max = @result.temp_max&.celsius&.value&.to_f
       return nil unless t_min && t_max
 
-      temp = if hour < sunrise_hour
-               # Phase 1: Pre-sunrise — exponential decay from previous peak toward min.
-               # We treat today's max as the prior-day peak (climate normals give the
-               # same shape day-to-day). Hours are extended by 24 to cross midnight.
-               hours_since_peak = (hour + 24) - peak_hour
-               t_max * Math.exp(-DECAY_RATE * hours_since_peak)
+      t_at_dusk = sine_temp(dusk_hour, t_min, t_max)
 
-             elsif hour <= peak_hour
-               # Phase 2: Rising — sine from min at sunrise to max at peak.
-               rise_window = peak_hour - sunrise_hour
-               progress    = rise_window.positive? ? (hour - sunrise_hour) / rise_window : 1.0
-               t_min + (t_max - t_min) * Math.sin(Math::PI / 2 * progress)
+      # k is computed so the decay reaches ~95% of the way from t_dusk to
+      # t_min by the following dawn — self-calibrating for any location/season.
+      hours_dusk_to_dawn = (dawn_hour + 24) - dusk_hour
+      k = DECAY_COMPLETENESS / hours_dusk_to_dawn
 
-             else
-               # Phase 3: Falling — exponential decay from max at peak onward.
-               hours_past_peak = hour - peak_hour
-               t_max * Math.exp(-DECAY_RATE * hours_past_peak)
-             end
+      if hour < dawn_hour
+        # Phase 1: Pre-dawn — exponential decay from t_dusk toward t_min,
+        # anchored to dusk (crossing midnight).
+        hours_since_dusk = (hour + 24) - dusk_hour
+        t_min + (t_at_dusk - t_min) * Math.exp(-k * hours_since_dusk)
 
-      temp.clamp(t_min, t_max).round(1)
+      elsif hour <= dusk_hour
+        # Phase 2: Dawn through dusk — sine curve.
+        # Rises from t_min at dawn to t_max at peak, then descends
+        # symmetrically back down through dusk.
+        sine_temp(hour, t_min, t_max)
+
+      else
+        # Phase 3: Post-dusk — exponential decay from t_dusk toward t_min.
+        hours_since_dusk = hour - dusk_hour
+        t_min + (t_at_dusk - t_min) * Math.exp(-k * hours_since_dusk)
+      end.round(1)
+    end
+
+    # Sine curve value at any hour between dawn and beyond.
+    # Maps dawn → 0, peak → π/2, continuing symmetrically past peak.
+    # Returns values in [t_min, t_max].
+    def sine_temp(hour, t_min, t_max)
+      rise_window = peak_hour - dawn_hour
+      progress    = rise_window.positive? ? (hour - dawn_hour) / rise_window : 1.0
+      t_min + (t_max - t_min) * Math.sin(Math::PI / 2 * progress)**1.5
     end
 
     # Convert a TimeWithZone to a fractional hour (e.g. 06:45 → 6.75)
@@ -113,16 +140,16 @@ module Weather
       time.hour + time.min / 60.0 + time.sec / 3600.0
     end
 
-    def sunrise_hour
-      @sunrise_hour ||= to_fractional_hour(@solar.sunrise)
+    def dawn_hour
+      @dawn_hour ||= to_fractional_hour(@solar.dawn)
     end
 
     def solar_noon_hour
       @solar_noon_hour ||= to_fractional_hour(@solar.solar_noon)
     end
 
-    def sunset_hour
-      @sunset_hour ||= to_fractional_hour(@solar.sunset)
+    def dusk_hour
+      @dusk_hour ||= to_fractional_hour(@solar.dusk)
     end
   end
 end

@@ -86,23 +86,36 @@ module Weather
     def windspeed_kmh     = windspeed&.km_per_hour&.value&.to_f
     def windspeed_max_kmh = windspeed_max&.km_per_hour&.value&.to_f
 
-    # Mean ± 1σ range for daily mean wind, floored at 0, in km/h
-    def windspeed_range_kmh
+    # Mean ± 1σ range for daily mean wind in the given unit, floored at 0.
+    # Std dev is stored in km/h — convert bounds after applying it.
+    #
+    # @param unit [Symbol] :km_per_hour, :miles_per_hour, etc. (default km/h)
+    # @return [Array<Integer>, nil]
+    def windspeed_range(unit = :km_per_hour)
       return nil unless windspeed && windspeed_std
 
-      base = windspeed.km_per_hour.value.to_f
-      [[0, (base - windspeed_std)].max.round(0).to_i,
-       (base + windspeed_std).round(0).to_i]
+      base_kmh = windspeed.km_per_hour.value.to_f
+      to_display = ->(kmh) { Units::Speed.new(kmh, units: :km_per_hour).to_units(unit).value.round(0).to_i }
+      [[0, to_display.call(base_kmh - windspeed_std)].max,
+       to_display.call(base_kmh + windspeed_std)]
     end
 
-    # Mean ± 1σ range for daily max wind, floored at 0, in km/h
-    def windspeed_max_range_kmh
+    # Mean ± 1σ range for daily max wind in the given unit, floored at 0.
+    #
+    # @param unit [Symbol] default km/h
+    # @return [Array<Integer>, nil]
+    def windspeed_max_range(unit = :km_per_hour)
       return nil unless windspeed_max && windspeed_max_std
 
-      base = windspeed_max.km_per_hour.value.to_f
-      [[0, (base - windspeed_max_std)].max.round(0).to_i,
-       (base + windspeed_max_std).round(0).to_i]
+      base_kmh = windspeed_max.km_per_hour.value.to_f
+      to_display = ->(kmh) { Units::Speed.new(kmh, units: :km_per_hour).to_units(unit).value.round(0).to_i }
+      [[0, to_display.call(base_kmh - windspeed_max_std)].max,
+       to_display.call(base_kmh + windspeed_max_std)]
     end
+
+    # Backward-compatible aliases
+    def windspeed_range_kmh     = windspeed_range(:km_per_hour)
+    def windspeed_max_range_kmh = windspeed_max_range(:km_per_hour)
 
     # ── Precipitation ─────────────────────────────────────────────────────────
 

@@ -56,6 +56,8 @@ en:
     system: "imperial"
     elevation: "feet"
     elevation_abbr: "ft"
+    temperature: "fahrenheit"
+    temperature_abbr: "°F"
   number:
     format:
       delimiter: ","
@@ -309,6 +311,7 @@ en:
       almost_certain: "Almost certain"
  
     humidity_summary: "%{pct}% humidity — %{label}"
+    humidity_label: "Humidity"
     humidity:
       very_dry: "very dry"
       dry: "dry"

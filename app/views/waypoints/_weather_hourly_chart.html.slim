@@ -1,0 +1,199 @@
+- p = HourlyTemperaturePresenter.new(waypoint)
+- return unless p.renderable?
+
+.card.shadow-sm.mb-4
+  .card-header.bg-white.border-bottom
+    h5.card-title.mb-0
+      i.bi.bi-thermometer-sun.me-2
+      = t('weather.hourly_chart_title')
+
+  .card-body
+
+    -# Solar event summary row
+    .row.g-2.mb-3
+      .col-3
+        .p-2.rounded.text-center[style="background: var(--color-background-secondary);"]
+          .small.text-muted = t('weather.dawn')
+          .fw-500 = p.dawn_label
+      .col-3
+        .p-2.rounded.text-center[style="background: var(--color-background-secondary);"]
+          .small.text-muted = t('weather.solar_noon')
+          .fw-500 = p.solar_noon_label
+      .col-3
+        .p-2.rounded.text-center[style="background: var(--color-background-secondary);"]
+          .small.text-muted = t('weather.peak_temp')
+          .fw-500 = p.peak_label
+      .col-3
+        .p-2.rounded.text-center[style="background: var(--color-background-secondary);"]
+          .small.text-muted = t('weather.dusk')
+          .fw-500 = p.dusk_label
+
+    -# Chart canvas
+    div[style="position: relative; width: 100%; height: 220px;"]
+      canvas id=p.chart_id
+
+    -# Legend — only for climate normals with std dev band
+    - if p.has_std_band?
+      .d-flex.gap-3.mt-2[style="font-size: 12px; color: var(--color-text-secondary);"]
+        span.d-flex.align-items-center.gap-1
+          span[style="width: 10px; height: 3px; background: #D85A30; display: inline-block;"]
+          = t('weather.legend_expected')
+        span.d-flex.align-items-center.gap-1
+          span[style="width: 10px; height: 10px; background: rgba(216, 90, 48, 0.15); border-radius: 2px; display: inline-block;"]
+          = t('weather.legend_std_band')
+
+  .card-footer.bg-white.border-top
+    small.text-muted
+      i.bi.bi-info-circle.me-1
+      = t('weather.hourly_chart_note')
+
+javascript:
+  (function() {
+    var mainTemps = #{p.main_temps.to_json.html_safe};
+    var hasStd    = #{p.has_std_band?};
+    var warmTemps = #{p.warm_temps.to_json.html_safe};
+    var coldTemps = #{p.cold_temps.to_json.html_safe};
+    var abbr      = #{p.temp_abbr.to_json.html_safe};
+    var yMin      = #{p.y_min};
+    var yMax      = #{p.y_max};
+    var chartId   = #{p.chart_id.to_json.html_safe};
+    var legendWarm   = #{t('weather.legend_warm').to_json.html_safe};
+    var legendCold   = #{t('weather.legend_cold').to_json.html_safe};
+    var sunriseHour  = #{p.sunrise_hour.round(4)};
+    var sunsetHour   = #{p.sunset_hour.round(4)};
+    var peakHour     = #{p.peak_hour.round(4)};
+    var sunriseLabel = #{p.sunrise_label.to_json.html_safe};
+    var sunsetLabel  = #{p.sunset_label.to_json.html_safe};
+
+    var labels = Array.from({length: 24}, function(_, i) { return i; });
+
+    var verticalLinesPlugin = {
+      id: 'verticalLines',
+      afterDraw: function(chart) {
+        var ctx   = chart.ctx;
+        var xAxis = chart.scales.x;
+        var yAxis = chart.scales.y;
+        var lines = [
+          { x: sunriseHour, color: 'rgba(255, 180, 0, 0.8)',  label: sunriseLabel },
+          { x: peakHour,    color: 'rgba(216, 90, 48, 0.9)',  label: 'Peak'       },
+          { x: sunsetHour,  color: 'rgba(255, 120, 0, 0.8)',  label: sunsetLabel  }
+        ];
+        lines.forEach(function(line) {
+          var xPixel = xAxis.getPixelForValue(line.x);
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(xPixel, yAxis.top);
+          ctx.lineTo(xPixel, yAxis.bottom);
+          ctx.strokeStyle = line.color;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = line.color;
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(line.label, xPixel + 3, yAxis.top + 12);
+          ctx.restore();
+        });
+      }
+    };
+
+    function buildChart() {
+      var ChartJS = window.Chartkick && Chartkick.adapters[0] && Chartkick.adapters[0].library;
+      if (!ChartJS) { setTimeout(buildChart, 50); return; }
+      var ctx = document.getElementById(chartId);
+      if (!ctx) return;
+
+      var datasets = [];
+
+      if (hasStd) {
+        datasets.push({
+          data:            warmTemps,
+          borderColor:     'transparent',
+          backgroundColor: 'rgba(216, 90, 48, 0.12)',
+          borderWidth:     0,
+          pointRadius:     0,
+          fill:            '+1',
+          tension:         0.4,
+          order:           3
+        });
+        datasets.push({
+          data:            coldTemps,
+          borderColor:     'transparent',
+          backgroundColor: 'transparent',
+          borderWidth:     0,
+          pointRadius:     0,
+          fill:            false,
+          tension:         0.4,
+          order:           2
+        });
+      }
+
+      datasets.push({
+        data:                      mainTemps,
+        borderColor:               '#D85A30',
+        backgroundColor:           'transparent',
+        borderWidth:               2,
+        pointRadius:               0,
+        pointHoverRadius:          4,
+        pointHoverBackgroundColor: '#D85A30',
+        fill:                      false,
+        tension:                   0.4,
+        order:                     1
+      });
+
+      ChartJS.register(verticalLinesPlugin);
+
+      new ChartJS(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: datasets },
+        options: {
+          responsive:          true,
+          maintainAspectRatio: false,
+          interaction:         { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: function(items) { return items[0].label + ':00'; },
+                label: function(item) {
+                  if (!hasStd) return ' ' + item.raw + abbr;
+                  if (item.datasetIndex === 0) return ' ' + legendWarm + ': ' + item.raw + abbr;
+                  if (item.datasetIndex === 1) return ' ' + legendCold + ': ' + item.raw + abbr;
+                  return ' ' + item.raw + abbr;
+                },
+                filter: function(item) { return item.raw !== null; }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              min:  0,
+              max:  23,
+              ticks: {
+                stepSize: 6,
+                callback: function(v) { return v + ':00'; },
+                font:  { size: 11 },
+                color: '#888780'
+              },
+              grid: { color: 'rgba(136, 135, 128, 0.15)' }
+            },
+            y: {
+              min:  yMin,
+              max:  yMax,
+              ticks: {
+                callback:      function(v) { return v + abbr; },
+                font:          { size: 11 },
+                color:         '#888780',
+                maxTicksLimit: 5
+              },
+              grid: { color: 'rgba(136, 135, 128, 0.15)' }
+            }
+          }
+        }
+      });
+    }
+
+    buildChart();
+  })();
