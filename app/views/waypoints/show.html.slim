@@ -114,8 +114,8 @@
             - else
               .markdown-preview = @waypoint.rendered_notes
       
-        = render 'weather', waypoint: @waypoint
-        = render 'weather_hourly_chart', waypoint: @waypoint
+      = render 'weather', waypoint: @waypoint
+      = render 'weather_hourly_chart', waypoint: @waypoint
 
       / Danger zone for delete action
       .card.shadow-sm.danger-zone-card
