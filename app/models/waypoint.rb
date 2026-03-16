@@ -18,6 +18,8 @@
 #  trip_id       :bigint
 #
 class Waypoint < ApplicationRecord
+  include Waypoints::Weather
+
   belongs_to :trip
   has_and_belongs_to_many :boundaries
   belongs_to :osm_poi, foreign_key: :osm_poi_osm_id, primary_key: :osm_id, optional: true
@@ -168,6 +170,8 @@ class Waypoint < ApplicationRecord
     when :park
       waypoint_type = :attraction
       delay = 1800
+    when :place
+      waypoint_type = :overnight
     else
       waypoint_type = :attraction
       delay = 0

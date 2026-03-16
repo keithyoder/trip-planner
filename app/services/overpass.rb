@@ -30,12 +30,12 @@ class Overpass
     barrier: { query: ["'barrier'='lift_gate'", "'amenity'='shelter'"], distance: 10, types: %i[node way] },
     tourism: {
       query: "'tourism']['tourism'!='hotel']['tourism'!='hostel']['tourism'!='motel']['tourism'!='guest_house'",
-      distance: 20_000,
+      distance: 40_000,
       types: %i[node way relation]
     },
     place: {
       query: "'place'~'city|town|village|hamlet'",
-      distance: 40_000,
+      distance: 100_000,
       types: %i[node]
     }
   }.freeze
@@ -93,8 +93,12 @@ class Overpass
     types = CATEGORIES[@node_type][:types]
     queries_list = Array(CATEGORIES[@node_type][:query])
 
-    # Build bounding box filter — Overpass QL bbox is (s,w,n,e)
-    bbox = "(#{@route.bbox_s},#{@route.bbox_w},#{@route.bbox_n},#{@route.bbox_e})"
+    # Expand bbox by max_distance so Overpass returns candidates
+    # that are up to that distance from the route boundary.
+    # 1 degree ≈ 111,000 m — close enough for a search buffer.
+    buffer_deg = @max_distance / 111_000.0
+
+    bbox = "(#{@route.bbox_s - buffer_deg},#{@route.bbox_w - buffer_deg},#{@route.bbox_n + buffer_deg},#{@route.bbox_e + buffer_deg})"
 
     queries = queries_list.flat_map do |filter|
       types.map { |type| "#{type}[#{filter}]#{bbox}" }

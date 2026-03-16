@@ -272,3 +272,67 @@ es:
       notes_placeholder: "Escribe notas en %{lang}..."
       cancel: "Cancelar"
       save: "Guardar Punto"
+  weather:
+    climate_normal_label: "Normal climática (30 años)"
+    forecast_label: "Pronóstico en tiempo real"
+    avg_daily_rain: "lluvia diaria prom."
+    avg_wind: "viento prom."
+ 
+    temp_summary: "Máx %{high}°C%{high_range} · Mín %{low}°C%{low_range}"
+ 
+    rain_very_unlikely: "Lluvia muy poco probable"
+    rain_summary: "%{label} lluvia significativa (%{prob}% de los años)%{avg}"
+    avg_mm: " — prom. %{mm}mm"
+ 
+    wind_mean: "%{label} %{speed} km/h prom."
+    wind_mean_range: "(típicamente %{low}–%{high} km/h)"
+    wind_max: "ráfagas hasta %{speed} km/h prom. máx."
+    wind_max_range: "(típicamente %{low}–%{high} km/h)"
+ 
+    wind_label:
+      calm: "Calma"
+      light: "Vientos suaves"
+      moderate: "Vientos moderados"
+      strong: "Vientos fuertes"
+      very_strong: "Vientos muy fuertes"
+ 
+    precip_probability:
+      very_unlikely: "Muy poco probable"
+      unlikely: "Poco probable"
+      possible: "Posible"
+      likely: "Probable"
+      very_likely: "Muy probable"
+      almost_certain: "Casi seguro"
+ 
+    humidity_summary: "%{pct}% humedad — %{label}"
+    humidity:
+      very_dry: "muy seco"
+      dry: "seco"
+      comfortable: "confortable"
+      humid: "húmedo"
+      very_humid: "muy húmedo"
+      oppressive: "sofocante"
+ 
+    cloudcover: "%{pct}% nubosidad"
+    precip_hours: "lluvia durante %{hours}h"
+ 
+    weathercode:
+      clear: "Cielo despejado"
+      mainly_clear: "Principalmente despejado"
+      partly_cloudy: "Parcialmente nublado"
+      overcast: "Nublado"
+      fog: "Niebla"
+      light_drizzle: "Llovizna ligera"
+      heavy_drizzle: "Llovizna intensa"
+      light_rain: "Lluvia ligera"
+      heavy_rain: "Lluvia intensa"
+      light_snow: "Nieve ligera"
+      heavy_snow: "Nieve intensa"
+      snow_grains: "Granizo de nieve"
+      light_showers: "Chubascos ligeros"
+      heavy_showers: "Chubascos intensos"
+      snow_showers: "Chubascos de nieve"
+      thunderstorm: "Tormenta eléctrica"
+      thunderstorm_hail: "Tormenta con granizo"
+      unknown: "Condiciones desconocidas"
+ 

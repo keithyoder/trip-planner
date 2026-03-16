@@ -47,6 +47,8 @@ class Route < ApplicationRecord
     )
   }
 
+  scope :without_geom, -> { select(column_names - ['geom']) }
+
   def waypoints
     @waypoints ||= trip.waypoints
                        .where(sequence: waypoint_start.sequence..waypoint_end.sequence)

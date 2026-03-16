@@ -33,7 +33,8 @@ class OsmPoi < ApplicationRecord
     barrier: 8,
     parking: 9,
     bank: 10,
-    park: 11
+    park: 11,
+    place: 12
   }
 
   def self.import

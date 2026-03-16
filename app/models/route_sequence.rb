@@ -80,7 +80,7 @@ class RouteSequence < ActiveRecord::Base
   end
 
   def date
-    trip.start_on + day.days if trip.start_on.present?
+    trip.start_on + start_time_sequence.parts[:days].to_i.days if trip.start_on.present?
   end
 
   # Override trip method to use manually set trip if available

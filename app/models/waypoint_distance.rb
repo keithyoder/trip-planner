@@ -37,7 +37,11 @@ class WaypointDistance < ActiveRecord::Base
     ferry_disembarkment: 4,
     toll_booth: 5,
     border_crossing: 6,
-    gas_station: 7
+    gas_station: 7,
+    attraction: 8,
+    routing: 9,
+    parking: 10,
+    bank: 11
   }
 
   def readonly?

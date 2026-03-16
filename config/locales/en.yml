@@ -275,3 +275,68 @@ en:
       notes_placeholder: "Write notes in %{lang}..."
       cancel: "Cancel"
       save: "Save Waypoint"
+
+  weather:
+    climate_normal_label: "30-yr climate normal"
+    forecast_label: "Live forecast"
+    avg_daily_rain: "avg daily rain"
+    avg_wind: "avg wind"
+ 
+    temp_summary: "High %{high}°C%{high_range} · Low %{low}°C%{low_range}"
+ 
+    rain_very_unlikely: "Rain very unlikely"
+    rain_summary: "%{label} to see meaningful rain (%{prob}% of years)%{avg}"
+    avg_mm: " — avg %{mm}mm"
+ 
+    wind_mean: "%{label} %{speed} km/h avg"
+    wind_mean_range: "(typically %{low}–%{high} km/h)"
+    wind_max: "gusting to %{speed} km/h avg max"
+    wind_max_range: "(typically %{low}–%{high} km/h)"
+ 
+    wind_label:
+      calm: "Calm"
+      light: "Light winds"
+      moderate: "Moderate winds"
+      strong: "Strong winds"
+      very_strong: "Very strong winds"
+ 
+    precip_probability:
+      very_unlikely: "Very unlikely"
+      unlikely: "Unlikely"
+      possible: "Possible"
+      likely: "Likely"
+      very_likely: "Very likely"
+      almost_certain: "Almost certain"
+ 
+    humidity_summary: "%{pct}% humidity — %{label}"
+    humidity:
+      very_dry: "very dry"
+      dry: "dry"
+      comfortable: "comfortable"
+      humid: "humid"
+      very_humid: "very humid"
+      oppressive: "oppressive"
+ 
+    cloudcover: "%{pct}% cloud cover"
+    precip_hours: "rain over %{hours}h"
+ 
+    weathercode:
+      clear: "Clear sky"
+      mainly_clear: "Mainly clear"
+      partly_cloudy: "Partly cloudy"
+      overcast: "Overcast"
+      fog: "Fog"
+      light_drizzle: "Light drizzle"
+      heavy_drizzle: "Heavy drizzle"
+      light_rain: "Light rain"
+      heavy_rain: "Heavy rain"
+      light_snow: "Light snow"
+      heavy_snow: "Heavy snow"
+      snow_grains: "Snow grains"
+      light_showers: "Light showers"
+      heavy_showers: "Heavy showers"
+      snow_showers: "Snow showers"
+      thunderstorm: "Thunderstorm"
+      thunderstorm_hail: "Thunderstorm with hail"
+      unknown: "Unknown conditions"
+ 
