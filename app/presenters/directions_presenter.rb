@@ -64,11 +64,14 @@ class DirectionsPresenter
     arriving_seg_for  = {}
     seg_idx = 0
 
+    # Walk every consecutive pair to keep seg_idx in sync with ORS — routing
+    # waypoints are transparent pass-throughs so ORS still emits a segment for
+    # each pair (including pairs that touch a routing waypoint). We only write
+    # into the display maps for non-routing endpoints, but we always increment
+    # seg_idx so the indices stay aligned with the segments array.
     all_waypoints.each_cons(2) do |a, b|
-      next if a.routing? || b.routing?
-
-      departing_seg_for[a.sequence] = seg_idx
-      arriving_seg_for[b.sequence]  = seg_idx
+      departing_seg_for[a.sequence] = seg_idx unless a.routing?
+      arriving_seg_for[b.sequence]  = seg_idx unless b.routing?
       seg_idx += 1
     end
 
@@ -101,7 +104,12 @@ class DirectionsPresenter
         transit: waypoint.transit?,
         arriving_profile: prev_wp.nil? ? nil : waypoint.profile,
         segment: outgoing_segment,
-        steps: outgoing_segment ? build_steps(outgoing_segment) : [],
+        steps: if outgoing_segment
+                 build_steps_for_row(outgoing_segment, all_waypoints, idx, segments,
+                                     departing_seg_for)
+               else
+                 []
+               end,
         segment_class: segment_class_for(next_wp)
       )
     end
@@ -122,6 +130,23 @@ class DirectionsPresenter
     else
       I18n.l(arrival, format: :time)
     end
+  end
+
+  # When the immediately next waypoint is a routing waypoint, ORS still produces
+  # two separate segments (one per non-routing pair) that should display as a
+  # single continuous set of directions. Merge their steps transparently.
+  def build_steps_for_row(outgoing_segment, all_waypoints, idx, segments, departing_seg_for)
+    next_wp = all_waypoints[idx + 1]
+
+    if next_wp&.routing?
+      routing_next     = all_waypoints[(idx + 2)..].find { |wp| !wp.routing? }
+      continuation_idx = routing_next && departing_seg_for[routing_next.sequence]
+      continuation_seg = continuation_idx ? segments[continuation_idx] : nil
+
+      return build_steps(outgoing_segment) + build_steps(continuation_seg) if continuation_seg
+    end
+
+    build_steps(outgoing_segment)
   end
 
   def build_steps(segment)

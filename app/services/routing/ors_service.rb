@@ -60,8 +60,8 @@ module Routing
     end
 
     # Fetches elevation data from ORS and writes it into the route geometry as
-    # a 4D (XYZM) LineString. Splits the geometry into two halves first when
-    # the route exceeds the ORS point limit.
+    # a 4D (XYZM) LineString. For routes exceeding ELEVATION_POINT_LIMIT points,
+    # the coordinate array is sliced Ruby-side into chunks and fetched separately.
     #
     # @return [void]
     def import_elevation
@@ -72,34 +72,6 @@ module Routing
             end
 
       Route.connection.exec_update(sql)
-
-      stored_count = Route.connection.exec_query(
-        Route.sanitize_sql(
-          ['SELECT ST_NPoints(geom::geometry) AS n FROM routes WHERE id = :id', { id: @route.id }]
-        )
-      ).first['n'].to_i
-
-      expected_count = @route.geom.num_points
-      return if stored_count >= expected_count
-
-      Rails.logger.debug "[OrsService] Elevation import dropped #{expected_count - stored_count} points for route #{@route.id}, clamping segments and surfaces"
-
-      max_idx = stored_count - 1
-
-      clamped_segments = @route.segments.map do |seg|
-        clamped_steps = seg['steps'].map do |step|
-          step.merge('way_points' => step['way_points'].map { |idx| [idx, max_idx].min })
-        end
-        seg.merge('steps' => clamped_steps)
-      end
-
-      clamped_surfaces = @route.surfaces.merge(
-        'values' => @route.surfaces['values'].map do |start_idx, end_idx, code|
-          [[start_idx, max_idx].min, [end_idx, max_idx].min, code]
-        end
-      )
-
-      @route.update!(segments: clamped_segments, surfaces: clamped_surfaces)
     end
 
     private
@@ -128,6 +100,38 @@ module Routing
 
     # -- Elevation ---------------------------------------------------------
 
+    # Fetches elevation for the route geometry by slicing the coordinate array
+    # into chunks of at most ELEVATION_POINT_LIMIT points and issuing one ORS
+    # elevation request per chunk. Chunks overlap by 1 point so the linestring
+    # remains contiguous when reassembled.
+    #
+    # This replaces the previous ST_Split approach, which was unreliable on
+    # complex geometries and could itself trigger ORS node-limit errors.
+    #
+    # @return [String] WKT LINESTRING (lon lat ele, ...) suitable for ST_GeomFromText
+    def fetch_all_elevation_coords
+      geojson = RGeo::GeoJSON.encode(@route.geom)
+      all_coords = geojson['coordinates']
+
+      chunks = all_coords.each_slice(ELEVATION_POINT_LIMIT).to_a
+      chunks.each_cons(2) { |prev, curr| curr.unshift(prev.last) }
+
+      elevated = []
+      chunks.each do |chunk|
+        # ORS elevation expects 2D input — strip the Z dimension
+        two_d = chunk.map { |c| c.first(2) }
+        geojson_2d = { 'type' => 'LineString', 'coordinates' => two_d }
+        response = client.post('/elevation/line', { format_in: 'geojson', geometry: geojson_2d })
+        result_coords = response[:geometry][:coordinates]
+        Rails.logger.debug "[OrsService] Elevation chunk: #{result_coords.count} points"
+        # Drop the overlapping junction point on all but the first chunk
+        result_coords = result_coords[1..] unless elevated.empty?
+        elevated.concat(result_coords)
+      end
+
+      elevated
+    end
+
     def elevation_sql_for_full_route
       Route.sanitize_sql(
         [
@@ -138,21 +142,14 @@ module Routing
     end
 
     def elevation_sql_for_split_route
+      elevated_coords = fetch_all_elevation_coords
+      points_wkt = elevated_coords.map { |c| c.join(' ') }.join(', ')
+      wkt = "LINESTRING Z (#{points_wkt})"
+
       Route.sanitize_sql(
         [
-          <<~SQL,
-            UPDATE routes
-            SET geom = ST_Force4D(ST_MakeLine(
-              ST_GeomFromGeoJSON(:geom1),
-              ST_GeomFromGeoJSON(:geom2)
-            ))
-            WHERE id = :id
-          SQL
-          {
-            id: @route.id,
-            geom1: fetch_elevation_geojson(subsegment(1)),
-            geom2: fetch_elevation_geojson(subsegment(2))
-          }
+          'UPDATE routes SET geom = ST_Force4D(ST_GeomFromText(:geom, 4326))::geography WHERE id = :id',
+          { id: @route.id, geom: wkt }
         ]
       )
     end
@@ -163,24 +160,6 @@ module Routing
       response = client.post('/elevation/line', { format_in: 'geojson', geometry: geojson })
       Rails.logger.debug "[OrsService] Elevation points: #{response[:geometry][:coordinates].count}"
       response[:geometry].to_json
-    end
-
-    def subsegment(segment)
-      sql = Arel.sql(
-        Route.sanitize_sql(
-          [
-            <<~SQL, segment
-              ST_GeometryN(
-                ST_Split(
-                  geom::geometry,
-                  ST_GeometryN(ST_Points(geom::geometry), ST_NPoints(geom::geometry)/2)
-                ), ?
-              )::geography AS geom
-            SQL
-          ]
-        )
-      )
-      @route.trip.routes.where(id: @route.id).pluck(sql).first
     end
 
     # -- Helpers -----------------------------------------------------------
