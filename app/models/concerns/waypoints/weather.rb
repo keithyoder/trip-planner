@@ -125,7 +125,7 @@ module Waypoints
     def planned_date
       return @planned_date if defined?(@planned_date)
 
-      @planned_date = inbound_route_date || trip&.start_on
+      @planned_date = route_sequence&.date || trip&.start_on
     end
 
     private
@@ -159,13 +159,6 @@ module Waypoints
         lonlat.x.to_f.round(2),
         planned_date
       )&.to_weather_result
-    end
-
-    def inbound_route_date
-      inbound = Route.without_geom
-                     .includes(:route_sequence)
-                     .find_by(trip_id: trip_id, waypoint_end_id: id)
-      inbound&.route_sequence&.date
     end
   end
 end

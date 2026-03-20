@@ -63,6 +63,10 @@ module Routing
     # a 4D (XYZM) LineString. For routes exceeding ELEVATION_POINT_LIMIT points,
     # the coordinate array is sliced Ruby-side into chunks and fetched separately.
     #
+    # After writing the elevation geometry, surface indices and segment way_points
+    # are clamped to the actual stored point count, since the ORS elevation API
+    # silently drops trailing points and the original indices become out of range.
+    #
     # @return [void]
     def import_elevation
       sql = if @route.geom.num_points > ELEVATION_POINT_LIMIT
@@ -72,6 +76,12 @@ module Routing
             end
 
       Route.connection.exec_update(sql)
+
+      # Read the true stored point count once — @route.geom is stale after the
+      # raw SQL update above, and both clamping methods need the same value.
+      max_idx = stored_geometry_max_idx
+      clamp_surface_indices(max_idx)
+      clamp_segment_way_points(max_idx)
     end
 
     private
@@ -108,7 +118,7 @@ module Routing
     # This replaces the previous ST_Split approach, which was unreliable on
     # complex geometries and could itself trigger ORS node-limit errors.
     #
-    # @return [String] WKT LINESTRING (lon lat ele, ...) suitable for ST_GeomFromText
+    # @return [Array] elevated coordinates
     def fetch_all_elevation_coords
       geojson = RGeo::GeoJSON.encode(@route.geom)
       all_coords = geojson['coordinates']
@@ -160,6 +170,55 @@ module Routing
       response = client.post('/elevation/line', { format_in: 'geojson', geometry: geojson })
       Rails.logger.debug "[OrsService] Elevation points: #{response[:geometry][:coordinates].count}"
       response[:geometry].to_json
+    end
+
+    # -- Post-elevation clamping -------------------------------------------
+
+    # Returns the maximum valid geometry index from the DB after elevation import.
+    # @route.geom is stale after the raw SQL update, so we query ST_NPoints fresh.
+    #
+    # @return [Integer]
+    def stored_geometry_max_idx
+      Route.where(id: @route.id).pick(Arel.sql('ST_NPoints(geom::geometry)')) - 1
+    end
+
+    # Clamps surface['values'] start/end indices to the stored geometry bounds.
+    #
+    # The ORS elevation API silently drops trailing points, so stored geom may
+    # be shorter than the geometry against which surface indices were recorded.
+    #
+    # @param max_idx [Integer]
+    # @return [void]
+    def clamp_surface_indices(max_idx)
+      return unless @route.surfaces&.key?('values')
+
+      clamped_values = @route.surfaces['values'].map do |start_idx, end_idx, surface_code|
+        [start_idx.clamp(0, max_idx), end_idx.clamp(0, max_idx), surface_code]
+      end
+
+      @route.update_columns(surfaces: @route.surfaces.merge('values' => clamped_values))
+    end
+
+    # Clamps segment step way_points indices to the stored geometry bounds.
+    #
+    # Same root cause as surface indices — way_points recorded against the
+    # original ORS geometry become out of range after elevation import truncates
+    # trailing points. Out-of-range indices cause nil coordinate lookups in
+    # DirectionsPresenter, producing missing timestamps and wrong map positions.
+    #
+    # @param max_idx [Integer]
+    # @return [void]
+    def clamp_segment_way_points(max_idx)
+      return unless @route.segments.present?
+
+      clamped_segments = @route.segments.map do |seg|
+        clamped_steps = seg['steps'].map do |step|
+          step.merge('way_points' => step['way_points'].map { |idx| idx.clamp(0, max_idx) })
+        end
+        seg.merge('steps' => clamped_steps)
+      end
+
+      @route.update_columns(segments: clamped_segments)
     end
 
     # -- Helpers -----------------------------------------------------------

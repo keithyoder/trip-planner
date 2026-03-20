@@ -87,23 +87,43 @@ module Routes
       # Returns each contiguous surface segment with its geometry points.
       # Useful for rendering surface-coded polylines on a map.
       #
+      # Adjacent segments share a junction point in the geometry (the end of
+      # one segment is the same coordinate as the start of the next). To avoid
+      # the previous segment's colour appearing to bleed into the next, the
+      # junction point is skipped on all segments after the first — i.e. each
+      # segment's draw range starts one point past its start_index. Segments
+      # that would have fewer than 2 drawable points after skipping are dropped.
+      #
       # @return [Array<SurfaceSegment>]
       def surface_segments
         return [] unless surfaces && geom
         return [] unless surfaces['values']
 
         geometry_points = geom.points
+        max_idx = geometry_points.size - 1
 
-        surfaces['values']&.map do |start_idx, end_idx, surface_code|
+        surfaces['values'].each_with_index.filter_map do |(start_idx, end_idx, surface_code), i|
           type     = SURFACE_TYPES.key(surface_code) || :unknown
           category = SURFACE_CATEGORIES.fetch(type, :unknown)
+
+          clamped_start = start_idx.clamp(0, max_idx)
+          clamped_end   = end_idx.clamp(0, max_idx)
+
+          # Skip the shared junction point on all segments after the first.
+          # The junction belongs to the tail of the preceding segment.
+          draw_start = i.zero? ? clamped_start : (clamped_start + 1).clamp(0, max_idx)
+
+          points = geometry_points[draw_start..clamped_end].map { |p| [p.y, p.x] }
+
+          # Need at least 2 points to draw a visible polyline
+          next if points.size < 2
 
           SurfaceSegment.new(
             surface_type: type,
             category: category,
-            start_index: start_idx,
-            end_index: end_idx,
-            points: geometry_points[start_idx..end_idx].map { |p| [p.y, p.x] }
+            start_index: clamped_start,
+            end_index: clamped_end,
+            points: points
           )
         end
       end
