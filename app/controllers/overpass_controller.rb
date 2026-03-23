@@ -70,7 +70,7 @@ class OverpassController < ApplicationController
       sequence = Waypoint.calculate_sequence_for_position(@trip, @route, osm_poi.geom.lat, osm_poi.geom.lon)
 
       # Create waypoint from osm_poi
-      waypoint = Waypoint.copy_from_osm(osm_poi.osm_id, @trip.id, sequence)
+      waypoint = Waypoints::OsmImporter.import(osm_poi.osm_id, @trip.id, sequence)
 
       if waypoint
         render json: {

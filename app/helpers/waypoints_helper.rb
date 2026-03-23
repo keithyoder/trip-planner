@@ -36,18 +36,18 @@ module WaypointsHelper
     waypoints
       .reject { |waypoint| waypoint.waypoint_type == 'routing' }
       .map do |waypoint|
-        {
-          lat: waypoint.lonlat.y,  # PostGIS point: y = latitude
-          lon: waypoint.lonlat.x,  # PostGIS point: x = longitude
-          type: waypoint.waypoint_type,
-          name: waypoint.name,
-          sequence: waypoint.sequence,
-          toll: waypoint.toll,
-          toll_formatted: waypoint.toll ? format_currency(waypoint) : nil,
-          url: trip_waypoint_path(@route.trip, waypoint)
-          # segment_distance: waypoint.segment_distance ? "#{waypoint.segment_distance.km.round(1)} km" : nil,
-          # trip_distance: waypoint.trip_distance ? "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km" : nil
-        }
+      {
+        lat: waypoint.lonlat.y,  # PostGIS point: y = latitude
+        lon: waypoint.lonlat.x,  # PostGIS point: x = longitude
+        type: waypoint.waypoint_type,
+        name: waypoint.name,
+        sequence: waypoint.sequence,
+        toll: waypoint.toll,
+        toll_formatted: waypoint.toll ? format_currency(waypoint) : nil,
+        url: trip_waypoint_path(@route.trip, waypoint)
+        # segment_distance: waypoint.segment_distance ? "#{waypoint.segment_distance.km.round(1)} km" : nil,
+        # trip_distance: waypoint.trip_distance ? "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km" : nil
+      }
     end.to_json
   end
 
@@ -66,7 +66,8 @@ module WaypointsHelper
       'attraction' => 'bi-camera-fill',
       'routing' => 'bi-signpost-2-fill',
       'parking' => 'bi-car-front-fill',
-      'bank' => 'bi-currency-exchange'
+      'bank' => 'bi-currency-exchange',
+      'laundry' => 'bi-luggage-fill'
     }
 
     icons[waypoint_type.to_s] || icons['routing']
@@ -87,7 +88,8 @@ module WaypointsHelper
       'attraction' => '#d63384',
       'routing' => '#6c757d',
       'parking' => '#6c757d',
-      'bank' => '#6c757d'
+      'bank' => '#2ca02c',
+      'laundry' => '#17a2b8'
     }
 
     colors[waypoint_type.to_s] || colors['routing']
@@ -108,7 +110,8 @@ module WaypointsHelper
       'attraction' => '#f7d6e6',
       'routing' => '#e9ecef',
       'parking' => '#e9ecef',
-      'bank' => '#e9ecef'
+      'bank' => '#d4edda',
+      'laundry' => '#d1ecf1'
     }
 
     bg_colors[waypoint_type.to_s] || bg_colors['routing']
@@ -228,7 +231,8 @@ module WaypointsHelper
       'gas_station' => 'text-warning',
       'attraction' => 'text-warning',
       'parking' => 'text-primary',
-      'bank' => 'text-success'
+      'bank' => 'text-success',
+      'laundry' => 'text-info'
     }
     classes[waypoint_type.to_s] || 'text-secondary'
   end

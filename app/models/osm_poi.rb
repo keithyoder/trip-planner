@@ -34,7 +34,8 @@ class OsmPoi < ApplicationRecord
     parking: 9,
     bank: 10,
     park: 11,
-    place: 12
+    place: 12,
+    laundry: 13
   }
 
   def self.import

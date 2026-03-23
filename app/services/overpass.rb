@@ -37,7 +37,8 @@ class Overpass
       query: "'place'~'city|town|village|hamlet'",
       distance: 100_000,
       types: %i[node]
-    }
+    },
+    laundry: { query: "'shop'~'laundry|dry_cleaning'", distance: 1000, types: %i[node way] }
   }.freeze
 
   def initialize(route_id, node_type)

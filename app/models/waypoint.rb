@@ -40,7 +40,8 @@ class Waypoint < ApplicationRecord
     attraction: 8,
     routing: 9,
     parking: 10,
-    bank: 11
+    bank: 11,
+    laundry: 12
   }
 
   PROFILES = %w[
@@ -61,7 +62,7 @@ class Waypoint < ApplicationRecord
   geocoded_by :address do |record, results|
     result = results.first
 
-    record.address = result.address # Store the address used for geocoding
+    record.address = result.address
     record.lonlat = GEO_FACTORY.point(result.longitude, result.latitude)
   end
 
@@ -101,12 +102,10 @@ class Waypoint < ApplicationRecord
   end
 
   def location
-    # boundaries.order(:level).pluck(:name).join(', ')
     boundaries.without_geom.sort_by(&:level).map(&:name).join(', ')
   end
 
   def timezone
-    # Find the boundary highest (more precise) level with a timezone
     @timezone ||= boundaries.where.not(timezone: nil).order(level: :desc).pluck(:timezone).first
   end
 
@@ -127,94 +126,6 @@ class Waypoint < ApplicationRecord
     MarkdownRenderer.render(markdown)
   end
 
-  def copy_from_osm(osm_poi_id)
-    # Just delegate to the class method
-    waypoint = self.class.copy_from_osm(osm_poi_id, trip_id, sequence)
-
-    # Copy the attributes to self
-    return unless waypoint
-
-    assign_attributes(waypoint.attributes.except('id', 'created_at', 'updated_at'))
-    save!
-  end
-
-  def self.copy_from_osm(osm_poi_id, trip_id, sequence)
-    osm_poi = OsmPoi.find_by(osm_id: osm_poi_id)
-    return unless osm_poi
-
-    case osm_poi.poi_type.to_sym # Changed: convert enum to symbol
-    when :fuel
-      waypoint_type = :gas_station
-      delay = 900
-    when :border_crossing
-      waypoint_type = :border_crossing
-      delay = 1800
-    when :toll
-      waypoint_type = :toll_booth
-      delay = 0
-    when :ferry
-      waypoint_type = :ferry_boarding
-      delay = 1800
-    when :restaurant
-      waypoint_type = :lunch
-      delay = 3600
-    when :accommodation
-      waypoint_type = :overnight
-      delay = 0
-    when :tourism
-      waypoint_type = :attraction
-      delay = 1800
-    when :barrier
-      waypoint_type = :attraction
-      delay = 600
-    when :park
-      waypoint_type = :attraction
-      delay = 1800
-    when :place
-      waypoint_type = :overnight
-    else
-      waypoint_type = :attraction
-      delay = 0
-    end
-
-    trip = Trip.find(trip_id)
-
-    taken = trip.waypoints
-                .where(sequence: sequence..sequence + 50)
-                .pluck(:sequence)
-                .to_set
-
-    sequence = (sequence..sequence + 50).find { |s| !taken.include?(s) } || sequence + 51
-
-    # Back up if we've landed on the route's end waypoint sequence
-    route = trip.routes
-                .joins(:waypoint_end)
-                .where('waypoints.sequence >= ?', sequence)
-                .order('waypoints.sequence ASC')
-                .first
-
-    sequence -= 1 if route && sequence == route.waypoint_end.sequence
-
-    create_attrs = {
-      trip_id: trip_id,
-      sequence: sequence,
-      waypoint_type: waypoint_type,
-      delay: delay,
-      name: osm_poi.name || osm_poi.metadata.dig('all_tags', 'note'),
-      lonlat: osm_poi.lonlat,
-      osm_poi_id: osm_poi.old_id
-    }
-
-    create_attrs[:toll] = osm_poi.toll_amount if osm_poi.toll_amount
-
-    create(create_attrs)
-  rescue ActiveRecord::RecordNotUnique
-    # Race condition fallback — another POI was inserted concurrently,
-    # retry with the next available sequence
-    sequence += 1
-    retry
-  end
-
   def latlon=(coordinates)
     latlon = coordinates.split(',')
     send(:lonlat=, GEO_FACTORY.point(latlon[1], latlon[0]))
@@ -226,76 +137,51 @@ class Waypoint < ApplicationRecord
     "#{lonlat.y}, #{lonlat.x}"
   end
 
-  # Delegates to Waypoints::BoundaryAssigner — see app/services/waypoints/boundary_assigner.rb
   def self.find_boundary(level)
     Waypoints::BoundaryAssigner.assign_missing(levels: [level])
   end
 
   def self.calculate_sequence_for_position(trip, route, lat, lon)
-    # Get the start and end waypoints for this route
     waypoint_start = route.waypoint_start
-    waypoint_end = route.waypoint_end
+    waypoint_end   = route.waypoint_end
 
     return 1 unless waypoint_start && waypoint_end
 
-    # Find closest point on route and its fraction (0.0 to 1.0)
     point_info = route.closest_point_info(lat, lon)
-    fraction = point_info[:fraction]
+    fraction   = point_info[:fraction]
 
-    # Get all waypoints between start and end, ordered by sequence
     existing_waypoints = trip.waypoints
                              .where('sequence > ? AND sequence < ?', waypoint_start.sequence, waypoint_end.sequence)
                              .order(:sequence)
 
-    # If no waypoints exist between start and end, use fraction to calculate
     if existing_waypoints.empty?
-      # Calculate sequence as fraction between start and end
       return (waypoint_start.sequence + (fraction * (waypoint_end.sequence - waypoint_start.sequence))).round
     end
 
-    # Find where this waypoint should be inserted based on its fraction
-    # Compare with fractions of existing waypoints
     prev_waypoint = waypoint_start
     prev_fraction = 0.0
 
     existing_waypoints.each do |wp|
       next unless wp.lonlat
 
-      wp_point_info = route.closest_point_info(wp.lonlat.y, wp.lonlat.x)
-      wp_fraction = wp_point_info[:fraction]
+      wp_fraction = route.closest_point_info(wp.lonlat.y, wp.lonlat.x)[:fraction]
 
-      # If new waypoint comes before this existing waypoint
       if fraction < wp_fraction
-        # Calculate sequence between prev_waypoint and wp based on fraction
-        fraction_range = wp_fraction - prev_fraction
-        fraction_position = fraction - prev_fraction
-        fraction_percent = fraction_position / fraction_range
-
-        sequence_range = wp.sequence - prev_waypoint.sequence
-        new_sequence = prev_waypoint.sequence + (fraction_percent * sequence_range).round
-
+        fraction_percent = (fraction - prev_fraction) / (wp_fraction - prev_fraction)
+        new_sequence = prev_waypoint.sequence + (fraction_percent * (wp.sequence - prev_waypoint.sequence)).round
         new_sequence += 1 if new_sequence == prev_waypoint.sequence
         new_sequence -= 1 if new_sequence == wp.sequence
         return new_sequence
       end
 
-      # Update for next iteration
       prev_waypoint = wp
       prev_fraction = wp_fraction
     end
 
-    # If we get here, waypoint comes after all existing waypoints
-    # Calculate sequence between last waypoint and end
-    fraction_range = 1.0 - prev_fraction
-    fraction_position = fraction - prev_fraction
-    fraction_percent = fraction_position / fraction_range
-
-    sequence_range = waypoint_end.sequence - prev_waypoint.sequence
-    prev_waypoint.sequence + (fraction_percent * sequence_range).round
+    fraction_percent = (fraction - prev_fraction) / (1.0 - prev_fraction)
+    prev_waypoint.sequence + (fraction_percent * (waypoint_end.sequence - prev_waypoint.sequence)).round
   end
 
-  # Triggers boundary assignment after the waypoint is saved.
-  # Kept thin — all logic lives in Waypoints::BoundaryAssigner.
   def assign_boundaries
     Waypoints::BoundaryAssigner.new(self).assign
   end
