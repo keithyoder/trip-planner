@@ -44,7 +44,8 @@ class Budget
     gas_station: :fuel,
     border_crossing: nil,
     routing: nil,
-    bank: nil
+    bank: nil,
+    laundry: :laundry
   }.freeze
 
   attr_reader :trip, :currency
@@ -121,6 +122,10 @@ class Budget
 
   def parking_cost
     by_category.fetch(:parking, Money.new(0, currency))
+  end
+
+  def laundry_cost
+    by_category.fetch(:laundry, Money.new(0, currency))
   end
 
   # Percentage of total budget per category

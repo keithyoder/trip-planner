@@ -101,6 +101,7 @@ en:
       attractions: "Attractions & Entrance Fees"
       parking: "Parking"
       fuel: "Fuel"
+      laundry: "Laundry"
       other: "Other"
     columns:
       description: "Description"

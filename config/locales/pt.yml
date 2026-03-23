@@ -101,6 +101,7 @@ pt:
       attractions: "Atrações / Entradas"
       parking: "Estacionamento"
       fuel: "Combustível"
+      laundry: "Lavanderia"
       other: "Outros"
     columns:
       description: "Descrição"

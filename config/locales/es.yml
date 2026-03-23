@@ -101,6 +101,7 @@ es:
       attractions: "Atracciones / Entradas"
       parking: "Estacionamiento"
       fuel: "Combustible"
+      laundry: "Lavandería"
       other: "Otros"
     columns:
       description: "Descripción"
