@@ -58,41 +58,38 @@ module Routing
     #
     # @return [Array<Array<Numeric>>] coordinate tuples [x, y, z, m]
     def stamp_coordinates
-      result = Route.connection.exec_query(
-        Route.sanitize_sql(
-          ['SELECT ST_AsGeoJSON(geom) AS geojson FROM routes WHERE id = :id', { id: @route.id }]
-        )
-      ).first
-      coords    = JSON.parse(result['geojson'])['coordinates']
-      waypoints = @route.waypoints.reject(&:routing?).to_a
-      elapsed   = 0.0
+      line = RGeo::GeoJSON.encode(@route.geom)
+      coords = line['coordinates']
+      all_waypoints = @route.waypoints.to_a
+      elapsed = 0.0
+
+      # Pre-departure delay at the first waypoint
+      elapsed += all_waypoints.first.delay.to_f if all_waypoints.first
+
+      # Each segment corresponds to one consecutive waypoint pair.
+      # arriving_waypoints[i] is the waypoint at the end of segment[i].
+      arriving_waypoints = all_waypoints[1..]
 
       @route.segments.each_with_index do |segment, i|
-        # Apply the departing waypoint's stop delay before walking this segment.
-        waypoint = waypoints[i]
-        elapsed += waypoint.delay.to_f if waypoint
-
         segment['steps'].each do |step|
           first_idx = step['way_points'].first
           last_idx  = step['way_points'].last
 
-          # Stamp the arrival step's coordinate with current elapsed time even
-          # though it covers no distance — this is what build_arrival_time reads.
-          if first_idx >= last_idx
-            coords[first_idx][3] = elapsed if first_idx < coords.size
-            next
-          end
+          next if first_idx >= last_idx
 
           velocity = step_velocity(step)
 
           (first_idx + 1..last_idx).each do |idx|
-            next if idx >= coords.size
-
             dist = distance_between(coords[idx], coords[idx - 1])
             elapsed += dist / velocity unless velocity.nan? || velocity.zero?
             coords[idx][3] = elapsed
           end
         end
+
+        # Only accumulate stop delays at display waypoints — routing waypoints
+        # are transparent pass-throughs with no stop time.
+        arriving_wp = arriving_waypoints[i]
+        elapsed += arriving_wp.delay.to_f if arriving_wp && !arriving_wp.routing?
       end
 
       coords

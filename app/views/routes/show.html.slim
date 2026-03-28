@@ -8,14 +8,27 @@
   .row
     .col-12
       / Route header
-      .d-flex.justify-content-between.align-items-center.mb-4
-        div
-          h1.display-5.fw-bold.mb-1
-            i.fa.fa-route.me-2
-            = "#{@route.waypoint_start.name} → #{@route.waypoint_end.name}"
-          p.text-muted.mb-0 = l(@route.route_sequence.date, format: :long)
+      .d-flex.justify-content-between.align-items-stretch.gap-3.mb-4
+        .d-flex.align-items-stretch.gap-2.min-w-0
+          - if @prev_route_id
+            = link_to trip_route_path(@route.trip, @prev_route_id), class: "btn btn-outline-secondary d-flex align-items-center flex-shrink-0" do
+              i.bi.bi-chevron-left.fs-4
+          - else
+            span.btn.btn-outline-secondary.d-flex.align-items-center.flex-shrink-0.disabled
+              i.bi.bi-chevron-left.fs-4
+          div.min-w-0
+            h1.display-5.fw-bold.mb-1 style="font-size: clamp(1.2rem, 2.5vw, 2.5rem);"
+              i.bi.bi-signpost-split.me-2
+              = "#{@route.waypoint_start.name} → #{@route.waypoint_end.name}"
+            p.text-muted.mb-0 = l(@route.route_sequence.date, format: :day_plan)
+          - if @next_route_id
+            = link_to trip_route_path(@route.trip, @next_route_id), class: "btn btn-outline-secondary d-flex align-items-center flex-shrink-0" do
+              i.bi.bi-chevron-right.fs-4
+          - else
+            span.btn.btn-outline-secondary.d-flex.align-items-center.flex-shrink-0.disabled
+              i.bi.bi-chevron-right.fs-4
 
-        .btn-group role="group"
+        .btn-group.flex-shrink-0 role="group"
           = link_to edit_trip_route_path(@route.trip, @route), class: "btn btn-outline-primary" do
             i.bi.bi-pencil-square.me-2
             = t('common.edit')
@@ -62,68 +75,8 @@
                 div.text-start
                   small.text-white-50.d-block = t('routes.show.day_length')
                   strong.d-block = humanize(@route.waypoint_start.solar_position(@route.route_sequence.date).day_length)
-
-  / Route statistics
-  - ferry_dur   = @route.route_sequence.ferry_duration
-  - hiking_dur  = @route.route_sequence.hiking_duration
-  - transit_dur = @route.route_sequence.transit_duration
-  - has_ferry   = ferry_dur&.to_i&.positive?
-  - has_hiking  = hiking_dur&.to_i&.positive?
-  - has_transit = transit_dur&.to_i&.positive?
-  - col_class   = "col-sm-6 col-lg-#{12 / [4, (has_ferry ? 1 : 0) + (has_hiking ? 1 : 0) + (has_transit ? 1 : 0) + 4].max}"
-
-  .row.g-4.mb-4
-    div class=col_class
-      .card.shadow-sm.h-100
-        .card-body.text-center
-          i.bi.bi-sign-turn-right.text-primary.fs-1.mb-2
-          h6.text-muted.mb-1 = t('routes.show.distance')
-          h4.mb-0 = format_distance(@route.route_sequence.distance, decimals: 1)
-
-    div class=col_class
-      .card.shadow-sm.h-100
-        .card-body.text-center
-          i.bi.bi-car-front.text-success.fs-1.mb-2
-          h6.text-muted.mb-1 = t('routes.show.driving_time')
-          h4.mb-0 = format_duration(@route.route_sequence.driving_duration)
-
-    - if has_ferry
-      div class=col_class
-        .card.shadow-sm.h-100
-          .card-body.text-center
-            i.bi.bi-water.text-info.fs-1.mb-2
-            h6.text-muted.mb-1 = t('routes.show.ferry_time')
-            h4.mb-0 = format_duration(ferry_dur)
-
-    - if has_hiking
-      div class=col_class
-        .card.shadow-sm.h-100
-          .card-body.text-center
-            i.bi.bi-person-walking.text-warning.fs-1.mb-2
-            h6.text-muted.mb-1 = t('routes.show.hiking_time')
-            h4.mb-0 = format_duration(hiking_dur)
-
-    - if has_transit
-      div class=col_class
-        .card.shadow-sm.h-100
-          .card-body.text-center
-            i.bi.bi-train-front.text-danger.fs-1.mb-2
-            h6.text-muted.mb-1 = t('routes.show.transit_time')
-            h4.mb-0 = format_duration(transit_dur)
-
-    div class=col_class
-      .card.shadow-sm.h-100
-        .card-body.text-center
-          i.bi.bi-pause-circle.text-warning.fs-1.mb-2
-          h6.text-muted.mb-1 = t('routes.show.stopped_time')
-          h4.mb-0 = format_duration(@route.route_sequence.stopped_time)
-
-    div class=col_class
-      .card.shadow-sm.h-100
-        .card-body.text-center
-          i.bi.bi-hourglass-split.text-info.fs-1.mb-2
-          h6.text-muted.mb-1 = t('routes.show.total_time')
-          h4.mb-0 = format_duration(@route.route_sequence.total_duration)
+  
+  = render 'route_stats', route_sequence: @route.route_sequence
 
   / Map and content
   .row.g-4.mb-4

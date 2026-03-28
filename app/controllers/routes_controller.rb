@@ -26,6 +26,15 @@ class RoutesController < ApplicationController
       :waypoint_end,
       :trip
     ).find(params[:id])
+
+    route_ids = @trip.routes
+                     .joins(:route_sequence)
+                     .order('route_sequences.sequence')
+                     .pluck(:id)
+
+    current_idx    = route_ids.index(@route.id)
+    @prev_route_id = route_ids[current_idx - 1] if current_idx.positive?
+    @next_route_id = route_ids[current_idx + 1]
   end
 
   # GET /routes/new

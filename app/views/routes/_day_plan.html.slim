@@ -27,8 +27,9 @@
         - if presenter.available_locales.size > 1
           .tab-content
             - presenter.available_locales.each_with_index do |locale, i|
-              div[id="day-plan-#{locale}" class="tab-pane fade#{i == 0 ? ' show active' : ''}" role="tabpanel" data-clipboard-target="source" data-content=DayPlanPresenter.new(route, locale: locale).to_whatsapp]
-                = MarkdownRenderer.render(DayPlanPresenter.new(route, locale: locale).to_markdown).html_safe
+              div[id="day-plan-#{locale}" class="tab-pane fade#{i == 0 ? ' show active' : ''}" role="tabpanel" data-clipboard-target="source" data-content=presenter.to_whatsapp(locale: locale)]
+                = MarkdownRenderer.render(presenter.to_markdown(locale: locale)).html_safe
         - else
-          div data-clipboard-target="source" data-content=presenter.to_whatsapp
-            = MarkdownRenderer.render(presenter.to_markdown).html_safe
+          - locale = presenter.available_locales.first
+          div data-clipboard-target="source" data-content=presenter.to_whatsapp(locale: locale)
+            = MarkdownRenderer.render(presenter.to_markdown(locale: locale)).html_safe

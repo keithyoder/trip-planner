@@ -11,13 +11,28 @@ class CalculateRouteJob < ApplicationJob
     Routing::MergeService.new(route, legs).call
     sleep(2)
     route.reload
+
+    # --- TEMP DEBUG ---
+    Rails.logger.debug '[DEBUG] Waypoints:'
+    route.waypoints.each_with_index do |wp, i|
+      Rails.logger.debug "  [#{i}] #{wp.name} profile=#{wp.profile} routing=#{wp.routing?} coords=#{wp.lonlat.x.round(5)},#{wp.lonlat.y.round(5)}"
+    end
+    Rails.logger.debug "[DEBUG] Segments (#{route.segments.size}):"
+    route.segments.each_with_index do |seg, i|
+      Rails.logger.debug "  [#{i}] duration=#{seg['duration']} distance=#{seg['distance']} steps=#{seg['steps'].size}"
+      seg['steps'].each_with_index do |step, j|
+        Rails.logger.debug "    step[#{j}] way_points=#{step['way_points']} distance=#{step['distance']}"
+      end
+    end
+    Rails.logger.debug "[DEBUG] Surfaces values: #{route.surfaces['values'].inspect}"
+    Rails.logger.debug "[DEBUG] Geom points: #{route.geom.num_points}"
+    # --- END TEMP DEBUG ---
+
     Routing::OrsService.new(route).import_elevation
     route.reload
     Routing::DurationImporter.new(route).import
 
     CalculateFuelJob.perform_later(route.trip_id)
-  rescue StandardError => e
-    Rails.logger.error("Failed to calculate route for Route ID #{route_id}: #{e.message}")
   end
 
   private

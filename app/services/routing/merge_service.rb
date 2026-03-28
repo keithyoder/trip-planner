@@ -87,6 +87,10 @@ module Routing
         surfaces_values << [leg_start, leg_end, hiking_code]
       end
 
+      hiking_ranges = hiking_index_ranges(all_segments)
+      Rails.logger.debug "[DEBUG] hiking_index_ranges: #{hiking_ranges.inspect}"
+      Rails.logger.debug "[DEBUG] surfaces_values before promote: #{surfaces_values.inspect}"
+
       promoted_values = promote_surface_values(surfaces_values, coordinates, all_segments)
       summary         = build_surfaces_summary(promoted_values, coordinates)
 
@@ -204,16 +208,11 @@ module Routing
     # @param all_segments [Array] merged segments with adjusted way_points
     # @return [Array<Range>]
     def hiking_index_ranges(all_segments)
-      # Build leg profiles from consecutive non-routing pairs, matching the
-      # order legs were fetched. Each pair (a, b) produces one segment whose
-      # profile is b.profile (the arriving waypoint's profile).
-      leg_profiles = waypoints
-                     .reject(&:routing?)
-                     .each_cons(2)
-                     .map { |_a, b| b.profile }
+      arriving_waypoints = waypoints[1..] # keep ALL waypoints, routing included
 
-      all_segments.zip(leg_profiles).filter_map do |segment, profile|
-        next unless profile&.start_with?('foot-')
+      all_segments.each_with_index.filter_map do |segment, i|
+        arriving_wp = arriving_waypoints[i]
+        next unless arriving_wp&.profile&.start_with?('foot-')
 
         steps     = segment[:steps] || segment['steps'] || []
         start_idx = steps.first&.dig(:way_points, 0) || steps.first&.dig('way_points', 0)

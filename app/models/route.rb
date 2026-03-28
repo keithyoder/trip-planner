@@ -103,12 +103,12 @@ class Route < ApplicationRecord
   def leg_duration_for(&condition)
     return 0.0 unless segments.present?
 
-    # Drop the first waypoint — it is the departure point of the route.
-    # The remaining waypoints align 1:1 with segments as arriving waypoints.
-    arriving_waypoints = waypoints.to_a.drop(1)
+    arriving_waypoints = waypoints.to_a[1..]
 
-    segments.zip(arriving_waypoints).sum do |segment, arriving_waypoint|
-      next 0.0 unless arriving_waypoint && condition.call(arriving_waypoint)
+    segments.each_with_index.sum do |segment, i|
+      arriving_waypoint = arriving_waypoints[i]
+      next 0.0 unless arriving_waypoint && !arriving_waypoint.routing?
+      next 0.0 unless condition.call(arriving_waypoint)
 
       segment['duration'].to_f
     end
@@ -121,10 +121,11 @@ class Route < ApplicationRecord
   def driving_distance_meters
     return 0.0 unless segments.present?
 
-    arriving_waypoints = waypoints.to_a.drop(1)
+    arriving_waypoints = waypoints.to_a[1..]
 
-    segments.zip(arriving_waypoints).sum do |segment, arriving_waypoint|
-      next 0.0 unless arriving_waypoint
+    segments.each_with_index.sum do |segment, i|
+      arriving_waypoint = arriving_waypoints[i]
+      next 0.0 unless arriving_waypoint && !arriving_waypoint.routing?
       next 0.0 if arriving_waypoint.ferry_disembarkment?
       next 0.0 if arriving_waypoint.profile.start_with?('foot-')
       next 0.0 if arriving_waypoint.transit?
