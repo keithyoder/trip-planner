@@ -7,15 +7,21 @@ class RoutesController < ApplicationController
 
   # GET /routes or /routes.json
   def index
-    route_sequence_columns = RouteSequence.column_names.reject { |col| col == 'geom' }
+    all_waypoints = @trip.waypoints.to_a
 
-    @routes = @trip.route_sequences
-                   .select(route_sequence_columns)
-                   .order(:sequence)
+    @routes = @trip.route_sequences.order(:sequence).to_a
 
-    # Manually assign the trip to each route_sequence to avoid N+1 queries
-    # when calling route_sequence.trip or route_sequence.date
-    @routes.each { |route_sequence| route_sequence.trip = @trip }
+    route_ids = @routes.map(&:route_id)
+    routes_by_id = Route.without_geom
+                        .where(id: route_ids)
+                        .preload(:waypoint_start, :waypoint_end)
+                        .index_by(&:id)
+
+    @routes.each do |rs|
+      rs.trip                = @trip
+      rs.route               = routes_by_id[rs.route_id]
+      rs.preloaded_waypoints = all_waypoints
+    end
   end
 
   # GET /routes/1 or /routes/1.json

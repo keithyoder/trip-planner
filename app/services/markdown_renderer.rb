@@ -12,6 +12,7 @@
 class MarkdownRenderer
   RENDERER = Redcarpet::Render::HTML.new(
     hard_wrap: true,
+    filter_html: false,
     link_attributes: { target: '_blank', rel: 'noopener noreferrer' }
   )
 

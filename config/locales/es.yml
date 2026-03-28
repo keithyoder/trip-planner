@@ -5,6 +5,7 @@ es:
       long: "%d de %B de %Y"  # 05 de noviembre de 2025
       short: "%d de %b"        # 05 de nov
       day_plan: "%A, %-d de %B de %Y"   # miércoles, 21 de abril de 2027
+      route_index: "%a, %b %-d"
     month_names: [~, enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre]
     abbr_month_names: [~, ene, feb, mar, abr, may, jun, jul, ago, sep, oct, nov, dic]
     day_names: [domingo, lunes, martes, miércoles, jueves, viernes, sábado]
@@ -188,6 +189,16 @@ es:
       rates_updated: "Tipos actualizadas: %{updated_at}"
       rates_not_updated: "Los tipos de cambio aún no se han actualizado"
   routes:
+    index:
+      title: "Rutas"
+      new_route: "Nueva Ruta"
+      back_to_trip: "Volver al Viaje"
+      day: "Día"
+      route: "Ruta"
+      distance: "Distancia"
+      driving_time: "Tiempo de Conducción"
+      stopped_time: "Tiempo Parado"
+      no_routes: "Aún no hay rutas"
     show:
       route_details: "Detalles de la ruta"
       back_to_routes: "Volver a rutas"

@@ -98,15 +98,19 @@ class Route < ApplicationRecord
   # in order, with each segment's duration representing travel time for
   # that leg excluding stop delays.
   #
+  # Accepts an optional +preloaded_waypoints+ array to avoid DB queries when
+  # all trip waypoints have been loaded in memory (e.g. from the controller).
+  #
+  # @param preloaded_waypoints [Array<Waypoint>, nil]
   # @yield [Waypoint] the arriving waypoint for each leg
   # @return [Float] total seconds
-  def leg_duration_for(&condition)
+  def leg_duration_for(preloaded_waypoints: nil, &condition)
     return 0.0 unless segments.present?
 
-    arriving_waypoints = waypoints.to_a[1..]
+    arriving_wps = arriving_waypoints_for(preloaded_waypoints)
 
     segments.each_with_index.sum do |segment, i|
-      arriving_waypoint = arriving_waypoints[i]
+      arriving_waypoint = arriving_wps[i]
       next 0.0 unless arriving_waypoint && !arriving_waypoint.routing?
       next 0.0 unless condition.call(arriving_waypoint)
 
@@ -117,24 +121,40 @@ class Route < ApplicationRecord
   # Sums segment distances for legs whose arriving waypoint is a driving leg
   # (excludes ferry crossings, foot-hiking legs, and transit legs).
   #
+  # Accepts an optional +preloaded_waypoints+ array to avoid DB queries when
+  # all trip waypoints have been loaded in memory (e.g. from the controller).
+  #
+  # @param preloaded_waypoints [Array<Waypoint>, nil]
   # @return [Float] driving distance in metres
-  def driving_distance_meters
+  def driving_distance_meters(preloaded_waypoints: nil)
     return 0.0 unless segments.present?
 
-    arriving_waypoints = waypoints.to_a[1..]
-
-    segments.each_with_index.sum do |segment, i|
-      arriving_waypoint = arriving_waypoints[i]
+    arriving_waypoints_for(preloaded_waypoints).each_with_index.sum do |arriving_waypoint, i|
       next 0.0 unless arriving_waypoint && !arriving_waypoint.routing?
       next 0.0 if arriving_waypoint.ferry_disembarkment?
       next 0.0 if arriving_waypoint.profile.start_with?('foot-')
       next 0.0 if arriving_waypoint.transit?
 
-      segment['distance'].to_f
+      segments[i]['distance'].to_f
     end
   end
 
   private
+
+  # Returns the arriving waypoints (all except the departure) for segment
+  # iteration. Uses the preloaded array when available to avoid a DB query.
+  #
+  # @param preloaded_waypoints [Array<Waypoint>, nil]
+  # @return [Array<Waypoint>]
+  def arriving_waypoints_for(preloaded_waypoints)
+    return waypoints.to_a[1..] unless preloaded_waypoints
+
+    start_seq = waypoint_start.sequence
+    end_seq   = waypoint_end.sequence
+    preloaded_waypoints
+      .select { |wp| wp.sequence > start_seq && wp.sequence <= end_seq }
+      .sort_by(&:sequence)
+  end
 
   def enqueue_calculate_route
     CalculateRouteJob.perform_later(id)

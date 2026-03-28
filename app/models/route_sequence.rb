@@ -20,14 +20,15 @@ class RouteSequence < ActiveRecord::Base
 
   self.primary_key = :route_id
 
-  # Allow manually setting the trip to avoid N+1 queries
+  # Allow manually setting the trip, route, and preloaded waypoints to avoid N+1 queries
   attr_writer :trip
+  attr_writer :route, :preloaded_waypoints
 
   def readonly?
     true
   end
 
-  # Driving time only — excludes stops, ferry crossings, and hiking legs.
+  # Driving time only — excludes stops, ferry crossings, hiking, and transit legs.
   #
   # @return [ActiveSupport::Duration, nil]
   def driving_duration
@@ -83,22 +84,35 @@ class RouteSequence < ActiveRecord::Base
     trip.start_on + start_time_sequence.parts[:days].to_i.days if trip.start_on.present?
   end
 
-  # Override trip method to use manually set trip if available
+  # Override association readers to use manually assigned values when available,
+  # avoiding N+1 queries when preloaded in the controller.
   def trip
     @trip || super
+  end
+
+  def route
+    @route || super
   end
 
   private
 
   def ferry_duration_seconds
-    @ferry_duration_seconds ||= route.leg_duration_for(&:ferry_disembarkment?)
+    @ferry_duration_seconds ||= route.leg_duration_for(
+      preloaded_waypoints: @preloaded_waypoints,
+      &:ferry_disembarkment?
+    )
   end
 
   def hiking_duration_seconds
-    @hiking_duration_seconds ||= route.leg_duration_for { |wp| wp.profile.start_with?('foot-') }
+    @hiking_duration_seconds ||= route.leg_duration_for(
+      preloaded_waypoints: @preloaded_waypoints
+    ) { |wp| wp.profile.start_with?('foot-') }
   end
 
   def transit_duration_seconds
-    @transit_duration_seconds ||= route.leg_duration_for(&:transit?)
+    @transit_duration_seconds ||= route.leg_duration_for(
+      preloaded_waypoints: @preloaded_waypoints,
+      &:transit?
+    )
   end
 end

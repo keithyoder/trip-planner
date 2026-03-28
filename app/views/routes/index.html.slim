@@ -1,23 +1,47 @@
-p[style="color: green"]
-  = notice
-h1
-  | Routes
-#routes
-  .table-responsive
-    table.table.table-striped
-      thead
-        tr 
-          th Day
-          th Route 
-          th Distance
-          th Driving Time
-          th Stopped Time
-      tbody
-        - @routes.each do |route|
-          tr 
-            td =route.date
-            td =link_to route.route_name, trip_route_url(@trip, route.route_id)
-            td =format_distance(route.distance, decimals: 0)
-            td =route.driving_duration.inspect
-            td =route.stopped_time.inspect
-= link_to "New Route", new_trip_route_path(@trip)
+.container-fluid.py-4
+  / Flash notice
+  - if notice
+    .alert.alert-success.alert-dismissible.fade.show role="alert"
+      = notice
+      button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+
+  .d-flex.justify-content-between.align-items-center
+    div
+      h1.display-5.fw-bold.mb-1
+        i.bi.bi-signpost-split.me-2
+        = t('.title')
+      p.text-muted.mb-0 = @trip.name
+    .btn-group
+      = link_to trip_path(@trip), class: "btn btn-outline-secondary" do
+        i.bi.bi-arrow-left.me-2
+        = t('.back_to_trip')
+      = link_to new_trip_route_path(@trip), class: "btn btn-primary" do
+        i.bi.bi-plus-circle.me-2
+        = t('.new_route')
+
+  .card.shadow-sm
+    .card-body.p-0
+      - if @routes.any?
+        .table-responsive
+          table.table.table-hover.mb-0
+            thead.table-light
+              tr
+                th #
+                th = t('.day')
+                th = t('.route')
+                th = t('.distance')
+                th = t('.driving_time')
+                th = t('.stopped_time')
+            tbody
+              - @routes.each do |route|
+                tr
+                  td = route.day
+                  td = l(route.date, format: :route_index) if route.date
+                  td = link_to route.route_name, trip_route_url(@trip, route.route_id)
+                  td = format_distance(route.distance, decimals: 0)
+                  td = format_duration(route.driving_duration)
+                  td = format_duration(route.stopped_time)
+      - else
+        .p-5.text-center
+          i.bi.bi-signpost-split.text-muted.fs-1.d-block.mb-3
+          p.text-muted.mb-0 = t('.no_routes')
