@@ -21,6 +21,9 @@
             |  km total
         
         .btn-group[role="group"]
+          = link_to trip_path(@trip), class: "btn btn-outline-secondary" do
+            i.bi.bi-arrow-left.me-2
+            = t('.back_to_trip')
           = link_to new_trip_waypoint_path(@trip), class: "btn btn-primary" do
             i.bi.bi-plus-lg.me-2
             | New Waypoint
@@ -79,10 +82,9 @@
           input.form-check-input[type="checkbox" id="showRoute" checked]
           label.form-check-label[for="showRoute"] Show route line
     .card-body.p-0
-      / Use your existing maps controller with waypoints data
       div[
         data-controller="maps" 
-        data-maps-waypoints-value="#{waypoints_map_data(@waypoints)}"
+        data-maps-waypoints-value="#{waypoints_map_data(@waypoints, @trip)}"
       ]
         #waypointsmap.w-100[
           data-maps-target="container" 
@@ -94,7 +96,6 @@
   / Waypoints grouped by type
   .row
     .col-lg-12
-      / View toggle buttons
       .d-flex.justify-content-between.align-items-center.mb-3
         .btn-group[role="group" aria-label="View mode"]
           input.btn-check[type="radio" name="viewMode" id="groupedView"]
@@ -120,44 +121,38 @@
             i.bi.bi-arrows-collapse.me-1
             | Collapse All
 
-      / Timeline view (hidden by default)
+      / Timeline view
       #timelineView[data-waypoints-target="timeline"]
         .card.shadow-sm
           .card-body.p-4
             .timeline-container
-              - @waypoints.sort_by(&:sequence).each_with_index do |waypoint, index|
+              - @waypoints.each_with_index do |waypoint, index|
                 .timeline-item.d-flex.gap-3.mb-4[
                   data-waypoint-type="#{waypoint.waypoint_type}"
                   data-waypoint-id="#{waypoint.id}"
                 ]
-                  / Icon column with connecting line
                   .timeline-icon-column.d-flex.flex-column.align-items-center[style="min-width: 60px;"]
-                    / Icon
-                    = link_to [@trip, waypoint.waypoint], class: "text-decoration-none", data: { action: "mouseenter->waypoints#highlightWaypoint" } do
+                    = link_to trip_waypoint_path(@trip, waypoint.waypoint), class: "text-decoration-none", data: { action: "mouseenter->waypoints#highlightWaypoint" } do
                       .position-relative
                         .d-flex.align-items-center.justify-content-center[
                           style="width: 48px; height: 48px; background-color: #{waypoint_background_color(waypoint.waypoint_type)}; color: #{waypoint_color(waypoint.waypoint_type)}; border-radius: 12px; border: 2px solid #{waypoint_color(waypoint.waypoint_type)}; z-index: 2; position: relative;"
                         ]
                           i[class="bi #{waypoint_icon_class(waypoint.waypoint_type)}" style="font-size: 24px;"]
-                        / Sequence badge
                         span.position-absolute.top-0.start-100.translate-middle.badge.rounded-pill.bg-secondary[
                           style="font-size: 10px; padding: 2px 6px; z-index: 3;"
                         ]
                           = waypoint.sequence
-                    
-                    / Connecting line (except for last item)
                     - unless index == @waypoints.size - 1
                       .timeline-line.flex-grow-1[
-                        style="width: 2px; background: linear-gradient(to bottom, #{waypoint_color(waypoint.waypoint_type)}, #{waypoint_color(@waypoints.sort_by(&:sequence)[index + 1].waypoint_type)}); min-height: 40px; margin: 8px 0;"
+                        style="width: 2px; background: linear-gradient(to bottom, #{waypoint_color(waypoint.waypoint_type)}, #{waypoint_color(@waypoints[index + 1].waypoint_type)}); min-height: 40px; margin: 8px 0;"
                       ]
                   
-                  / Content column
                   .timeline-content.flex-grow-1
                     .card.border-0.shadow-sm
                       .card-body
                         .d-flex.justify-content-between.align-items-start
                           div.flex-grow-1
-                            = link_to [@trip, waypoint.waypoint], class: "text-decoration-none" do
+                            = link_to trip_waypoint_path(@trip, waypoint.waypoint), class: "text-decoration-none" do
                               h6.mb-1.fw-bold = waypoint.name
                             .text-muted.small.mb-2
                               i.bi.bi-geo-alt.me-1
@@ -183,10 +178,9 @@
                                 i.bi.bi-arrow-right.me-1
                                 strong = "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km"
 
-      / Grouped view (shown by default)
+      / Grouped view
       #groupedView.d-none[data-waypoints-target="grouped"]
-        - grouped_waypoints = @waypoints.group_by(&:waypoint_type)
-        - grouped_waypoints.each_with_index do |(type, waypoints), index|
+        - @waypoints.group_by(&:waypoint_type).each do |(type, waypoints)|
           .card.shadow-sm.mb-3[
             data-waypoint-group="#{type}"
             data-waypoints-target="group"
@@ -205,42 +199,39 @@
                   strong = t("waypoints.#{type.to_s}")
                   span.badge.bg-secondary.ms-2 = waypoints.count
                 i.bi.bi-chevron-down
-          
-          .collapse.show[id="waypoint-group-#{type}"]
-            .list-group.list-group-flush
-              - waypoints.sort_by(&:sequence).each do |waypoint|
-                = link_to [@trip, waypoint.waypoint], class: "list-group-item list-group-item-action", data: { waypoint_id: waypoint.id, action: "mouseenter->waypoints#highlightWaypoint" } do
-                  .row.align-items-center.g-3
-                    .col-auto
-                      / Large prominent icon
-                      .d-flex.align-items-center.justify-content-center.position-relative[
-                        style="width: 48px; height: 48px; background-color: #{waypoint_background_color(type)}; color: #{waypoint_color(type)}; border-radius: 12px; border: 2px solid #{waypoint_color(type)};"
-                      ]
-                        i[class="bi #{waypoint_icon_class(type)}" style="font-size: 24px;"]
-                        / Small sequence badge in corner
-                        span.position-absolute.top-0.start-100.translate-middle.badge.rounded-pill.bg-secondary[
-                          style="font-size: 10px; padding: 2px 6px;"
+            .collapse.show[id="waypoint-group-#{type}"]
+              .list-group.list-group-flush
+                - waypoints.each do |waypoint|
+                  = link_to trip_waypoint_path(@trip, waypoint.waypoint), class: "list-group-item list-group-item-action", data: { waypoint_id: waypoint.id, action: "mouseenter->waypoints#highlightWaypoint" } do
+                    .row.align-items-center.g-3
+                      .col-auto
+                        .d-flex.align-items-center.justify-content-center.position-relative[
+                          style="width: 48px; height: 48px; background-color: #{waypoint_background_color(type)}; color: #{waypoint_color(type)}; border-radius: 12px; border: 2px solid #{waypoint_color(type)};"
                         ]
-                          = waypoint.sequence
-                    
-                    .col
-                      .d-flex.justify-content-between.align-items-start
-                        div
-                          .fw-bold.mb-1 = waypoint.name
-                          .text-muted.small
-                            i.bi.bi-geo-alt.me-1
-                            = waypoint.location
-                        
-                        .text-end.text-nowrap.ms-3
-                          - if waypoint.toll && waypoint.toll > 0
-                            .text-success.small.mb-1
-                              i.bi.bi-cash-coin.me-1
-                              = format_currency(waypoint)
-                          - if waypoint.segment_distance
-                            .text-muted.small.mb-1
-                              i.bi.bi-signpost.me-1
-                              = waypoint.segment_distance.km
-                          - if waypoint.trip_distance
-                            .text-primary.small.fw-bold
-                              i.bi.bi-arrow-right.me-1
-                              = "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km"
+                          i[class="bi #{waypoint_icon_class(type)}" style="font-size: 24px;"]
+                          span.position-absolute.top-0.start-100.translate-middle.badge.rounded-pill.bg-secondary[
+                            style="font-size: 10px; padding: 2px 6px;"
+                          ]
+                            = waypoint.sequence
+                      
+                      .col
+                        .d-flex.justify-content-between.align-items-start
+                          div
+                            .fw-bold.mb-1 = waypoint.name
+                            .text-muted.small
+                              i.bi.bi-geo-alt.me-1
+                              = waypoint.location
+                          
+                          .text-end.text-nowrap.ms-3
+                            - if waypoint.toll && waypoint.toll > 0
+                              .text-success.small.mb-1
+                                i.bi.bi-cash-coin.me-1
+                                = format_currency(waypoint)
+                            - if waypoint.segment_distance
+                              .text-muted.small.mb-1
+                                i.bi.bi-signpost.me-1
+                                = waypoint.segment_distance.km
+                            - if waypoint.trip_distance
+                              .text-primary.small.fw-bold
+                                i.bi.bi-arrow-right.me-1
+                                = "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km"

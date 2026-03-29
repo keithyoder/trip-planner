@@ -32,23 +32,21 @@ module WaypointsHelper
   # Generate JSON data for waypoints to be displayed on a map
   # @param waypoints [Array<Waypoint>] Array of waypoint objects
   # @return [String] JSON string for JavaScript consumption
-  def waypoints_map_data(waypoints)
+  def waypoints_map_data(waypoints, trip = nil)
     waypoints
       .reject { |waypoint| waypoint.waypoint_type == 'routing' }
       .map do |waypoint|
-      {
-        lat: waypoint.lonlat.y,  # PostGIS point: y = latitude
-        lon: waypoint.lonlat.x,  # PostGIS point: x = longitude
-        type: waypoint.waypoint_type,
-        name: waypoint.name,
-        sequence: waypoint.sequence,
-        toll: waypoint.toll,
-        toll_formatted: waypoint.toll ? format_currency(waypoint) : nil,
-        url: trip_waypoint_path(@route.trip, waypoint)
-        # segment_distance: waypoint.segment_distance ? "#{waypoint.segment_distance.km.round(1)} km" : nil,
-        # trip_distance: waypoint.trip_distance ? "#{number_with_delimiter(waypoint.trip_distance.km.round.to_i)} km" : nil
-      }
-    end.to_json
+        {
+          lat: waypoint.lonlat.y,
+          lon: waypoint.lonlat.x,
+          type: waypoint.waypoint_type,
+          name: waypoint.name,
+          sequence: waypoint.sequence,
+          toll: waypoint.toll,
+          toll_formatted: waypoint.toll ? format_currency(waypoint) : nil,
+          url: trip ? trip_waypoint_path(trip, waypoint) : nil
+        }
+      end.to_json
   end
 
   # Get Bootstrap icon class for waypoint type

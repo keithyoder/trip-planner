@@ -27,6 +27,7 @@ class WaypointDistance < ActiveRecord::Base
   attribute :segment_distance, :distance
 
   delegate :waypoint_type, :location, :country, :currency, to: :waypoint
+  attr_writer :waypoint
 
   self.primary_key = :id
 
@@ -46,5 +47,9 @@ class WaypointDistance < ActiveRecord::Base
 
   def readonly?
     true
+  end
+
+  def waypoint
+    @waypoint || super
   end
 end

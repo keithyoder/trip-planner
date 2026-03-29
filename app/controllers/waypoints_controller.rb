@@ -6,17 +6,22 @@ class WaypointsController < ApplicationController
 
   # GET /waypoints or /waypoints.json
   def index
-    waypoint_distances = @trip.waypoint_distances.includes(:waypoint, :boundaries).order(:sequence)
-    @waypoints = if params.key?(:ferry)
-                   waypoint_distances.where(waypoint_type: :ferry_disembarkment)
-                 elsif params.key?(:gas_station)
-                   waypoint_distances.where(waypoint_type: :gas_station)
-                 elsif params.key?(:toll)
-                   waypoint_distances.where(waypoint_type: :toll_booth)
-                 else
-                   waypoint_distances
-                 end
-    @waypoints = @waypoints.all
+    @waypoints = @trip.waypoint_distances.order(:sequence).to_a
+
+    waypoints = Waypoint
+                .where(id: @waypoints.map(&:id))
+                .to_a
+
+    ActiveRecord::Associations::Preloader.new(
+      records: waypoints,
+      associations: :boundaries,
+      scope: Boundary.without_geom
+    ).call
+
+    waypoints_by_id = waypoints.index_by(&:id)
+    @waypoints.each { |wd| wd.waypoint = waypoints_by_id[wd.id] }
+
+    @waypoints = filter_waypoints(@waypoints)
   end
 
   # GET /waypoints/1 or /waypoints/1.json
@@ -88,6 +93,18 @@ class WaypointsController < ApplicationController
         minutes = permitted_params.delete(:delay_minutes).to_i
         permitted_params[:delay] = (hours * 3600) + (minutes * 60)
       end
+    end
+  end
+
+  def filter_waypoints(waypoints)
+    if params.key?(:ferry)
+      waypoints.select { |w| w.waypoint_type == 'ferry_disembarkment' }
+    elsif params.key?(:gas_station)
+      waypoints.select { |w| w.waypoint_type == 'gas_station' }
+    elsif params.key?(:toll)
+      waypoints.select { |w| w.waypoint_type == 'toll_booth' }
+    else
+      waypoints
     end
   end
 end

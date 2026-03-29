@@ -83,10 +83,6 @@ class Waypoint < ApplicationRecord
     route&.route_sequence
   end
 
-  def country
-    @country ||= boundaries.where(level: 2).pluck(:name).join(' ')
-  end
-
   def currency
     CountryCurrency.for(country)
   end
@@ -97,16 +93,39 @@ class Waypoint < ApplicationRecord
     Money.new(toll, currency).format
   end
 
+  def country
+    @country ||= if boundaries.loaded?
+                   boundaries.find { |b| b.level == 2 }&.name.to_s
+                 else
+                   boundaries.where(level: 2).pluck(:name).join(' ')
+                 end
+  end
+
   def state
-    boundaries.where(level: 4).pluck(:name).join(' ')
+    if boundaries.loaded?
+      boundaries.select { |b| b.level == 4 }.map(&:name).join(' ')
+    else
+      boundaries.where(level: 4).pluck(:name).join(' ')
+    end
   end
 
   def location
-    boundaries.without_geom.sort_by(&:level).map(&:name).join(', ')
+    if boundaries.loaded?
+      boundaries.sort_by(&:level).map(&:name).join(', ')
+    else
+      boundaries.without_geom.sort_by(&:level).map(&:name).join(', ')
+    end
   end
 
   def timezone
-    @timezone ||= boundaries.where.not(timezone: nil).order(level: :desc).pluck(:timezone).first
+    @timezone ||= if boundaries.loaded?
+                    boundaries
+                      .select { |b| b.timezone.present? }
+                      .max_by(&:level)
+                      &.timezone
+                  else
+                    boundaries.where.not(timezone: nil).order(level: :desc).pluck(:timezone).first
+                  end
   end
 
   def solar_position(date = Date.today)
