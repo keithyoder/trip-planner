@@ -7,138 +7,144 @@
 -# Usage: = render 'weather', waypoint: @waypoint
 -#
 - w = waypoint.weather
-- return if w.nil?
 
--# Resolve locale units once for the whole partial
-- temp_unit  = Units::Temperature.locale_unit
-- temp_abbr  = Units::Temperature.locale_abbr
-- speed_unit = Units::Speed.locale_unit
-- speed_abbr = Units::Speed.locale_abbr
+div id="waypoint-#{waypoint.id}-weather"
+  - if w.nil? && local_assigns[:weather_pending]
+    .card.shadow-sm.mb-4
+      .card-body.text-center.py-4.text-muted
+        .spinner-border.spinner-border-sm.me-2
+        = t('weather.loading')
+  - elsif w
+    -# Resolve locale units once for the whole partial
+    - temp_unit  = Units::Temperature.locale_unit
+    - temp_abbr  = Units::Temperature.locale_abbr
+    - speed_unit = Units::Speed.locale_unit
+    - speed_abbr = Units::Speed.locale_abbr
 
-.card.shadow-sm.mb-4
-  .card-header.bg-white.border-bottom
-    .d-flex.justify-content-between.align-items-center
-      h5.card-title.mb-0
-        i.bi[class="bi-#{w.weathercode_icon || 'cloud-sun'} me-2"]
-        = t('weather.card_title')
-      .d-flex.align-items-center.gap-2
-        - if w.forecast?
-          span.badge.bg-info.text-dark = t('weather.forecast_label')
-        - else
-          span.badge.bg-secondary
-            i.bi.bi-clock-history.me-1
-            = t('weather.climate_normal_label')
-        small.text-muted = l(w.date, format: :day_plan)
+    .card.shadow-sm.mb-4
+      .card-header.bg-white.border-bottom
+        .d-flex.justify-content-between.align-items-center
+          h5.card-title.mb-0
+            i.bi[class="bi-#{w.weathercode_icon || 'cloud-sun'} me-2"]
+            = t('weather.card_title')
+          .d-flex.align-items-center.gap-2
+            - if w.forecast?
+              span.badge.bg-info.text-dark = t('weather.forecast_label')
+            - else
+              span.badge.bg-secondary
+                i.bi.bi-clock-history.me-1
+                = t('weather.climate_normal_label')
+            small.text-muted = l(w.date, format: :day_plan)
 
-  .card-body
+      .card-body
 
-    -# Weathercode summary (forecast only)
-    - if w.weathercode_label
-      .alert.alert-light.d-flex.align-items-center.gap-2.py-2.mb-3
-        i.bi.fs-5[class="bi-#{w.weathercode_icon}"]
-        span.fw-semibold = w.weathercode_label
+        -# Weathercode summary (forecast only)
+        - if w.weathercode_label
+          .alert.alert-light.d-flex.align-items-center.gap-2.py-2.mb-3
+            i.bi.fs-5[class="bi-#{w.weathercode_icon}"]
+            span.fw-semibold = w.weathercode_label
 
-    -# ── Temperature ────────────────────────────────────────────────────────
-    - if w.temp_max || w.temp_min
-      .mb-3
-        .d-flex.align-items-center.gap-2.mb-2
-          i.bi.bi-thermometer-half.text-danger
-          span.fw-semibold.text-uppercase.small.text-muted = t('weather.temperature')
-        .row.g-2
-          .col-6
-            .p-2.rounded.bg-light.text-center
-              .small.text-muted = t('weather.high')
-              - high_val = w.temp_max&.to_units(temp_unit)&.value&.round(0).to_i
-              .fs-4.fw-bold.text-danger = "#{high_val}#{temp_abbr}"
-              - if (range = w.temp_max_range(temp_unit))
-                .small.text-muted = "#{range[0]}–#{range[1]}#{temp_abbr}"
-          .col-6
-            .p-2.rounded.bg-light.text-center
-              .small.text-muted = t('weather.low')
-              - low_val = w.temp_min&.to_units(temp_unit)&.value&.round(0).to_i
-              .fs-4.fw-bold.text-primary = "#{low_val}#{temp_abbr}"
-              - if (range = w.temp_min_range(temp_unit))
-                .small.text-muted = "#{range[0]}–#{range[1]}#{temp_abbr}"
-      hr.my-3
+        -# ── Temperature ────────────────────────────────────────────────────────
+        - if w.temp_max || w.temp_min
+          .mb-3
+            .d-flex.align-items-center.gap-2.mb-2
+              i.bi.bi-thermometer-half.text-danger
+              span.fw-semibold.text-uppercase.small.text-muted = t('weather.temperature')
+            .row.g-2
+              .col-6
+                .p-2.rounded.bg-light.text-center
+                  .small.text-muted = t('weather.high')
+                  - high_val = w.temp_max&.to_units(temp_unit)&.value&.round(0).to_i
+                  .fs-4.fw-bold.text-danger = "#{high_val}#{temp_abbr}"
+                  - if (range = w.temp_max_range(temp_unit))
+                    .small.text-muted = "#{range[0]}–#{range[1]}#{temp_abbr}"
+              .col-6
+                .p-2.rounded.bg-light.text-center
+                  .small.text-muted = t('weather.low')
+                  - low_val = w.temp_min&.to_units(temp_unit)&.value&.round(0).to_i
+                  .fs-4.fw-bold.text-primary = "#{low_val}#{temp_abbr}"
+                  - if (range = w.temp_min_range(temp_unit))
+                    .small.text-muted = "#{range[0]}–#{range[1]}#{temp_abbr}"
+          hr.my-3
 
-    -# ── Precipitation ───────────────────────────────────────────────────────
-    - precip_prob = w.precip_probability
-    - if precip_prob || w.precipitation_mm&.positive?
-      .mb-3
-        .d-flex.align-items-center.gap-2.mb-2
-          i.bi.bi-cloud-rain.text-info
-          span.fw-semibold.text-uppercase.small.text-muted = t('weather.precipitation')
-        .row.g-2
-          - if precip_prob
-            .col-auto
-              .p-2.rounded.bg-light.text-center
-                .small.text-muted = t('weather.chance')
-                .fs-4.fw-bold[class=precip_color_class(precip_prob)] = "#{precip_prob}%"
-                .small.text-muted = w.precip_probability_label
-          - if w.precipitation_mm&.positive?
-            .col-auto
-              .p-2.rounded.bg-light.text-center
-                .small.text-muted = t('weather.avg_amount')
-                .fs-5.fw-bold = "#{w.precipitation_mm.round(1)} mm"
-                - if (range = w.precip_range_mm)
-                  .small.text-muted = "#{range[0]}–#{range[1]} mm"
-          - if w.precipitation_hours&.positive?
-            .col-auto
-              .p-2.rounded.bg-light.text-center
-                .small.text-muted = t('weather.duration')
-                .fs-5.fw-bold = "#{w.precipitation_hours}h"
-          - if w.precipitation_probability_max
-            .col-auto
-              .p-2.rounded.bg-light.text-center
-                .small.text-muted = t('weather.open_meteo_prob')
-                .fs-5.fw-bold = "#{w.precipitation_probability_max}%"
-      hr.my-3
+        -# ── Precipitation ───────────────────────────────────────────────────────
+        - precip_prob = w.precip_probability
+        - if precip_prob || w.precipitation_mm&.positive?
+          .mb-3
+            .d-flex.align-items-center.gap-2.mb-2
+              i.bi.bi-cloud-rain.text-info
+              span.fw-semibold.text-uppercase.small.text-muted = t('weather.precipitation')
+            .row.g-2
+              - if precip_prob
+                .col-auto
+                  .p-2.rounded.bg-light.text-center
+                    .small.text-muted = t('weather.chance')
+                    .fs-4.fw-bold[class=precip_color_class(precip_prob)] = "#{precip_prob}%"
+                    .small.text-muted = w.precip_probability_label
+              - if w.precipitation_mm&.positive?
+                .col-auto
+                  .p-2.rounded.bg-light.text-center
+                    .small.text-muted = t('weather.avg_amount')
+                    .fs-5.fw-bold = "#{w.precipitation_mm.round(1)} mm"
+                    - if (range = w.precip_range_mm)
+                      .small.text-muted = "#{range[0]}–#{range[1]} mm"
+              - if w.precipitation_hours&.positive?
+                .col-auto
+                  .p-2.rounded.bg-light.text-center
+                    .small.text-muted = t('weather.duration')
+                    .fs-5.fw-bold = "#{w.precipitation_hours}h"
+              - if w.precipitation_probability_max
+                .col-auto
+                  .p-2.rounded.bg-light.text-center
+                    .small.text-muted = t('weather.open_meteo_prob')
+                    .fs-5.fw-bold = "#{w.precipitation_probability_max}%"
+          hr.my-3
 
-    -# ── Wind ────────────────────────────────────────────────────────────────
-    - if w.windspeed
-      .mb-3
-        .d-flex.align-items-center.gap-2.mb-2
-          i.bi.bi-wind.text-secondary
-          span.fw-semibold.text-uppercase.small.text-muted = t('weather.wind')
-        .row.g-2
-          .col-auto
-            .p-2.rounded.bg-light.text-center
-              .small.text-muted = t('weather.avg_wind')
-              - avg_speed = w.windspeed&.to_units(speed_unit)&.value&.round(0).to_i
-              .fs-5.fw-bold = "#{avg_speed} #{speed_abbr}"
-              - if (range = w.windspeed_range(speed_unit))
-                .small.text-muted = "#{range[0]}–#{range[1]} #{speed_abbr}"
-          - if w.windspeed_max
-            .col-auto
-              .p-2.rounded.bg-light.text-center
-                .small.text-muted = t('weather.max_gust')
-                - max_speed = w.windspeed_max&.to_units(speed_unit)&.value&.round(0).to_i
-                .fs-5.fw-bold = "#{max_speed} #{speed_abbr}"
-                - if (range = w.windspeed_max_range(speed_unit))
-                  .small.text-muted = "#{range[0]}–#{range[1]} #{speed_abbr}"
-      hr.my-3
+        -# ── Wind ────────────────────────────────────────────────────────────────
+        - if w.windspeed
+          .mb-3
+            .d-flex.align-items-center.gap-2.mb-2
+              i.bi.bi-wind.text-secondary
+              span.fw-semibold.text-uppercase.small.text-muted = t('weather.wind')
+            .row.g-2
+              .col-auto
+                .p-2.rounded.bg-light.text-center
+                  .small.text-muted = t('weather.avg_wind')
+                  - avg_speed = w.windspeed&.to_units(speed_unit)&.value&.round(0).to_i
+                  .fs-5.fw-bold = "#{avg_speed} #{speed_abbr}"
+                  - if (range = w.windspeed_range(speed_unit))
+                    .small.text-muted = "#{range[0]}–#{range[1]} #{speed_abbr}"
+              - if w.windspeed_max
+                .col-auto
+                  .p-2.rounded.bg-light.text-center
+                    .small.text-muted = t('weather.max_gust')
+                    - max_speed = w.windspeed_max&.to_units(speed_unit)&.value&.round(0).to_i
+                    .fs-5.fw-bold = "#{max_speed} #{speed_abbr}"
+                    - if (range = w.windspeed_max_range(speed_unit))
+                      .small.text-muted = "#{range[0]}–#{range[1]} #{speed_abbr}"
+          hr.my-3
 
-    -# ── Humidity ────────────────────────────────────────────────────────────
-    - if w.humidity_pct
-      .d-flex.align-items-center.justify-content-between
-        .d-flex.align-items-center.gap-2
-          i.bi.bi-droplet-half.text-info
-          span.fw-semibold.text-uppercase.small.text-muted = t('weather.humidity_label')
-        .d-flex.align-items-center.gap-2
-          .progress[style="width: 120px; height: 8px;"]
-            .progress-bar.bg-info[
-              role="progressbar"
-              style="width: #{w.humidity_pct}%"
-              aria-valuenow=w.humidity_pct
-              aria-valuemin="0"
-              aria-valuemax="100"
-            ]
-          span.fw-semibold = "#{w.humidity_pct}%"
-          span.text-muted.small = w.humidity_label
+        -# ── Humidity ────────────────────────────────────────────────────────────
+        - if w.humidity_pct
+          .d-flex.align-items-center.justify-content-between
+            .d-flex.align-items-center.gap-2
+              i.bi.bi-droplet-half.text-info
+              span.fw-semibold.text-uppercase.small.text-muted = t('weather.humidity_label')
+            .d-flex.align-items-center.gap-2
+              .progress[style="width: 120px; height: 8px;"]
+                .progress-bar.bg-info[
+                  role="progressbar"
+                  style="width: #{w.humidity_pct}%"
+                  aria-valuenow=w.humidity_pct
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                ]
+              span.fw-semibold = "#{w.humidity_pct}%"
+              span.text-muted.small = w.humidity_label
 
-  -# Footer — source note
-  - if w.climate_normal?
-    .card-footer.bg-white.border-top
-      small.text-muted
-        i.bi.bi-info-circle.me-1
-        = t('weather.climate_normal_note', years: 34)
+      -# Footer — source note
+      - if w.climate_normal?
+        .card-footer.bg-white.border-top
+          small.text-muted
+            i.bi.bi-info-circle.me-1
+            = t('weather.climate_normal_note', years: 34)

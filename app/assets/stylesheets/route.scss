@@ -212,3 +212,116 @@
 .text-success { color: #198754 !important; }
 .text-warning { color: #ffc107 !important; }
 .text-info { color: #0dcaf0 !important; }
+
+// ─── Print styles ────────────────────────────────────────────────────────────
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm 12mm 20mm; // extra left for binder holes
+  }
+
+  // Kill animations — can cause blank prints
+  .card {
+    animation: none !important;
+  }
+
+  // Hide everything that isn't the map
+  .navbar,
+  footer,
+  .alert,
+  .breadcrumb,
+  .bg-dark,                                      // solar banner
+  [data-controller="panel-toggle"],              // day plan / directions card
+  .col-lg-5,                                     // the whole right column
+  .row.mb-4:has(.bi-graph-up),                   // elevation card row
+  .d-flex.justify-content-between,              // prev/next + edit buttons row
+  .btn-group,
+  h1 {
+    display: none !important;
+  }
+
+  // Print-only header
+  #print-header {
+    display: block !important;
+    font-family: sans-serif;
+    margin-bottom: 4mm;
+    padding-bottom: 3mm;
+    border-bottom: 0.5pt solid #ccc;
+
+    h4 {
+      font-size: 13pt;
+      font-weight: 700;
+      margin: 0 0 1mm;
+    }
+
+    p {
+      font-size: 9pt;
+      color: #555;
+      margin: 0;
+    }
+  }
+
+  // Expand the map column to full page width
+  .col-lg-7 {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    padding: 0 !important;
+  }
+
+  // Remove card chrome
+  .col-lg-7 .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .col-lg-7 .card-header {
+    display: none !important;
+  }
+
+  .col-lg-7 .card-body {
+    padding: 0 !important;
+  }
+
+  // Map height is driven by the JS beforeprint handler (756px = ~200mm).
+  // The CSS just ensures nothing fights it and the container fills its parent.
+  #routescontainer {
+    width: 100% !important;
+    min-height: unset !important;
+    max-height: unset !important;
+    border-radius: 0 !important;
+
+    .leaflet-container {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 0 !important;
+    }
+  }
+
+  // Keep everything on one page
+  .row.g-4.mb-4 {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  // Force Leaflet to paint tile and vector colors
+  .leaflet-container,
+  .leaflet-overlay-pane svg,
+  .leaflet-tile {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  // Keep the surface legend
+  .surface-legend {
+    display: block !important;
+  }
+
+  // Hide map controls — not useful on paper
+  .leaflet-control-zoom,
+  .leaflet-control-custom,
+  .leaflet-control-container {
+    display: none !important;
+  }
+}

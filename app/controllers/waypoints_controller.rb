@@ -25,7 +25,9 @@ class WaypointsController < ApplicationController
   end
 
   # GET /waypoints/1 or /waypoints/1.json
-  def show; end
+  def show
+    schedule_weather_fetch_if_needed
+  end
 
   # GET /waypoints/new
   def new
@@ -94,6 +96,20 @@ class WaypointsController < ApplicationController
         permitted_params[:delay] = (hours * 3600) + (minutes * 60)
       end
     end
+  end
+
+  def schedule_weather_fetch_if_needed
+    return unless @waypoint.lonlat && @waypoint.planned_date
+
+    lat      = @waypoint.lonlat.y.to_f.round(2)
+    lon      = @waypoint.lonlat.x.to_f.round(2)
+    estimate = WeatherEstimate.for_location(lat, lon, @waypoint.planned_date)
+
+    return if estimate&.fresh?
+
+    @weather_pending = true
+    @waypoint.instance_variable_set(:@weather, nil)
+    FetchWaypointWeatherJob.perform_later(@waypoint.id)
   end
 
   def filter_waypoints(waypoints)

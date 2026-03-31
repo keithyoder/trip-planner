@@ -74,8 +74,12 @@ export class MapManager {
             center: [0, 0],
             zoom: 14,
             maxZoom: 19,
-            tileLayerUrl: 'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png?api_key=50e54c7f-f220-44f9-875c-a0ce16bc63b5',
-            attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+            // tileLayerUrl: 'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png?api_key=50e54c7f-f220-44f9-875c-a0ce16bc63b5',
+            // attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+            tileLayerUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            // tileLayerUrl: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+            // attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         };
 
         // Merge options with defaults
@@ -140,18 +144,21 @@ export class MapManager {
         let popupContent = null;
 
         if (name) {
-            const nameHtml = url
-                ? `<a href="${url}"><strong>${name}</strong></a>`
-                : `<strong>${name}</strong>`;
             popupContent = `
         <div style="text-align: center;">
-            ${nameHtml}<br>
+            <strong>${name}</strong><br>
             <small class="text-muted">${config.label}</small>
         </div>
         `;
         }
 
-        return this.addMarker(lat, lon, { icon: icon }, popupContent)
+        const marker = this.addMarker(lat, lon, { icon: icon }, url ? null : popupContent);
+
+        if (url) {
+            marker.on('click', () => { window.location.href = url; });
+        }
+
+        return marker;
     }
 
     // Add a plain polyline to the map (single colour, no surface data)

@@ -51,6 +51,53 @@ export default class extends Controller {
     }
 
     this.mapManager.fitAllBounds([0,0]);
+
+    // Bind print handlers so they can be removed on disconnect
+    this._beforePrint = this.handleBeforePrint.bind(this);
+    this._afterPrint  = this.handleAfterPrint.bind(this);
+    window.addEventListener('beforeprint', this._beforePrint);
+    window.addEventListener('afterprint',  this._afterPrint);
+  }
+
+  // A4 portrait printable area minus the print header (~25mm) leaves ~200mm
+  // for the map. 200mm at 96dpi = 756px. Setting this on the container before
+  // invalidateSize() tells Leaflet the true render target so it loads tiles to
+  // fill the full area rather than leaving a grey void.
+  handleBeforePrint() {
+    const targetHeight = '756px';
+
+    // Set height on both the wrapper and the Leaflet container itself
+    this.containerTarget.style.height    = targetHeight;
+    this.containerTarget.style.minHeight = targetHeight;
+
+    const leafletContainer = this.containerTarget.querySelector('.leaflet-container');
+    if (leafletContainer) {
+      leafletContainer.style.height    = targetHeight;
+      leafletContainer.style.minHeight = targetHeight;
+    }
+
+    const map = this.mapManager.map;
+    map.invalidateSize({ animate: false });
+    this.mapManager.fitAllBounds([0, 0]);
+
+    map.once('moveend', () => {
+      setTimeout(() => map.invalidateSize({ animate: false }), 150);
+    });
+  }
+
+  handleAfterPrint() {
+    this.containerTarget.style.height    = '60vh';
+    this.containerTarget.style.minHeight = '500px';
+
+    const leafletContainer = this.containerTarget.querySelector('.leaflet-container');
+    if (leafletContainer) {
+      leafletContainer.style.height    = '';
+      leafletContainer.style.minHeight = '';
+    }
+
+    const map = this.mapManager.map;
+    map.invalidateSize({ animate: false });
+    this.mapManager.fitAllBounds([0, 0]);
   }
 
   displayWaypoints() {
@@ -67,6 +114,8 @@ export default class extends Controller {
   }
 
   disconnect() {
+    window.removeEventListener('beforeprint', this._beforePrint);
+    window.removeEventListener('afterprint',  this._afterPrint);
     if (this.mapManager) {
       this.mapManager.destroy();
     }

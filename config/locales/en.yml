@@ -293,6 +293,7 @@ en:
   weather:
     climate_normal_label: "30-yr climate normal"
     forecast_label: "Live forecast"
+    loading: "Loading weather data..."
     avg_daily_rain: "avg daily rain"
     avg_wind: "avg wind"
  

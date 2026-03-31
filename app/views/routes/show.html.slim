@@ -8,7 +8,7 @@
   .row
     .col-12
       / Route header
-      .d-flex.justify-content-between.align-items-stretch.gap-3.mb-4
+      .d-flex.justify-content-between.align-items-stretch.gap-3.mb-4.d-print-none
         .d-flex.align-items-stretch.gap-2.min-w-0
           - if @prev_route_id
             = link_to trip_route_path(@route.trip, @prev_route_id), class: "btn btn-outline-secondary d-flex align-items-center flex-shrink-0" do
@@ -28,7 +28,7 @@
             span.btn.btn-outline-secondary.d-flex.align-items-center.flex-shrink-0.disabled
               i.bi.bi-chevron-right.fs-4
 
-        .btn-group.flex-shrink-0 role="group"
+        .btn-group.flex-shrink-0.d-print-none role="group"
           = link_to edit_trip_route_path(@route.trip, @route), class: "btn btn-outline-primary" do
             i.bi.bi-pencil-square.me-2
             = t('common.edit')
@@ -38,9 +38,24 @@
           = link_to trip_routes_path(@route.trip), class: "btn btn-outline-secondary" do
             i.bi.bi-arrow-left.me-2
             = t('routes.show.back_to_routes')
+          button.btn.btn-outline-secondary type="button" onclick="window.print()"
+            i.bi.bi-printer.me-2
+            = t('routes.show.print_map')
+
+  / Print-only header
+  #print-header.d-none
+    h4
+      i.bi.bi-signpost-split.me-2
+      = "#{@route.waypoint_start.name} → #{@route.waypoint_end.name}"
+    p
+      = l(@route.route_sequence.date, format: :day_plan)
+      |  ·  
+      = format_distance(@route.route_sequence.distance, decimals: 1)
+      |  ·  
+      = format_duration(@route.route_sequence.driving_duration)
 
   / Solar information banner
-  .row.mb-4
+  .row.mb-4.d-print-none
     .col-12
       .card.shadow-sm.bg-dark.text-white
         .card-body.py-2
@@ -73,16 +88,17 @@
               .d-flex.align-items-center.justify-content-center.gap-2
                 i.bi.bi-sun.text-warning
                 div.text-start
-                  small.text-white-50.d-block = t('routes.show.day_length')
+                  small.text-white-50.d-block = t('routes.show.day_plan')
                   strong.d-block = humanize(@route.waypoint_start.solar_position(@route.route_sequence.date).day_length)
-  
-  = render 'route_stats', route_sequence: @route.route_sequence
+
+  .d-print-none
+    = render 'route_stats', route_sequence: @route.route_sequence
 
   / Map and content
   .row.g-4.mb-4
     .col-lg-7
       .card.shadow-sm.h-100
-        .card-header.bg-white.border-bottom
+        .card-header.bg-white.border-bottom.d-print-none
           h5.card-title.mb-0
             i.bi.bi-map.me-2
             = t('routes.show.route_map')
@@ -91,7 +107,7 @@
             - surface_segments_json = @route.surface_segments&.map { |s| { surface_type: s.surface_type, category: s.category, points: s.points } }.to_json
             div[
               data-controller="routes"
-              data-routes-waypoints-value="#{waypoints_map_data(@route.waypoints)}"
+              data-routes-waypoints-value="#{waypoints_map_data(@route.waypoints, @trip)}"
             ]
               #routescontainer.w-100[
                 data-routes-target="container"
@@ -102,7 +118,7 @@
                 data-surface-segments="#{surface_segments_json}"
               ]
 
-    .col-lg-5
+    .col-lg-5.d-print-none
       .card.shadow-sm.h-100[
         data-controller="panel-toggle"
         data-panel-toggle-day-plan-label-value=t('routes.show.day_plan')
@@ -134,7 +150,7 @@
             = render "directions", route: @route, trip: @trip
 
   / Elevation profile
-  .row.mb-4
+  .row.mb-4.d-print-none
     .col-12
       .card.shadow-sm
         .card-header.bg-white.border-bottom

@@ -114,8 +114,9 @@
             - else
               .markdown-preview = @waypoint.rendered_notes
       
-      = render 'weather', waypoint: @waypoint
-      = render 'weather_hourly_chart', waypoint: @waypoint
+      = turbo_stream_from "waypoint_#{@waypoint.id}_weather"
+      = render 'weather', waypoint: @waypoint, weather_pending: @weather_pending
+      = render 'weather_hourly_chart', waypoint: @waypoint, weather_pending: @weather_pending
 
       / Danger zone for delete action
       .card.shadow-sm.danger-zone-card
