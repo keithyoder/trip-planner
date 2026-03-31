@@ -147,7 +147,9 @@
             = turbo_stream_from "route_#{@route.id}_day_plan"
             = render 'day_plan', route: @route
           div.d-none[data-panel-toggle-target="directions"]
-            = render "directions", route: @route, trip: @trip
+            = turbo_stream_from "route_#{@route.id}_weather_forecast"
+            div id="route-#{@route.id}-directions-weather"
+              = render "directions", route: @route, trip: @trip, weather_pending: @weather_forecast_pending
 
   / Elevation profile
   .row.mb-4.d-print-none

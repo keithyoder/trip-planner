@@ -1,4 +1,9 @@
-- presenter = DirectionsPresenter.new(route)
+- presenter    = DirectionsPresenter.new(route)
+- forecast     = Weather::RouteForecast.new(route)
+- temp_by_seq  = forecast.entries.index_by { |e| e.waypoint.sequence }
+- temp_unit    = Units::Temperature.locale_unit
+- temp_abbr    = Units::Temperature.locale_abbr
+- unit_sym     = temp_unit == :fahrenheit ? :f : :c
 
 div[data-controller="directions"]
   - if presenter.has_geometry?
@@ -30,6 +35,12 @@ div[data-controller="directions"]
                 .d-flex.align-items-center.gap-2
                   - if row.arrival_time
                     small.text-muted.fw-normal = row.arrival_time
+                  - entry = temp_by_seq[row.waypoint.sequence]
+                  - if entry&.temperature
+                    - temp = Units::Temperature.new(entry.temperature, units: :celsius).to_units(temp_unit).value.round(0)
+                    small.text-muted.fw-normal = "#{temp}#{temp_abbr}"
+                  - elsif local_assigns[:weather_pending]
+                    .spinner-border.spinner-border-sm.text-secondary[style="width: 0.75rem; height: 0.75rem;"]
                   i.bi.bi-chevron-down.text-muted.small[style="transition: transform 0.2s;"]
 
         - if row.steps.any?

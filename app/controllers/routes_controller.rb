@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class RoutesController < ApplicationController
+class RoutesController < ApplicationController # rubocop:disable Metrics/ClassLength
   before_action :set_trip
   before_action :set_route, only: %i[edit update destroy calculate generate_day_plan]
   helper WaypointsHelper
@@ -26,21 +26,9 @@ class RoutesController < ApplicationController
 
   # GET /routes/1 or /routes/1.json
   def show
-    @route = @trip.routes.includes(
-      :route_sequence,
-      :waypoint_start,
-      :waypoint_end,
-      :trip
-    ).find(params[:id])
-
-    route_ids = @trip.routes
-                     .joins(:route_sequence)
-                     .order('route_sequences.sequence')
-                     .pluck(:id)
-
-    current_idx    = route_ids.index(@route.id)
-    @prev_route_id = route_ids[current_idx - 1] if current_idx.positive?
-    @next_route_id = route_ids[current_idx + 1]
+    set_route_for_show
+    set_adjacent_route_ids
+    schedule_weather_fetch_if_needed
   end
 
   # GET /routes/new
@@ -126,6 +114,44 @@ class RoutesController < ApplicationController
   end
 
   # Only allow a list of trusted parameters through.
+  def set_route_for_show
+    @route = @trip.routes.includes(
+      :route_sequence, :waypoint_start, :waypoint_end, :trip
+    ).find(params[:id])
+  end
+
+  def set_adjacent_route_ids
+    route_ids = @trip.routes
+                     .joins(:route_sequence)
+                     .order('route_sequences.sequence')
+                     .pluck(:id)
+    current_idx    = route_ids.index(@route.id)
+    @prev_route_id = route_ids[current_idx - 1] if current_idx.positive?
+    @next_route_id = route_ids[current_idx + 1]
+  end
+
+  def schedule_weather_fetch_if_needed
+    return unless @route.start_time && @route.geom.present?
+
+    missing = waypoints_missing_weather
+    return if missing.empty?
+
+    missing.each { |wp| wp.instance_variable_set(:@weather, nil) }
+    @weather_forecast_pending = true
+    missing.each { |wp| FetchWaypointWeatherJob.perform_later(wp.id, route_id: @route.id) }
+  end
+
+  def waypoints_missing_weather
+    @route.waypoints.reject(&:routing?).reject do |wp|
+      next true unless wp.lonlat && wp.planned_date
+
+      estimate = WeatherEstimate.for_location(
+        wp.lonlat.y.to_f.round(2), wp.lonlat.x.to_f.round(2), wp.planned_date
+      )
+      estimate&.fresh?
+    end
+  end
+
   def route_params
     params.require(:route).permit(
       :name,
