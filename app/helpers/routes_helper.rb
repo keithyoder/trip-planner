@@ -10,6 +10,7 @@ module RoutesHelper
 
     line_chart(
       elevation_data,
+      id: "elevation-chart",
       points: false,
       library: {
         scales: {

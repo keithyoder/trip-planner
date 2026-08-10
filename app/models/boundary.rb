@@ -46,6 +46,72 @@ class Boundary < ActiveRecord::Base
       .order('intersection_order ASC', 'boundaries.level ASC')
   }
 
+  scope :intersecting_with_trip_track, lambda { |trip_id, level: nil|
+    query = joins('JOIN trip_tracks ON ST_Intersects(boundaries.geom::geometry, ST_Force2D(trip_tracks.geom::geometry))')
+            .where(trip_tracks: { trip_id: trip_id })
+            .select(<<~SQL)
+              boundaries.id, name, level, hierarchy, osm_id,
+              ST_Length(
+                ST_Intersection(boundaries.geom::geometry, ST_Force2D(trip_tracks.geom::geometry))::geography
+              ) AS intersection_distance,
+              (
+                SELECT MIN(seg.seg_idx + ST_LineLocatePoint(
+                  seg.geom,
+                  ST_StartPoint(ST_Intersection(boundaries.geom::geometry, seg.geom))
+                ))
+                FROM (
+                  SELECT (d).path[1] AS seg_idx, (d).geom AS geom
+                  FROM (
+                    SELECT ST_Dump(ST_Force2D(trip_tracks.geom::geometry)) AS d
+                  ) dumped
+                ) seg
+                WHERE ST_Intersects(boundaries.geom::geometry, seg.geom)
+                  AND NOT ST_IsEmpty(ST_Intersection(boundaries.geom::geometry, seg.geom))
+              ) AS intersection_order
+            SQL
+            .order('intersection_order ASC', 'boundaries.level ASC')
+
+    query = query.where(level: level) if level
+    query
+  }
+
+  # Resolves a boundary from a rake-task-friendly argument, disambiguating
+  # between multiple same-named boundaries (e.g. "Santa Cruz" exists as a
+  # province in Argentina AND a region in Chile). Accepts three forms:
+  #
+  #   Boundary.find_unambiguous("482")                  # numeric id — always unambiguous
+  #   Boundary.find_unambiguous("Argentina/Santa Cruz")  # "Country/Name" path
+  #   Boundary.find_unambiguous("Uruguay")               # plain name — only works if unique
+  #
+  # Raises ArgumentError with a list of candidates (id + level + hierarchy)
+  # if a plain name matches more than one boundary, rather than silently
+  # picking whichever row Postgres happens to return first.
+  def self.find_unambiguous(arg)
+    return nil if arg.blank?
+    return find(arg) if arg.match?(/\A\d+\z/)
+
+    if arg.include?('/')
+      country_name, name = arg.split('/', 2).map(&:strip)
+      country = find_by(name: country_name)
+      raise ArgumentError, "No boundary found named #{country_name.inspect} to scope the lookup by" if country.nil?
+
+      matches = where('hierarchy <@ ?', country.hierarchy).where(name: name)
+    else
+      matches = where(name: arg)
+    end
+
+    case matches.count(:id)
+    when 0
+      raise ArgumentError, "No boundary found matching #{arg.inspect}"
+    when 1
+      matches.first
+    else
+      details = matches.map { |b| "  id=#{b.id} level=#{b.level} hierarchy=#{b.hierarchy}" }.join("\n")
+      raise ArgumentError, "Multiple boundaries named #{arg.inspect} found:\n#{details}\n" \
+                            "Re-run with the numeric id, or qualify as \"CountryName/#{arg}\""
+    end
+  end
+
   attribute :intersection_distance, :distance, units: :meters
 
   def import_boundaries(level)

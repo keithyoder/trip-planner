@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import "leaflet-css"
+import L from "leaflet"
 import { MapManager } from "../utils/map_manager"
 
 
@@ -51,6 +52,8 @@ export default class extends Controller {
     }
 
     this.mapManager.fitAllBounds([0,0]);
+
+    this._setupElevationCrosshair();
 
     // Bind print handlers so they can be removed on disconnect
     this._beforePrint = this.handleBeforePrint.bind(this);
@@ -113,7 +116,71 @@ export default class extends Controller {
     });
   }
 
+  _setupElevationCrosshair() {
+    const wrapper = document.getElementById('elevation-chart-wrapper');
+    if (!wrapper) return;
+
+    const elevationPoints = JSON.parse(wrapper.dataset.elevationPoints || '[]');
+    if (!elevationPoints.length) return;
+
+    const tryAttach = () => {
+      const chartkickChart = Chartkick.charts['elevation-chart'];
+      if (!chartkickChart) {
+        this._chartRetries = (this._chartRetries || 0) + 1;
+        if (this._chartRetries < 20) {
+          this._chartRetryTimer = setTimeout(tryAttach, 100);
+        }
+        return;
+      }
+
+      const chart  = chartkickChart.getChartObject();
+      const canvas = chart.canvas;
+
+      this._onChartMousemove = (e) => {
+        const elements = chart.getElementsAtEventForMode(e, 'index', { intersect: false }, false);
+        if (!elements.length) return;
+
+        const pt = elevationPoints[elements[0].index];
+        if (!pt) return;
+
+        if (this._elevationMarker) {
+          this._elevationMarker.setLatLng([pt.lat, pt.lon]);
+        } else {
+          this._elevationMarker = L.circleMarker([pt.lat, pt.lon], {
+            radius: 8,
+            color: '#dc3545',
+            fillColor: '#dc3545',
+            fillOpacity: 0.8,
+            weight: 2
+          }).addTo(this.mapManager.map);
+        }
+      };
+
+      this._onChartMouseleave = () => {
+        if (this._elevationMarker) {
+          this._elevationMarker.remove();
+          this._elevationMarker = null;
+        }
+      };
+
+      canvas.addEventListener('mousemove',  this._onChartMousemove);
+      canvas.addEventListener('mouseleave', this._onChartMouseleave);
+      this._elevationCanvas = canvas;
+    };
+
+    tryAttach();
+  }
+
   disconnect() {
+    if (this._chartRetryTimer) clearTimeout(this._chartRetryTimer);
+    if (this._elevationCanvas) {
+      this._elevationCanvas.removeEventListener('mousemove',  this._onChartMousemove);
+      this._elevationCanvas.removeEventListener('mouseleave', this._onChartMouseleave);
+    }
+    if (this._elevationMarker) {
+      this._elevationMarker.remove();
+      this._elevationMarker = null;
+    }
     window.removeEventListener('beforeprint', this._beforePrint);
     window.removeEventListener('afterprint',  this._afterPrint);
     if (this.mapManager) {

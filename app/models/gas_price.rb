@@ -19,12 +19,12 @@ class GasPrice
   # Average gasoline prices per liter by country
   # Prices are approximate averages and should be updated periodically
   GASOLINE_PRICES = {
-    Brasil: Money.from_amount(6.16, :brl),
-    Argentina: Money.from_amount(1630, :ars),
-    Uruguay: Money.from_amount(77, :uyu),
-    Chile: Money.from_amount(1175, :clp),
-    Bolivia: Money.from_amount(7, :bob),
-    Perú: Money.from_amount(4.0, :pen)
+    Brasil: Money.from_amount(6.90, :brl),
+    Argentina: Money.from_amount(2100, :ars),
+    Uruguay: Money.from_amount(88.67, :uyu),
+    Chile: Money.from_amount(1400, :clp),
+    Bolivia: Money.from_amount(6.96, :bob),
+    Perú: Money.from_amount(5.30, :pen)
   }.freeze
 
   # Returns the gasoline price for a country in its local currency

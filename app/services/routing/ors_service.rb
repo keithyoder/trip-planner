@@ -32,6 +32,11 @@ module Routing
     # Fetches a single ORS leg for the given profile and coordinates.
     # Called directly by CalculateRouteJob when orchestrating mixed-profile routes.
     #
+    # If ORS reports an unroutable coordinate, that coordinate is removed and
+    # the request is retried automatically. Recurses until the request succeeds
+    # or fewer than 2 coordinates remain (in which case an empty LegResult is
+    # returned). Handles sequences of consecutive unroutable waypoints.
+    #
     # @param profile     [String]  ORS profile e.g. 'driving-car', 'foot-hiking'
     # @param coordinates [Array]   [[lon, lat], ...]
     # @return [LegResult]
@@ -57,6 +62,22 @@ module Routing
         segments: feature[:properties][:segments],
         surfaces_values: surface[:values] || []
       )
+    rescue StandardError => e
+      bad_index = unroutable_coordinate_index(e.message)
+
+      raise unless bad_index && bad_index < coordinates.size
+
+      bad_coord = coordinates[bad_index]
+      Rails.logger.warn "[OrsService] Skipping unroutable coordinate #{bad_index} " \
+                        "(#{bad_coord.join(', ')}) and retrying: #{e.message}"
+      pruned = coordinates.dup.tap { |c| c.delete_at(bad_index) }
+
+      if pruned.size < 2
+        Rails.logger.warn '[OrsService] Too few coordinates remain after skipping unroutable points; returning empty leg'
+        return LegResult.new(profile: profile, coordinates: [], segments: [], surfaces_values: [])
+      end
+
+      fetch_single_leg(profile, pruned)
     end
 
     # Fetches elevation data from ORS and writes it into the route geometry as
@@ -222,6 +243,19 @@ module Routing
     end
 
     # -- Helpers -----------------------------------------------------------
+
+    # Parses the ORS error message to extract the 0-based coordinate index of
+    # an unroutable point.
+    #
+    # Expected format: "Could not find routable point within a radius of X
+    #                   meters of specified coordinate N: lon lat."
+    #
+    # @param message [String]
+    # @return [Integer, nil]
+    def unroutable_coordinate_index(message)
+      match = message.match(/coordinate\s+(\d+):/i)
+      match&.[](1)&.to_i
+    end
 
     def waypoints
       @waypoints ||= @route.waypoints.to_a

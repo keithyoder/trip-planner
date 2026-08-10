@@ -17,6 +17,7 @@ class Trip < ApplicationRecord
   has_many :waypoints, dependent: :destroy
   has_many :waypoint_distances, foreign_key: :trip_id, primary_key: :id
   has_one :track, class_name: 'TripTrack', foreign_key: :trip_id, primary_key: :id
+  has_many :coverage_features, class_name: 'NetworkCoverage::Feature', dependent: :destroy
 
   attribute :fuel_consumption_l_per_100km, :fuel_consumption
   attribute :distance, :distance

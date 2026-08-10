@@ -9,6 +9,8 @@
 #  distance :float
 #
 class TripTrack < ApplicationRecord
+  include NetworkCoverage::Analyzable
+
   belongs_to :trip
   attribute :distance, :distance
   attribute :geom, :multi_line_string, srid: 4326, geographic: true, has_z: true
