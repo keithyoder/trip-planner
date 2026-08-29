@@ -543,6 +543,7 @@ DEPENDENCIES
   jbuilder
   jsbundling-rails
   libxml-ruby (~> 5.0)
+  matrix
   mini_magick
   money
   money-open-exchange-rates
