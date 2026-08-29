@@ -165,10 +165,14 @@ function initializeDashboard() {
           this.updateMapLocation(data.gps)
         }
         
-        // Sync trip points with server state (clears stale polyline when there's no trip)
-        window.currentTripPoints = data.trip_points || []
-        console.log(`📍 Syncing ${window.currentTripPoints.length} trip point(s)`)
-        this.updateTripPolyline()
+        // Only resync when the server explicitly included trip_points (i.e. this came
+        // from a /dashboard.json fetch, not a live ActionCable broadcast — those never
+        // include this key and shouldn't wipe what we're incrementally building).
+        if (data.trip_points !== undefined) {
+          window.currentTripPoints = data.trip_points
+          console.log(`📍 Syncing ${window.currentTripPoints.length} trip point(s)`)
+          this.updateTripPolyline()
+        }
         
         // Plot today's completed trips
         if (data.todays_trips && data.todays_trips.trips) {

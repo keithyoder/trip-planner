@@ -205,10 +205,9 @@ class TelemetrySyncService # rubocop:disable Metrics/ClassLength
   end
 
   def calculate_today_distance
-    # Calculate distance from loaded records
-    distance_meters = TripLog.today.to_a.sum(&:distance)
+    distance_meters = TripLog.today.to_a.sum { |trip| trip.distance.to_f }
     distance_meters += @trip_detector.current_trip[:total_distance] if @trip_detector&.current_trip
-    distance_meters
+    Units::Distance.new(distance_meters)
   end
 
   def check_and_save_trip(is_currently_travelling)
