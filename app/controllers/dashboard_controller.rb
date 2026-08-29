@@ -37,7 +37,7 @@ class DashboardController < ApplicationController
         data = build_dashboard_data(
           latest_log,
           trip_detector: trip_detector,
-          today_distance: today_distance.send(I18n.t('units.distance').to_sym).to_json
+          today_distance: today_distance
         )
 
         # Add trip polyline points if currently travelling

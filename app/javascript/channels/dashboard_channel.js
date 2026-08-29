@@ -1,5 +1,7 @@
 import consumer from "./consumer"
 
+const DISTANCE_UNIT = document.querySelector('meta[name="distance-unit"]')?.content || 'km'
+
 // Dashboard Data Fetcher class
 class DashboardDataFetcher {
   constructor() {
@@ -214,10 +216,11 @@ function initializeDashboard() {
       },
 
       updateOdometer(distanceKm) {
+        const value = DISTANCE_UNIT === 'miles' ? distanceKm * 0.621371 : distanceKm
         const container = document.querySelector('.odometer-container')
         if (!container) return
         
-        const digits = distanceKm.toFixed(1).padStart(7, '0').split('')
+        const digits = value.toFixed(1).padStart(7, '0').split('')
         
         container.innerHTML = digits.map(digit => {
           if (digit === '.') {

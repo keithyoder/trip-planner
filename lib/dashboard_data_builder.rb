@@ -13,7 +13,7 @@ module DashboardDataBuilder
 
     {
       travelling: trip_detector&.currently_travelling? || false,
-      distance_km: today_distance.to_f.round(1),
+      distance_km: today_distance.km.round(1),
       speed_kmh: calculate_speed(log.data['gps_speed']),
       gps: gps_data,
       device: log.data['device'], # "ios" or whatever the Pi sends
