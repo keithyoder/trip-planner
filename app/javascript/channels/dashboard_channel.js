@@ -102,17 +102,28 @@ function initializeDashboard() {
       },
 
       received(data) {
-        console.log("📡 Received data via ActionCable:", data)
-        
-        // Update timestamp immediately
         window.lastTelemetryUpdate = Date.now()
-        
+        const justStartedTravelling = data.travelling && !window.wasTravelling
+
         this.updateDashboardWidgets(data)
-        
+
         if (data.gps && data.travelling) {
-          window.currentTripPoints.push([data.gps.lat, data.gps.lon])
-          this.updateTripPolyline()
+          if (justStartedTravelling && window.dashboardDataFetcher) {
+            // Trip just got confirmed — backfill the points we missed during the debounce window
+            console.log('🚗 Trip confirmed, backfilling full trip history')
+            window.dashboardDataFetcher.fetchDashboardData().then(freshData => {
+              if (freshData) {
+                window.currentTripPoints = freshData.trip_points || []
+                this.updateTripPolyline()
+              }
+            })
+          } else {
+            window.currentTripPoints.push([data.gps.lat, data.gps.lon])
+            this.updateTripPolyline()
+          }
         }
+
+        window.wasTravelling = !!data.travelling
       },
 
       updateDashboardWidgets(data) {

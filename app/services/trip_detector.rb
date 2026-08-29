@@ -1,6 +1,15 @@
-# app/services/trip_detector.rb
+# frozen_string_literal: true
 
 class TripDetector
+  MODE_THRESHOLDS = {
+    'automotive' => { min_trip_distance: 200, min_trip_duration: 60 },
+    'driving' => { min_trip_distance: 200, min_trip_duration: 60 },
+    'cycling' => { min_trip_distance: 100, min_trip_duration: 30 },
+    'running' => { min_trip_distance: 75,  min_trip_duration: 30 },
+    'walking' => { min_trip_distance: 50,  min_trip_duration: 45 }
+  }.freeze
+  DEFAULT_THRESHOLDS = MODE_THRESHOLDS['automotive'].freeze
+
   attr_reader :current_trip
 
   EARTH_RADIUS_METERS = 6_371_000
@@ -52,16 +61,8 @@ class TripDetector
   end
 
   # Detect trips from telemetry data
-  def detect_trips(
-    start_date: nil,
-    end_date: nil,
-    min_speed: 1.0,
-    max_stop_duration: 300,
-    min_trip_distance: 200,
-    min_trip_duration: 60,
-    max_stationary_distance: 10,
-    use_cache: true
-  )
+  def detect_trips(start_date: nil, end_date: nil, min_speed: 1.0, # rubocop:disable Metrics/AbcSize,Metrics/ParameterLists
+                   max_stop_duration: 300, max_stationary_distance: 10, use_cache: true)
     # Build query
     logs_query = TelemetryLog.order(:timestamp)
 
@@ -121,10 +122,7 @@ class TripDetector
 
         # End trip if gap exceeds threshold
         if time_gap > max_stop_duration
-          finalized_trip = finalize_trip(
-            current_trip, next_trip_id,
-            min_trip_distance, min_trip_duration
-          )
+          finalized_trip = finalize_trip(current_trip, next_trip_id, thresholds_for(current_trip))
           if finalized_trip
             new_trips << finalized_trip
             @cached_trips << finalized_trip
@@ -176,10 +174,7 @@ class TripDetector
 
         stop_duration = timestamp - stopped_since
         if stop_duration > max_stop_duration
-          finalized_trip = finalize_trip(
-            current_trip, next_trip_id,
-            min_trip_distance, min_trip_duration
-          )
+          finalized_trip = finalize_trip(current_trip, next_trip_id, thresholds_for(current_trip))
           if finalized_trip
             new_trips << finalized_trip
             @cached_trips << finalized_trip
@@ -202,9 +197,10 @@ class TripDetector
     if current_trip
       current_trip[:stopped_since] = stopped_since
       @current_incomplete_trip = current_trip
+      thresholds = thresholds_for(current_trip)
       trip_duration = current_trip[:end_time] - current_trip[:start_time]
-      @currently_travelling = current_trip[:total_distance] > min_trip_distance \
-        && trip_duration > min_trip_duration
+      @currently_travelling = current_trip[:total_distance] > thresholds[:min_trip_distance] \
+        && trip_duration > thresholds[:min_trip_duration]
     else
       @current_incomplete_trip = nil
       @currently_travelling = false
@@ -214,15 +210,10 @@ class TripDetector
     if use_cache
       filter_trips_by_date(@cached_trips, start_date, end_date)
     else
-      # Handle incomplete trip at end for non-cached mode
       if current_trip
-        finalized_trip = finalize_trip(
-          current_trip, next_trip_id,
-          min_trip_distance, min_trip_duration
-        )
+        finalized_trip = finalize_trip(current_trip, next_trip_id, thresholds_for(current_trip))
         new_trips << finalized_trip if finalized_trip
       end
-
       new_trips
     end
   end
@@ -319,12 +310,25 @@ class TripDetector
     degrees * Math::PI / 180.0
   end
 
-  def finalize_trip(current_trip, trip_id, min_trip_distance, min_trip_duration)
-    trip_duration = current_trip[:end_time] - current_trip[:start_time]
+  def thresholds_for(current_trip)
+    mode = dominant_mode(current_trip[:points])
+    MODE_THRESHOLDS[mode] || DEFAULT_THRESHOLDS
+  end
 
-    # Validate trip meets minimum requirements
-    return nil if current_trip[:total_distance] < min_trip_distance ||
-                  trip_duration < min_trip_duration
+  # Most recent known activity wins — falls back to automotive when the
+  # trip has no iOS-sourced points yet (Pi-only, or before classification).
+  def dominant_mode(points)
+    points.reverse_each do |log|
+      activity = log.data['ios_activity']
+      return activity if activity.present?
+    end
+    'automotive'
+  end
+
+  def finalize_trip(current_trip, trip_id, thresholds = thresholds_for(current_trip))
+    trip_duration = current_trip[:end_time] - current_trip[:start_time]
+    return nil if current_trip[:total_distance] < thresholds[:min_trip_distance] ||
+                  trip_duration < thresholds[:min_trip_duration]
 
     {
       trip_id: trip_id,
@@ -341,7 +345,7 @@ class TripDetector
       },
       total_distance_meters: current_trip[:total_distance],
       max_speed_ms: current_trip[:max_speed],
-      avg_speed_ms: trip_duration > 0 ? current_trip[:total_distance] / trip_duration : 0,
+      avg_speed_ms: trip_duration.positive? ? current_trip[:total_distance] / trip_duration : 0,
       point_count: current_trip[:points].length,
       points: current_trip[:points]
     }
