@@ -128,11 +128,9 @@ javascript:
       }
       
       // Update trip points if available
-      if (data.trip_points && data.trip_points.length > 0) {
-        window.currentTripPoints = data.trip_points;
-        if (window.dashboardChannel) {
-          window.dashboardChannel.updateTripPolyline();
-        }
+      window.currentTripPoints = data.trip_points || [];
+      if (window.dashboardChannel) {
+        window.dashboardChannel.updateTripPolyline();
       }
             
       // Update last update text

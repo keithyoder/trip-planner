@@ -6,7 +6,7 @@ module DashboardDataBuilder
   extend ActiveSupport::Concern
   include HeadingCalculator
 
-  def build_dashboard_data(log, trip_detector: nil, today_distance: 0) # rubocop:disable Metrics/MethodLength
+  def build_dashboard_data(log, trip_detector: nil, today_distance: 0) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
     return nil unless log
 
     gps_data = extract_gps_data(log)
@@ -16,6 +16,8 @@ module DashboardDataBuilder
       distance_km: today_distance.to_f.round(1),
       speed_kmh: calculate_speed(log.data['gps_speed']),
       gps: gps_data,
+      device: log.data['device'], # "ios" or whatever the Pi sends
+      transport_mode: log.data['ios_activity'], # nil for Pi-sourced logs
       temperature: log.data['shtc3_temperature']&.round(1),
       weather: extract_weather_data(log),
       timestamp: log.timestamp.iso8601

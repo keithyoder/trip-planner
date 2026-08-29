@@ -41,7 +41,7 @@ class DashboardController < ApplicationController
         )
 
         # Add trip polyline points if currently travelling
-        data[:trip_points] = trip_detector.current_trip_points if trip_detector.currently_travelling?
+        data[:trip_points] = trip_detector.currently_travelling? ? trip_detector.current_trip_points : []
 
         # Add today's trips from TripLog (saved trips with geom)
         todays_trip_logs = TripLog.today.recent.to_a

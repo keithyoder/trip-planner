@@ -126,14 +126,14 @@ function initializeDashboard() {
         // Update last telemetry timestamp
         window.lastTelemetryUpdate = new Date(data.timestamp).getTime()
         
-        this.updateTravellingStatus(data.travelling)
+        this.updateTravellingStatus(data.travelling, data.transport_mode)
         this.updateOdometer(data.distance_km || 0)
         
         if (data.gps && data.gps.direction) {
           this.updateHeadingIndicator(data.gps.direction, data.travelling, data.speed_kmh)
           // Rotate car icon when travelling and heading is available
-          if (data.travelling && data.gps.direction.degrees !== undefined) {
-            this.rotateCarIcon(data.gps.direction.degrees)
+          if (data.travelling && data.gps.heading !== undefined) {
+            this.rotateCarIcon(data.gps.heading)
           }
         }
     
@@ -152,12 +152,10 @@ function initializeDashboard() {
           this.updateMapLocation(data.gps)
         }
         
-        // Load trip points if available (for initial page load with existing trip)
-        if (data.trip_points && data.trip_points.length > 0) {
-          console.log(`📍 Loading ${data.trip_points.length} existing trip points`)
-          window.currentTripPoints = data.trip_points
-          this.updateTripPolyline()
-        }
+        // Sync trip points with server state (clears stale polyline when there's no trip)
+        window.currentTripPoints = data.trip_points || []
+        console.log(`📍 Syncing ${window.currentTripPoints.length} trip point(s)`)
+        this.updateTripPolyline()
         
         // Plot today's completed trips
         if (data.todays_trips && data.todays_trips.trips) {
@@ -165,30 +163,34 @@ function initializeDashboard() {
         }
       },
 
-      updateTravellingStatus(isTravelling) {
+      updateTravellingStatus(isTravelling, transportMode) {
         const statusElement = document.getElementById('travelling-status')
         if (!statusElement) {
           console.warn("⚠️ travelling-status element not found")
           return
         }
-        
+
         const badge = statusElement.querySelector('.badge')
         if (!badge) {
           console.warn("⚠️ badge element not found inside travelling-status")
           return
         }
-        
-        // Clear existing classes
+
         badge.classList.remove('bg-success', 'bg-secondary', 'bg-warning', 'text-dark', 'text-white')
-        
-        // Check if data is stale
-        const isStale = window.lastTelemetryUpdate && 
-                       (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
-        
+
+        const isStale = window.lastTelemetryUpdate &&
+                      (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
+
+        const MODE_LABELS = { automotive: 'Driving', driving: 'Driving', walking: 'Walking', running: 'Running', cycling: 'Cycling' }
+        const MODE_ICONS  = { automotive: 'bi-car-front', driving: 'bi-car-front', walking: 'bi-person-walking', running: 'bi-person-running', cycling: 'bi-bicycle' }
+
         if (isTravelling) {
           badge.classList.add('bg-success', 'text-white')
-          badge.innerHTML = '<i class="bi bi-car-front me-1"></i>Moving'
-          console.log("✅ Status: Moving")
+          const mode = transportMode || 'driving'
+          const label = MODE_LABELS[mode] || (mode.charAt(0).toUpperCase() + mode.slice(1))
+          const icon = MODE_ICONS[mode] || 'bi-car-front'
+          badge.innerHTML = `<i class="bi ${icon} me-1"></i>${label}`
+          console.log(`✅ Status: ${label}`)
         } else if (isStale || !window.lastTelemetryUpdate) {
           badge.classList.add('bg-warning', 'text-dark')
           badge.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>Not Connected'
@@ -362,8 +364,8 @@ function initializeDashboard() {
           this.updateMapLocation(data.gps)
           
           // Initialize heading if available and travelling
-          if (data.gps.direction?.degrees !== undefined && data.travelling) {
-            this.rotateCarIcon(data.gps.direction.degrees)
+          if (data.travelling && data.gps.heading !== undefined) {
+            this.rotateCarIcon(data.gps.heading)
           }
         }
         
@@ -386,15 +388,17 @@ function initializeDashboard() {
         window.updateMapWithData = (newData) => {
           if (newData?.gps) {
             this.updateMapLocation(newData.gps)
-            if (newData.gps.direction?.degrees !== undefined && newData.travelling) {
-              this.rotateCarIcon(newData.gps.direction.degrees)
-            }
+            if (newData.travelling && newData.gps.heading !== undefined) {
+              this.rotateCarIcon(newData.gps.heading)
+            }            
           }
+
           // Load trip points if available
-          if (newData?.trip_points && newData.trip_points.length > 0) {
-            window.currentTripPoints = newData.trip_points
-            this.updateTripPolyline()
+          window.currentTripPoints = newData.trip_points || [];
+          if (window.dashboardChannel) {
+            window.dashboardChannel.updateTripPolyline();
           }
+
           // Plot today's completed trips if available
           if (newData?.todays_trips && newData.todays_trips.trips) {
             this.plotTodaysTrips(newData.todays_trips.trips)
@@ -448,21 +452,24 @@ function initializeDashboard() {
       },
 
       updateTripPolyline() {
-        if (!window.dashboardMap || !window.currentTripPoints || window.currentTripPoints.length < 2) {
-          console.log(`ℹ️ Cannot update trip polyline: map=${!!window.dashboardMap}, points=${window.currentTripPoints?.length || 0}`)
+        if (!window.dashboardMap) return
+
+        if (!window.currentTripPoints || window.currentTripPoints.length < 2) {
+          if (window.currentTripPolyline) {
+            window.dashboardMap.removeLayer(window.currentTripPolyline)
+            window.currentTripPolyline = null
+          }
           return
         }
-        
+
         if (window.currentTripPolyline) {
           window.currentTripPolyline.setLatLngs(window.currentTripPoints)
-          console.log(`🔄 Updated trip polyline with ${window.currentTripPoints.length} points`)
         } else {
           window.currentTripPolyline = L.polyline(window.currentTripPoints, {
             color: '#0066ff',
             weight: 4,
             opacity: 0.7
           }).addTo(window.dashboardMap)
-          console.log(`✨ Created trip polyline with ${window.currentTripPoints.length} points`)
         }
       },
 
