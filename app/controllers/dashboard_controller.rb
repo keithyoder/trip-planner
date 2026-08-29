@@ -70,12 +70,12 @@ class DashboardController < ApplicationController
   private
 
   def calculate_today_distance(trip_detector)
-    distance_meters = TripLog.today.to_a.sum(&:distance)
+    distance_meters = TripLog.today.to_a.sum { |trip| trip.distance.to_f }
     distance_meters += trip_detector.current_trip[:total_distance] if trip_detector.current_trip
-    distance_meters
+    Units::Distance.new(distance_meters)
   end
 
-  def format_trip_log(trip_log) # rubocop:disable Metrics/AbcSize
+  def format_trip_log(trip_log) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     {
       id: trip_log.id,
       name: trip_log.name,
