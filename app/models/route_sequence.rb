@@ -21,8 +21,13 @@ class RouteSequence < ActiveRecord::Base
   self.primary_key = :route_id
 
   # Allow manually setting the trip, route, and preloaded waypoints to avoid N+1 queries
-  attr_writer :trip
-  attr_writer :route, :preloaded_waypoints
+  attr_writer :route, :preloaded_waypoints, :trip, :actionable
+
+  # Set by the controller in one pass over the already-ordered list, to
+  # avoid an actionable? query per row. Falls back to true if unset.
+  def actionable?
+    @actionable.nil? || @actionable
+  end
 
   def readonly?
     true

@@ -22,10 +22,12 @@
         .col
           .card.shadow-sm.h-100.trip-card
             .card-header.bg-white.border-bottom
-              h5.card-title.mb-0
-                = link_to trip, class: "text-decoration-none text-dark" do
-                  i.bi.bi-map.me-2
-                  = trip.name
+              .d-flex.justify-content-between.align-items-center.gap-2
+                h5.card-title.mb-0.text-truncate
+                  = link_to trip, class: "text-decoration-none text-dark" do
+                    i.bi.bi-map.me-2
+                    = trip.name
+                span.flex-shrink-0 = status_badge(trip.status)
             .card-body
               .row.g-2.mb-3
                 .col-6

@@ -160,4 +160,6 @@
             i.bi.bi-graph-up.me-2
             = t('routes.show.elevation_profile')
         .card-body
-          = elevation_chart(@route)
+          - elevation_pts = @route.elevations.map { |e| { lat: e.latitude, lon: e.longitude, distance: e.distance.value.to_f, elevation: e.elevation } }.to_json
+          #elevation-chart-wrapper data-elevation-points=elevation_pts
+            = elevation_chart(@route)

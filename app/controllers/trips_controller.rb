@@ -7,7 +7,7 @@ class TripsController < ApplicationController
 
   # GET /trips or /trips.json
   def index
-    @trips = Trip.with_distance.with_duration.all
+    @trips = Trip.with_distance.with_duration.sorted_for_index
   end
 
   # GET /trips/1 or /trips/1.json
@@ -101,7 +101,7 @@ class TripsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def trip_params
-    params.require(:trip).permit(:name, :start_on, :vehicle_description, :fuel_consumption_l_per_100km)
+    params.require(:trip).permit(:name, :start_on, :vehicle_description, :fuel_consumption_l_per_100km, :status)
   end
 
   def calculate_exchange_rate(from_currency, to_currency)

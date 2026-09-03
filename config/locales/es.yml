@@ -90,6 +90,7 @@ es:
     detail_heading: "Desglose por Categoría"
     subtotal: "Subtotal"
     currency_note: "Montos convertidos a %{currency}. Las tasas de cambio pueden variar."
+    total: "Total"
     items_count:
       one: "1 elemento"
       other: "%{count} elementos"
@@ -116,6 +117,9 @@ es:
     excluding_stops: "sin contar paradas"
     google_maps: "Abrir en Google Maps"
     surfaces: "Tipos de carretera"
+    stops: "Paradas"
+    arrival_abbr: "Lleg."
+    departure_abbr: "Sal."
   trips:
     index:
       my_trips: "Mis viajes"
@@ -177,6 +181,15 @@ es:
       duration: "Duración"
       vehicle: "Vehículo"
       fuel_consumption: "Consumo de Combustible"
+      status:
+        planning: "Planificación"
+        in_progress: "En curso"
+        completed: "Completado"
+      start_trip: "Iniciar viaje"
+      start_trip_confirm: "¿Marcar este viaje como en curso?"
+      complete_trip: "Completar viaje"
+      complete_trip_confirm: "¿Marcar este viaje como completado?"
+      current_route: "Ruta actual"
     currencies:
       title: "Tipos de Cambio para %{trip_name}"
       back_to_trip: "Volver al Viaje"
@@ -197,8 +210,14 @@ es:
       route: "Ruta"
       distance: "Distancia"
       driving_time: "Tiempo de Conducción"
-      stopped_time: "Tiempo Parado"
+      stopped_time: "Tiempo Detenido"
       no_routes: "Aún no hay rutas"
+      start_route: "Iniciar ruta"
+      start_route_confirm: "¿Marcar esta ruta como en curso?"
+      complete_route: "Completar ruta"
+      complete_route_confirm: "¿Marcar esta ruta como completada?"
+      skip_route: "Omitir"
+      skip_route_confirm: "¿Marcar esta ruta como omitida? Esto no se puede deshacer desde aquí."
     show:
       route_details: "Detalles de la ruta"
       back_to_routes: "Volver a rutas"
@@ -233,6 +252,7 @@ es:
       hiking: "Senderismo"
       hiking_time: "Tiempo de senderismo"
       no_route_calculated: "No se calculó ninguna ruta"
+      transit_time: "Tiempo de tránsito"
     edit:
       title: "Editar Ruta"
       calculate_route: "Calcular Ruta"
@@ -375,3 +395,19 @@ es:
     peak_temp: "Temperatura máxima"
     hourly_chart_title: "Temperatura horaria estimada"
     hourly_chart_note: "Estimado a partir de normales climáticas usando la posición del sol"
+  surface_types:
+    asphalt: Asfalto
+    paved: Pavimentado
+    unpaved: Sin pavimentar
+    gravel: Grava
+    dirt: Tierra
+    ground: Suelo
+    unknown: Desconocido
+    water: Agua
+    paving_stones: Adoquines
+    concrete: Concreto
+    sand: Arena
+    grass: Césped
+    cobblestone: Empedrado
+    ice: Hielo
+    snow: Nieve

@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 module RoutesHelper
+  def route_card_class(route)
+    case route&.status
+    when 'in_progress' then 'border-success'
+    when 'skipped' then 'opacity-75'
+    end
+  end
+
   def elevation_chart(route)
     elevations = route.elevations
     y_min = [0, elevations.map { |e| e.elevation.round(0) }.min || 0].min
@@ -10,7 +17,7 @@ module RoutesHelper
 
     line_chart(
       elevation_data,
-      id: "elevation-chart",
+      id: 'elevation-chart',
       points: false,
       library: {
         scales: {

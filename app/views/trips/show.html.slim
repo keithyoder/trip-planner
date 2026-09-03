@@ -4,27 +4,39 @@
     .alert.alert-success.alert-dismissible.fade.show role="alert"
       = notice
       button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
-  
+
   .row
     .col-12
-      / Trip header with title and actions
-      .d-flex.justify-content-between.align-items-center.mb-4
+      / Trip header with title, status, and actions
+      .d-flex.justify-content-between.align-items-center.mb-4.flex-wrap.gap-3
         div
-          h1.display-5.fw-bold.mb-1 = @trip.name || t('trips.show.trip_details')
+          .d-flex.align-items-center.gap-2.mb-1
+            h1.display-5.fw-bold.mb-0 = @trip.name || t('trips.show.trip_details')
+            = status_badge(@trip.status)
           - if @trip.start_on
             p.text-muted.mb-0 = t('trips.show.starting_on', date: l(@trip.start_on, format: :long))
-        
-        .btn-group role="group"
-          = link_to edit_trip_path(@trip), class: "btn btn-outline-primary" do
-            i.bi.bi-pencil.me-2
-            = t('trips.show.edit_trip')
-          = link_to trip_routes_path(@trip), class: "btn btn-outline-primary" do
-            i.bi.bi-pencil-square.me-2
-            = t('trips.show.trip_routes')
-          = link_to trips_path, class: "btn btn-outline-secondary" do
-            i.bi.bi-arrow-left.me-2
-            = t('trips.show.back')
-  
+
+        .d-flex.gap-2.flex-wrap
+          - if @trip.planning?
+            = button_to trip_path(@trip), method: :patch, params: { trip: { status: 'in_progress' } }, class: 'btn btn-success', form: { data: { turbo_confirm: t('trips.show.start_trip_confirm') } } do
+              i.bi.bi-play-fill.me-2
+              = t('trips.show.start_trip')
+          - elsif @trip.in_progress?
+            = button_to trip_path(@trip), method: :patch, params: { trip: { status: 'completed' } }, class: 'btn btn-outline-primary', form: { data: { turbo_confirm: t('trips.show.complete_trip_confirm') } } do
+              i.bi.bi-check-circle.me-2
+              = t('trips.show.complete_trip')
+
+          .btn-group role="group"
+            = link_to edit_trip_path(@trip), class: "btn btn-outline-primary" do
+              i.bi.bi-pencil.me-2
+              = t('trips.show.edit_trip')
+            = link_to trip_routes_path(@trip), class: "btn btn-outline-primary" do
+              i.bi.bi-pencil-square.me-2
+              = t('trips.show.trip_routes')
+            = link_to trips_path, class: "btn btn-outline-secondary" do
+              i.bi.bi-arrow-left.me-2
+              = t('trips.show.back')
+
   .row.g-4
     / Map section - takes full width on mobile, 8 cols on larger screens
     .col-lg-8
@@ -36,13 +48,13 @@
         .card-body.p-0
           div[data-controller="routes"]
             #container.w-100(
-              data-routes-target="container" 
-              style="min-height: 500px; height: 60vh;" 
-              data-lon="34.5" 
-              data-lat="-8.5" 
+              data-routes-target="container"
+              style="min-height: 500px; height: 60vh;"
+              data-lon="34.5"
+              data-lat="-8.5"
               data-route="#{@trip.track&.coordinates}"
             )
-    
+
     / Trip details sidebar
     .col-lg-4
       .card.shadow-sm.mb-4
@@ -55,21 +67,31 @@
           = link_to currencies_trip_path(@trip), class: 'btn btn-outline-info' do
             i.bi.bi-currency-exchange.me-2
             = t('trips.show.view_currencies', default: 'View Exchange Rates')
-      
+
+      - if @trip.in_progress? && @trip.current_route
+        .card.shadow-sm.mb-4.border-success
+          .card-header.bg-success.text-white
+            h5.card-title.mb-0
+              i.bi.bi-car-front-fill.me-2
+              = t('trips.show.current_route')
+          .card-body
+            = link_to trip_route_path(@trip, @trip.current_route), class: "text-decoration-none" do
+              strong = @trip.current_route.name
+
 / Optional: Add custom styles
 css:
   .card {
     border-radius: 0.5rem;
   }
-  
+
   .card-header {
     padding: 1rem 1.25rem;
   }
-  
+
   #routescontainer {
     border-radius: 0 0 0.5rem 0.5rem;
   }
-  
+
   @media (max-width: 991px) {
     #routescontainer {
       height: 400px !important;

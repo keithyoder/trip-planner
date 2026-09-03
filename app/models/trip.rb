@@ -7,10 +7,13 @@
 #  id         :bigint           not null, primary key
 #  name       :string
 #  start_on   :date
+#  status     :integer          default(0), not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
 class Trip < ApplicationRecord
+  include Statusable
+
   has_many :routes, dependent: :destroy
   has_many :route_sequences, through: :routes
   # has_many :elevations, through: :routes, class_name: 'RouteElevation'
@@ -25,8 +28,6 @@ class Trip < ApplicationRecord
 
   validates :name, presence: true
   validate :only_one_in_progress_trip, if: :in_progress?
-
-  enum :status, { planning: 0, in_progress: 1, completed: 2 }, default: :planning
 
   scope :with_distance, lambda {
     select(
@@ -50,16 +51,31 @@ class Trip < ApplicationRecord
     )
   }
 
+  # Maps enum's raw integer values to display order: in_progress (1) first,
+  # then planning (0), then completed (2), then skipped (3) last. Update
+  # this CASE if the status enum's underlying integer values ever change.
+  scope :sorted_for_index, lambda {
+    order(
+      Arel.sql(
+        <<~SQL.squish
+          CASE status
+            WHEN 1 THEN 0
+            WHEN 0 THEN 1
+            WHEN 2 THEN 2
+            WHEN 3 THEN 3
+          END
+        SQL
+      ),
+      :start_on
+    )
+  }
+
   def waypoints_coordinates
     waypoints.map { |wp| [wp.lonlat.x, wp.lonlat.y] }
   end
 
   def calculate_route
     routes.each(&:calculate_route)
-  end
-
-  def self.current
-    find_by(status: :in_progress)
   end
 
   def current_route

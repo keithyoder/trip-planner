@@ -90,6 +90,7 @@ en:
     detail_heading: "Category Breakdown"
     subtotal: "Subtotal"
     currency_note: "Amounts converted to %{currency}. Exchange rates may vary."
+    total: "Total"
     items_count:
       one: "1 item"
       other: "%{count} items"
@@ -116,6 +117,9 @@ en:
     excluding_stops: "excluding stops"
     google_maps: "Open in Google Maps"
     surfaces: "Road surfaces"
+    stops: "Stops"
+    arrival_abbr: "Arr"
+    departure_abbr: "Dep"
   trips:
     index:
       my_trips: "My Trips"
@@ -177,6 +181,15 @@ en:
       duration: "Duration"
       vehicle: "Vehicle"
       fuel_consumption: "Fuel Consumption"
+      status:
+        planning: "Planning"
+        in_progress: "In Progress"
+        completed: "Completed"
+      start_trip: "Start Trip"
+      start_trip_confirm: "Mark this trip as in progress?"
+      complete_trip: "Complete Trip"
+      complete_trip_confirm: "Mark this trip as completed?"
+      current_route: "Current Route"
     currencies:
       title: "Currency Exchange Rates for %{trip_name}"
       back_to_trip: "Back to Trip"
@@ -199,6 +212,12 @@ en:
       driving_time: "Driving Time"
       stopped_time: "Stopped Time"
       no_routes: "No routes yet"
+      start_route: "Start Route"
+      start_route_confirm: "Mark this route as in progress?"
+      complete_route: "Complete Route"
+      complete_route_confirm: "Mark this route as completed?"
+      skip_route: "Skip"
+      skip_route_confirm: "Mark this route as skipped? This can't be undone from here."
     show:
       route_details: "Route Details"
       back_to_routes: "Back to Routes"
@@ -236,6 +255,7 @@ en:
       walking: "Walking"
       transit: "Transit"
       transit_no_directions: "No turn-by-turn directions — transit leg"
+      transit_time: "Transit time"
     edit:
       title: "Edit Route"
       calculate_route: "Calculate Route"
@@ -379,3 +399,19 @@ en:
     peak_temp: "Peak"
     hourly_chart_title: "Estimated hourly temperature"
     hourly_chart_note: "Modelled from climate normals using solar geometry"
+  surface_types:
+    asphalt: Asphalt
+    paved: Paved
+    unpaved: Unpaved
+    gravel: Gravel
+    dirt: Dirt
+    ground: Ground
+    unknown: Unknown
+    water: Water
+    paving_stones: Paving stones
+    concrete: Concrete
+    sand: Sand
+    grass: Grass
+    cobblestone: Cobblestone
+    ice: Ice
+    snow: Snow

@@ -5,7 +5,7 @@
       = notice
       button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
 
-  .d-flex.justify-content-between.align-items-center
+  .d-flex.justify-content-between.align-items-center.mb-4.flex-wrap.gap-3
     div
       h1.display-5.fw-bold.mb-1
         i.bi.bi-signpost-split.me-2
@@ -19,29 +19,59 @@
         i.bi.bi-plus-circle.me-2
         = t('.new_route')
 
-  .card.shadow-sm
-    .card-body.p-0
-      - if @routes.any?
-        .table-responsive
-          table.table.table-hover.mb-0
-            thead.table-light
-              tr
-                th #
-                th = t('.day')
-                th = t('.route')
-                th = t('.distance')
-                th = t('.driving_time')
-                th = t('.stopped_time')
-            tbody
-              - @routes.each do |route|
-                tr
-                  td = route.day
-                  td = l(route.date, format: :route_index) if route.date
-                  td = link_to route.route_name, trip_route_url(@trip, route.route_id)
-                  td = format_distance(route.distance, decimals: 0)
-                  td = format_duration(route.driving_duration)
-                  td = format_duration(route.stopped_time)
-      - else
-        .p-5.text-center
-          i.bi.bi-signpost-split.text-muted.fs-1.d-block.mb-3
-          p.text-muted.mb-0 = t('.no_routes')
+  - if @routes.any?
+    .d-flex.flex-column.gap-3
+      - @routes.each do |route_sequence|
+        - route = route_sequence.route
+        .card.shadow-sm class=route_card_class(route)
+          .card-body
+            .d-flex.justify-content-between.align-items-start.flex-wrap.gap-3
+              .d-flex.align-items-start.gap-3
+                .text-center.flex-shrink-0 style="min-width: 3.5rem;"
+                  .badge.bg-secondary.rounded-pill.fs-6 = route_sequence.day
+                  small.text-muted.d-block.mt-1.text-uppercase = t('.day')
+
+                div
+                  .d-flex.align-items-center.flex-wrap.gap-2.mb-1
+                    h5.mb-0
+                      = link_to route_sequence.route_name, trip_route_url(@trip, route_sequence.route_id), class: "text-decoration-none"
+                    - if route
+                      = status_badge(route.status)
+
+                  - if route_sequence.date
+                    p.text-muted.small.mb-2
+                      i.bi.bi-calendar-event.me-1
+                      = l(route_sequence.date, format: :route_index)
+
+                  .d-flex.gap-3.flex-wrap
+                    span.text-muted.small
+                      i.bi.bi-sign-turn-right.me-1
+                      = "#{t('.distance')}: "
+                      strong.text-body = format_distance(route_sequence.distance, decimals: 0)
+                    span.text-muted.small
+                      i.bi.bi-car-front.me-1
+                      = "#{t('.driving_time')}: "
+                      strong.text-body = format_duration(route_sequence.driving_duration)
+                    span.text-muted.small
+                      i.bi.bi-pause-circle.me-1
+                      = "#{t('.stopped_time')}: "
+                      strong.text-body = format_duration(route_sequence.stopped_time)
+
+              - if route && route_sequence.actionable?
+                .flex-shrink-0.d-flex.gap-2
+                  - if route.planning?
+                    = button_to trip_route_path(@trip, route), method: :patch, params: { route: { status: 'in_progress' } }, class: 'btn btn-sm btn-success', form: { data: { turbo_confirm: t('.start_route_confirm') } } do
+                      i.bi.bi-play-fill.me-1
+                      = t('.start_route')
+                    = button_to trip_route_path(@trip, route), method: :patch, params: { route: { status: 'skipped' } }, class: 'btn btn-sm btn-outline-secondary', form: { data: { turbo_confirm: t('.skip_route_confirm') } } do
+                      i.bi.bi-skip-end.me-1
+                      = t('.skip_route')
+                  - elsif route.in_progress?
+                    = button_to trip_route_path(@trip, route), method: :patch, params: { route: { status: 'completed' } }, class: 'btn btn-sm btn-outline-primary', form: { data: { turbo_confirm: t('.complete_route_confirm') } } do
+                      i.bi.bi-check-circle.me-1
+                      = t('.complete_route')
+  - else
+    .card.shadow-sm.text-center.py-5
+      .card-body
+        i.bi.bi-signpost-split.text-muted.fs-1.d-block.mb-3
+        p.text-muted.mb-0 = t('.no_routes')

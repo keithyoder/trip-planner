@@ -15,8 +15,10 @@
 #  trip_id           :bigint
 #  profile           :string           default("driving-car"), not null
 #  surfaces          :jsonb
+#  status            :integer          default(0), not null
 #
 class Route < ApplicationRecord
+  include Statusable
   include Routes::ElevationProfile
   include Routes::ElevationAnalysis
   include Routes::SurfaceProfile
@@ -29,9 +31,8 @@ class Route < ApplicationRecord
   after_create_commit { enqueue_calculate_route }
   after_update_commit { enqueue_calculate_route if waypoints_changed? }
 
-  enum :status, { planning: 0, in_progress: 1, completed: 2 }, default: :planning
-
   validate :only_one_in_progress_route_per_trip, if: :in_progress?
+  validate :only_first_non_terminal_route_editable, if: :status_changed?
 
   scope :bounding_box, lambda {
     select('ST_Envelope(geom::geometry) AS bounding_box, *')
@@ -83,9 +84,10 @@ class Route < ApplicationRecord
   end
 
   def self.find_by_waypoint(waypoint)
-    Route.joins(%i[waypoint_start waypoint_end])
-         .where("#{waypoint.sequence} BETWEEN waypoints.sequence AND waypoint_ends_routes.sequence")
-         .first
+    where(trip_id: waypoint.trip_id)
+      .joins(%i[waypoint_start waypoint_end])
+      .where("#{waypoint.sequence} BETWEEN waypoints.sequence AND waypoint_ends_routes.sequence")
+      .first
   end
 
   # Filters out surface types below a minimum distance threshold.
@@ -143,8 +145,18 @@ class Route < ApplicationRecord
     end
   end
 
-  def self.current
-    find_by(status: :in_progress)
+  # A route can only have its status changed once every earlier route in
+  # the trip's sequence has reached a terminal state (completed or
+  # skipped) -- you work through the trip in order, you don't jump ahead.
+  def actionable?
+    return true unless route_sequence
+
+    !trip.routes
+         .joins(:route_sequence)
+         .where.not(id: id)
+         .where('route_sequences.sequence < ?', route_sequence.sequence)
+         .where.not(status: %i[completed skipped])
+         .exists?
   end
 
   private
@@ -176,5 +188,11 @@ class Route < ApplicationRecord
     return unless trip.routes.where(status: :in_progress).where.not(id: id).exists?
 
     errors.add(:status, 'another route on this trip is already in progress')
+  end
+
+  def only_first_non_terminal_route_editable
+    return if actionable?
+
+    errors.add(:status, 'can only change status once all earlier routes are completed or skipped')
   end
 end

@@ -17,10 +17,13 @@ class RoutesController < ApplicationController # rubocop:disable Metrics/ClassLe
                         .preload(:waypoint_start, :waypoint_end)
                         .index_by(&:id)
 
+    found_non_terminal = false
     @routes.each do |rs|
-      rs.trip                = @trip
-      rs.route               = routes_by_id[rs.route_id]
+      rs.trip = @trip
+      rs.route = routes_by_id[rs.route_id]
       rs.preloaded_waypoints = all_waypoints
+      rs.actionable           = !found_non_terminal
+      found_non_terminal    ||= rs.route && !rs.route.completed? && !rs.route.skipped?
     end
   end
 
@@ -160,7 +163,8 @@ class RoutesController < ApplicationController # rubocop:disable Metrics/ClassLe
       :waypoint_end_id,
       :start_time_days,
       :start_time_hours,
-      :start_time_minutes
+      :start_time_minutes,
+      :status
     )
   end
 

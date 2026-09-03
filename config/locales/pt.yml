@@ -90,6 +90,7 @@ pt:
     detail_heading: "Detalhamento por Categoria"
     subtotal: "Subtotal"
     currency_note: "Valores convertidos para %{currency}. Taxas de câmbio podem variar."
+    total: "Total"
     items_count:
       one: "1 item"
       other: "%{count} itens"
@@ -116,6 +117,9 @@ pt:
     excluding_stops: "sem contar paradas"
     google_maps: "Abrir no Google Maps"
     surfaces: "Tipos de estrada"
+    stops: "Paradas"
+    arrival_abbr: "Cheg."
+    departure_abbr: "Part."
   trips:
     index:
       my_trips: "Minhas Viagens"
@@ -177,6 +181,15 @@ pt:
       duration: "Duração"
       vehicle: "Veículo"
       fuel_consumption: "Consumo de Combustível"
+      status:
+        planning: "Planejamento"
+        in_progress: "Em andamento"
+        completed: "Concluído"
+      start_trip: "Iniciar viagem"
+      start_trip_confirm: "Marcar esta viagem como em andamento?"
+      complete_trip: "Concluir viagem"
+      complete_trip_confirm: "Marcar esta viagem como concluída?"
+      current_route: "Rota atual"
     currencies:
       title: "Taxas de Câmbio para %{trip_name}"
       back_to_trip: "Voltar para Viagem"
@@ -192,13 +205,19 @@ pt:
     index:
       title: "Rotas"
       new_route: "Nova Rota"
-      back_to_trip: "Voltar à Viagem"
-      distance: "Distância"
+      back_to_trip: "Voltar para Viagem"
       day: "Dia"
       route: "Rota"
+      distance: "Distância"
       driving_time: "Tempo de Condução"
       stopped_time: "Tempo Parado"
-      no_routes: "Nenhuma rota ainda"
+      no_routes: "Ainda não há rotas"
+      start_route: "Iniciar rota"
+      start_route_confirm: "Marcar esta rota como em andamento?"
+      complete_route: "Concluir rota"
+      complete_route_confirm: "Marcar esta rota como concluída?"
+      skip_route: "Pular"
+      skip_route_confirm: "Marcar esta rota como pulada? Isso não pode ser desfeito por aqui."
     show:
       route_details: "Detalhes da rota"
       back_to_routes: "Voltar para rotas"
@@ -238,6 +257,7 @@ pt:
       time: "Horário"
       turn_by_turn_directions: "Direções passo a passo"
       no_route_calculated: "Nenhuma rota calculada"
+      transit_time: "Transporte público"
     edit:
       title: "Editar Rota"
       calculate_route: "Calcular Rota"
@@ -380,3 +400,19 @@ pt:
     peak_temp: "Máximo"
     hourly_chart_title: "Temperatura horária estimada"
     hourly_chart_note: "Modelado a partir das normais climáticas usando geometria solar"
+  surface_types:
+    asphalt: Asfalto
+    paved: Pavimentado
+    unpaved: Não pavimentado
+    gravel: Cascalho
+    dirt: Terra
+    ground: Solo
+    unknown: Desconhecido
+    water: Água
+    paving_stones: Paralelepípedos
+    concrete: Concreto
+    sand: Areia
+    grass: Grama
+    cobblestone: Calçamento
+    ice: Gelo
+    snow: Neve
