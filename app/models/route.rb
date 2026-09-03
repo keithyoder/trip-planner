@@ -29,6 +29,10 @@ class Route < ApplicationRecord
   after_create_commit { enqueue_calculate_route }
   after_update_commit { enqueue_calculate_route if waypoints_changed? }
 
+  enum :status, { planning: 0, in_progress: 1, completed: 2 }, default: :planning
+
+  validate :only_one_in_progress_route_per_trip, if: :in_progress?
+
   scope :bounding_box, lambda {
     select('ST_Envelope(geom::geometry) AS bounding_box, *')
   }
@@ -139,6 +143,10 @@ class Route < ApplicationRecord
     end
   end
 
+  def self.current
+    find_by(status: :in_progress)
+  end
+
   private
 
   # Returns the arriving waypoints (all except the departure) for segment
@@ -162,5 +170,11 @@ class Route < ApplicationRecord
 
   def waypoints_changed?
     saved_change_to_waypoint_start_id? || saved_change_to_waypoint_end_id?
+  end
+
+  def only_one_in_progress_route_per_trip
+    return unless trip.routes.where(status: :in_progress).where.not(id: id).exists?
+
+    errors.add(:status, 'another route on this trip is already in progress')
   end
 end
