@@ -7,7 +7,7 @@ class OpenRouteService
 
   def initialize(access_token = nil, url = nil)
     @access_token = access_token || ENV['OPEN_ROUTE_SERVICE_TOKEN']
-    @url = url || 'https://api.openrouteservice.org'
+    @url = url || 'https://api.heigit.org'
   end
 
   def get(path, query = {})

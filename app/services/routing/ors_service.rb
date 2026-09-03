@@ -44,7 +44,7 @@ module Routing
       Rails.logger.debug "[OrsService] Fetching #{profile} leg with #{coordinates.size} waypoints"
 
       response = client.post(
-        "/v2/directions/#{profile}/geojson",
+        "/openrouteservice/v2/directions/#{profile}/geojson",
         {
           elevation: true,
           extra_info: %w[tollways surface waycategory waytype],
@@ -152,7 +152,7 @@ module Routing
         # ORS elevation expects 2D input — strip the Z dimension
         two_d = chunk.map { |c| c.first(2) }
         geojson_2d = { 'type' => 'LineString', 'coordinates' => two_d }
-        response = client.post('/elevation/line', { format_in: 'geojson', geometry: geojson_2d })
+        response = client.post('/openelevationservice/v0/line', { format_in: 'geojson', geometry: geojson_2d })
         result_coords = response[:geometry][:coordinates]
         Rails.logger.debug "[OrsService] Elevation chunk: #{result_coords.count} points"
         # Drop the overlapping junction point on all but the first chunk
@@ -188,7 +188,7 @@ module Routing
     def fetch_elevation_geojson(line)
       geojson = RGeo::GeoJSON.encode(line)
       geojson['coordinates'].each { |c| c.delete_at(2) }
-      response = client.post('/elevation/line', { format_in: 'geojson', geometry: geojson })
+      response = client.post('/openelevationservice/v0/line', { format_in: 'geojson', geometry: geojson })
       Rails.logger.debug "[OrsService] Elevation points: #{response[:geometry][:coordinates].count}"
       response[:geometry].to_json
     end
