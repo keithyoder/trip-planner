@@ -136,6 +136,10 @@ class Boundary < ActiveRecord::Base
     end
   end
 
+  def self.timezone_at(lon, lat)
+    containing_point(lat, lon).where.not(timezone: nil).order(level: :desc).pick(:timezone)
+  end
+
   def descendants_at_level(level, include_self: false)
     query = Boundary.where('hierarchy <@ ?', hierarchy)
                     .where(level: level)

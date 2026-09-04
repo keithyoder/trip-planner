@@ -11,8 +11,18 @@ module Statusable
 
   included do
     enum :status, { planning: 0, in_progress: 1, completed: 2, skipped: 3 }, default: :planning
+  end
 
-    scope :current, -> { find_by(status: :in_progress) }
+  class_methods do
+    # Deliberately a plain class method, not `scope :current`. A `scope`
+    # that can return nil silently falls back to the full unscoped
+    # relation instead (Rails' `body.call(*args) || all` behavior inside
+    # ActiveRecord::Scoping), so `Trip.current` would return `Trip.all`
+    # rather than nil whenever nothing is in_progress -- making
+    # `Trip.current&.id` blow up instead of safely returning nil.
+    def current
+      find_by(status: :in_progress)
+    end
   end
 
   # @return [String, nil] the next status in sequence, or nil if there
