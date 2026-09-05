@@ -116,6 +116,7 @@
                 data-lat="-8.5"
                 data-route="#{@route.geom.coordinates.map { |c| [c[1], c[0]] }}"
                 data-surface-segments="#{surface_segments_json}"
+                data-network-coverage-url="#{network_coverage_trip_route_path(@trip, @route)}"
               ]
 
     .col-lg-5.d-print-none

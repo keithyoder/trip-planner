@@ -218,6 +218,19 @@ export class MapManager {
         }
     }
 
+    async loadNetworkCoverage(url) {
+        const res = await fetch(url);
+        if (!res.ok) return this;
+        const geojson = await res.json();
+        if (!geojson.features?.length) return this;
+
+        this.coverageLayer = L.geoJSON(geojson, {
+            style: { color: '#9C27B0', weight: 0, fillOpacity: 0.15 }
+        }).addTo(this.map);
+        this.coverageLayer.bringToBack();
+        return this;
+    }
+
     /**
      * Add a surface legend control to the map.
      * Only shows categories that are actually present in the rendered segments,

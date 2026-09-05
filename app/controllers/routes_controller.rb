@@ -105,6 +105,17 @@ class RoutesController < ApplicationController # rubocop:disable Metrics/ClassLe
     end
   end
 
+  def network_coverage
+    set_route
+    builder = NetworkCoverage::RouteCoverageBuilder.new(fetch_if_missing: false)
+    geometries = builder.build_for_route(@route)
+
+    render json: {
+      type: 'FeatureCollection',
+      features: geometries.map { |g| RGeo::GeoJSON.encode(g) }
+    }
+  end
+
   private
 
   # Use callbacks to share common setup or constraints between actions.

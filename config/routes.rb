@@ -20,6 +20,7 @@ Rails.application.routes.draw do
     resources :waypoints
     resources :routes do
       member do
+        get :network_coverage
         post :calculate
         post :generate_day_plan
       end

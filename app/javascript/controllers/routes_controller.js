@@ -15,10 +15,11 @@ export default class extends Controller {
     console.log("Routes controller connected");
     
     // Get data attributes from the target element
-    const lon             = parseFloat(this.containerTarget.dataset.lon)
-    const lat             = parseFloat(this.containerTarget.dataset.lat)
-    const routeData       = this.containerTarget.dataset.route
-    const surfaceData     = this.containerTarget.dataset.surfaceSegments
+    const lon               = parseFloat(this.containerTarget.dataset.lon)
+    const lat               = parseFloat(this.containerTarget.dataset.lat)
+    const routeData         = this.containerTarget.dataset.route
+    const surfaceData       = this.containerTarget.dataset.surfaceSegments
+    const networkCoverageUrl = this.containerTarget.dataset.networkCoverageUrl
         
     this.mapManager = new MapManager(this.containerTarget, {
       center: [lat, lon],
@@ -43,6 +44,13 @@ export default class extends Controller {
       this.mapManager.addPolyline(JSON.parse(routeData));
     } else {
       console.warn("No route data available");
+    }
+
+    // Fire-and-forget: coverage is background context, not something the
+    // initial map render should ever wait on (mirrors Renderer::Map::CoverageOverlay's
+    // "log and skip" philosophy on the PDF side).
+    if (networkCoverageUrl) {
+      this.mapManager.loadNetworkCoverage(networkCoverageUrl);
     }
     
     // Display waypoints if available
