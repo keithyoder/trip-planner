@@ -185,6 +185,34 @@ class TripLog < ApplicationRecord
     "SRID=4326;LINESTRING(#{points})"
   end
 
+  def self.summary_for(trip_logs)
+    return default_summary if trip_logs.empty?
+
+    total_distance = trip_logs.sum(&:distance)
+    total_duration = trip_logs.sum(&:duration)
+    max_speed = trip_logs.filter_map(&:max_speed).max || 0
+
+    {
+      total_trips: trip_logs.length,
+      total_distance_km: (total_distance / 1000.0).round(2),
+      total_duration_hours: (total_duration / 3600.0).round(2),
+      avg_trip_distance_km: (total_distance / trip_logs.length / 1000.0).round(2),
+      avg_trip_duration_minutes: (total_duration / trip_logs.length / 60.0).round(1),
+      max_speed_kmh: (max_speed * 3.6).round(1)
+    }
+  end
+
+  def self.default_summary
+    {
+      total_trips: 0,
+      total_distance_km: 0,
+      total_duration_hours: 0,
+      avg_trip_distance_km: 0,
+      avg_trip_duration_minutes: 0,
+      max_speed_kmh: 0
+    }
+  end
+
   private
 
   def end_time_after_start_time

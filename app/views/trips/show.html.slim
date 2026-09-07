@@ -76,7 +76,7 @@
               = t('trips.show.current_route')
           .card-body
             = link_to trip_route_path(@trip, @trip.current_route), class: "text-decoration-none" do
-              strong = @trip.current_route.name
+              strong = "#{@trip.current_route.waypoint_start.name} → #{@trip.current_route.waypoint_end.name}"
 
 / Optional: Add custom styles
 css:

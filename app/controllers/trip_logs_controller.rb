@@ -2,19 +2,14 @@
 
 class TripLogsController < ApplicationController
   def index
-    # Get trips for date range (default to today)
-    start_date = params[:start_date] ? Time.zone.parse(params[:start_date]) : Time.zone.now.beginning_of_day
-    end_date = params[:end_date] ? Time.zone.parse(params[:end_date]) : Time.zone.now.end_of_day
-
-    @trip_logs = TripLog.between(start_date, end_date).recent
+    @date = params[:date].present? ? Date.parse(params[:date]) : Time.zone.today
+    @trip_logs = TripLog.on_date(@date).order(:start_time).to_a
+    @summary = TripLog.summary_for(@trip_logs)
 
     respond_to do |format|
       format.html
       format.json do
-        render json: {
-          type: 'FeatureCollection',
-          features: @trip_logs.map(&:to_geojson)
-        }
+        render json: { type: 'FeatureCollection', features: @trip_logs.map(&:to_geojson) }
       end
     end
   end

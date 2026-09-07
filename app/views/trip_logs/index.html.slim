@@ -1,0 +1,31 @@
+.container-fluid
+  .row.align-items-center.mb-3
+    .col
+      h2 = l(@date, format: :long)
+    .col-auto
+      = link_to trip_logs_path(date: @date - 1.day), class: 'btn btn-outline-secondary btn-sm' do
+        i.bi.bi-chevron-left
+        ' Previous day
+      = link_to trip_logs_path(date: @date + 1.day), class: 'btn btn-outline-secondary btn-sm ms-2' do
+        ' Next day
+        i.bi.bi-chevron-right
+
+  .row.mb-3.g-2
+    - [[t('trip_logs.index.distance'), "#{@summary[:total_distance_km]} km"],
+       [t('trip_logs.index.duration'), "#{@summary[:total_duration_hours]} h"],
+       [t('trip_logs.index.max_speed'), "#{@summary[:max_speed_kmh]} km/h"],
+       [t('trip_logs.index.trips'), @summary[:total_trips]]].each do |label, value|
+      .col-md-3
+        .card
+          .card-body.text-center
+            .text-muted.small = label
+            h4 = value
+
+  .row
+    .col-12
+      #trip-log-map.w-100[
+        data-controller="trip-logs"
+        data-trip-logs-target="container"
+        style="min-height: 500px; height: 60vh;"
+        data-trip-logs="#{@trip_logs.map { |tl| { coordinates: tl.coordinates.map { |c| [c[1], c[0]] }, name: tl.name } }.to_json}"
+      ]

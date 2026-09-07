@@ -30,3 +30,6 @@ application.register("clipboard", ClipboardController)
 
 import PanelToggleController from "./panel_toggle_controller"
 application.register("panel-toggle", PanelToggleController)
+
+import TripLogsController from "./trip_logs_controller"
+application.register("trip-logs", TripLogsController)
