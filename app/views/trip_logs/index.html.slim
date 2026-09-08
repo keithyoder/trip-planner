@@ -11,11 +11,13 @@
         i.bi.bi-chevron-right
 
   .row.mb-3.g-2
-    - [[t('trip_logs.index.distance'), "#{@summary[:total_distance_km]} km"],
-       [t('trip_logs.index.duration'), "#{@summary[:total_duration_hours]} h"],
-       [t('trip_logs.index.max_speed'), "#{@summary[:max_speed_kmh]} km/h"],
-       [t('trip_logs.index.trips'), @summary[:total_trips]]].each do |label, value|
-      .col-md-3
+    - [[t('trip_logs.index.distance'), @presenter.distance],
+       [t('trip_logs.index.duration'), @presenter.duration],
+       [t('trip_logs.index.max_speed'), @presenter.max_speed],
+       [t('trip_logs.index.segments'), @presenter.segments],
+       [t('trip_logs.index.fuel_used'), @presenter.fuel_used],
+       [t('trip_logs.index.fuel_efficiency'), @presenter.fuel_efficiency]].each do |label, value|
+      .col-md-2
         .card
           .card-body.text-center
             .text-muted.small = label

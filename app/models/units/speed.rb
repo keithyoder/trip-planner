@@ -64,11 +64,11 @@ module Units
 
     # In Units::Speed
     def self.locale_unit
-      I18n.t('units.speed').to_sym
+      default_unit_for_locale(I18n.locale)
     end
 
     def self.locale_abbr
-      I18n.t('units.speed_abbr')
+      UNITS[locale_unit]
     end
 
     def locale

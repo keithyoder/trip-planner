@@ -59,6 +59,8 @@ es:
     elevation_abbr: "m"
     temperature: "celsius"
     temperature_abbr: "°C"
+    volume: liters
+    fuel_consumption: km_per_liter
   number:
     format:
       delimiter: "."

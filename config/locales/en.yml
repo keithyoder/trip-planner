@@ -59,6 +59,8 @@ en:
     elevation_abbr: "ft"
     temperature: "fahrenheit"
     temperature_abbr: "°F"
+    volume: gallons_us
+    fuel_consumption: mpg_us
   number:
     format:
       delimiter: ","

@@ -5,6 +5,8 @@ class TripLogsController < ApplicationController
     @date = params[:date].present? ? Date.parse(params[:date]) : Time.zone.today
     @trip_logs = TripLog.on_date(@date).order(:start_time).to_a
     @summary = TripLog.summary_for(@trip_logs)
+    @fuel_used = TelemetryLog.total_fuel_used(@trip_logs)
+    @presenter = TripLogs::DaySummaryPresenter.new(@summary, @fuel_used)
 
     respond_to do |format|
       format.html

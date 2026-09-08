@@ -63,15 +63,5 @@ module Units
         super(opts)
       end
     end
-
-    # Locale-aware default unit
-    def self.default_unit_for_locale(locale)
-      case locale.to_s
-      when 'en'
-        :mpg_us
-      else # es, pt
-        :liters_per_100km
-      end
-    end
   end
 end

@@ -65,7 +65,7 @@ class TripLog < ApplicationRecord
   end
 
   def distance_km
-    (distance / 1000.0).round(2)
+    distance.to_units(:km).round(2).value.to_f
   end
 
   # Speed conversions
@@ -194,23 +194,23 @@ class TripLog < ApplicationRecord
 
     {
       total_trips: trip_logs.length,
-      total_distance_km: (total_distance / 1000.0).round(2),
-      total_duration_hours: (total_duration / 3600.0).round(2),
-      avg_trip_distance_km: (total_distance / trip_logs.length / 1000.0).round(2),
-      avg_trip_duration_minutes: (total_duration / trip_logs.length / 60.0).round(1),
-      max_speed_kmh: (max_speed * 3.6).round(1)
+      total_distance: total_distance,
+      total_duration_seconds: total_duration,
+      max_speed_mps: max_speed
     }
   end
 
   def self.default_summary
-    {
-      total_trips: 0,
-      total_distance_km: 0,
-      total_duration_hours: 0,
-      avg_trip_distance_km: 0,
-      avg_trip_duration_minutes: 0,
-      max_speed_kmh: 0
-    }
+    { total_trips: 0, total_distance: Units::Distance.new(0), total_duration_seconds: 0, max_speed_mps: 0 }
+  end
+
+  # @param total_seconds [Integer, Float]
+  # @return [String] e.g. "4h 51m"
+  def self.format_duration(total_seconds)
+    seconds = total_seconds.to_i
+    hours = seconds / 3600
+    minutes = (seconds % 3600) / 60
+    "#{hours}h #{minutes}m"
   end
 
   private

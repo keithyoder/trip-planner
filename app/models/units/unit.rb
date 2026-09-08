@@ -48,7 +48,7 @@ module Units
 
     attr_reader :value, :units
 
-    def_delegators :value, :to_i, :to_f, :to_d
+    def_delegators :value, :to_i, :to_f, :to_d, :positive?, :negative?
 
     class << self
       def convert(value, from_units, to_units)
@@ -72,6 +72,26 @@ module Units
         # Override in subclasses to specify the base unit
         # e.g., :meters for Distance, :meters_per_second for Speed
         raise NotImplementedError, 'Subclasses must define base_unit'
+      end
+
+      # Locale-aware default display unit, read from I18n at
+      # units.<i18n_key> (e.g. units.distance, units.speed, units.volume).
+      # Every locale file must define a value under that key using one of
+      # this class's UNITS keys.
+      #
+      # @param locale [Symbol, String]
+      # @return [Symbol]
+      def default_unit_for_locale(locale)
+        key = "units.#{i18n_key}"
+        unit = I18n.t(key, locale: locale, default: nil)
+        raise InvalidUnitError, "Missing i18n key #{key} for locale #{locale}" if unit.nil?
+
+        unit.to_sym
+      end
+
+      # Units::Distance -> "distance", Units::FuelConsumption -> "fuel_consumption"
+      def i18n_key
+        name.demodulize.underscore
       end
     end
 

@@ -39,7 +39,7 @@ module Units
         # Volume / Distance = FuelConsumption (L/100km)
         # Convert both to base units: liters and kilometers
         liters_value = liters.value
-        km_value = other.kilometers.value
+        km_value = other.km.value
 
         # Calculate L/100km
         liters_per_100km = (liters_value / km_value) * 100
@@ -71,16 +71,6 @@ module Units
       def initialize(opts = {})
         opts[:class] = Volume
         super(opts)
-      end
-    end
-
-    # Locale-aware default unit
-    def self.default_unit_for_locale(locale)
-      case locale.to_s
-      when 'en'
-        :gallons_us
-      else # es, pt
-        :liters
       end
     end
   end

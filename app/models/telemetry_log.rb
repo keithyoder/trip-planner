@@ -304,6 +304,27 @@ class TelemetryLog < ApplicationRecord
     }
   end
 
+  # Sums obd_fuel_used_ml across each trip_log's own [start_time, end_time]
+  # window and adds them together -- scoped to actual driving, unlike
+  # summing across a whole calendar day, which would also pull in fuel
+  # burned while idling between trips (at stops, waiting at lights, etc.)
+  # that the accompanying distance/duration totals don't include.
+  #
+  # @param trip_logs [Enumerable<TripLog>]
+  # @return [Units::Volume]
+  def self.total_fuel_used(trip_logs)
+    return Units::Volume.new(0, units: :liters) if trip_logs.empty?
+
+    total_ml = trip_logs.sum do |trip_log|
+      between(trip_log.start_time, trip_log.end_time)
+        .where.not("data->>'obd_fuel_used_ml' IS NULL")
+        .pluck(Arel.sql("SUM((data->>'obd_fuel_used_ml')::float)"))
+        .first.to_f
+    end
+
+    Units::Volume.new(total_ml / 1000.0, units: :liters)
+  end
+
   def gps_data?
     data['gps_latitude'].present? && data['gps_longitude'].present?
   end

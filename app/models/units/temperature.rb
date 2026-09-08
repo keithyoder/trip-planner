@@ -71,9 +71,8 @@ module Units
       to_units(:fahrenheit)
     end
 
-    # Convert to the current locale's preferred unit
     def locale
-      to_units(self.class.locale_unit)
+      to_units(self.class.default_unit_for_locale(I18n.locale))
     end
 
     # ActiveRecord Type specific to Temperature
