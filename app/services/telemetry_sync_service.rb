@@ -84,8 +84,6 @@ require_relative 'telemetry_rabbitmq_consumer'
 # * Uses DashboardDataBuilder concern for consistent data formatting across the application
 
 class TelemetrySyncService # rubocop:disable Metrics/ClassLength
-  include DashboardDataBuilder
-
   TRIP_DETECTION_CACHE_SECONDS = 5
 
   def self.start
