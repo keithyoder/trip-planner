@@ -46,12 +46,11 @@ javascript:
     function initMap() {
       var mapElement = document.getElementById('map');
       if (!mapElement) return;
-      
-      // Initialize map with default view (will be updated when data loads)
+
       window.dashboardMap = L.map('map', {
         zoomControl: false
-      }).setView([0, 0], 2); // Default world view
-      
+      }).setView([0, 0], 2);
+            
       L.control.zoom({
         position: 'bottomright'
       }).addTo(window.dashboardMap);
@@ -80,6 +79,21 @@ javascript:
 
       // Mark map as initialized
       window.mapInitialized = true;
+
+      // Mobile Safari's toolbar show/hide changes the actual viewport height
+      // after initial paint -- Leaflet caches its container size at init time
+      // and won't notice on its own, leaving a blank gap below the rendered
+      // tiles until something tells it to recheck.
+      const invalidate = () => window.dashboardMap?.invalidateSize();
+
+      window.addEventListener('resize', invalidate);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', invalidate);
+      }
+
+      // Also catch the common case: toolbar settles a moment after initial
+      // load, before any resize event would naturally fire.
+      setTimeout(invalidate, 300);
       
       // If data fetcher has already loaded data, update the map
       if (window.initialDashboardData) {

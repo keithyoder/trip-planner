@@ -2,11 +2,6 @@
 
 class DashboardChannel < ApplicationCable::Channel
   def subscribed
-    stream_from 'dashboard_updates'
-    # Or for user-specific: stream_from "dashboard_#{current_user.id}"
-  end
-
-  def unsubscribed
-    # Cleanup when channel is unsubscribed
+    stream_from "dashboard_updates_#{locale}"
   end
 end

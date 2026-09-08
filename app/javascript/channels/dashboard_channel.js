@@ -140,7 +140,7 @@ function initializeDashboard() {
         window.lastTelemetryUpdate = new Date(data.timestamp).getTime()
         
         this.updateTravellingStatus(data.travelling, data.transport_mode)
-        this.updateOdometer(data.distance_km || 0)
+        this.updateOdometer(data.distance || 0)
         
         if (data.gps && data.gps.direction) {
           this.updateHeadingIndicator(data.gps.direction, data.travelling, data.speed_kmh)
@@ -313,9 +313,9 @@ function initializeDashboard() {
           satellites: document.getElementById('gps-satellites')
         }
         
-        if (elements.lat) elements.lat.textContent = gps.lat.toFixed(6)
-        if (elements.lon) elements.lon.textContent = gps.lon.toFixed(6)
-        if (elements.alt) elements.alt.textContent = `${Math.round(gps.altitude || 0)} m`
+        if (elements.lat) elements.lat.textContent = gps.lat.toFixed(5)
+        if (elements.lon) elements.lon.textContent = gps.lon.toFixed(5)
+        if (elements.alt) elements.alt.textContent = `${Math.round(gps.altitude || 0)} ${gps.altitude_unit || 'm'}`
         if (elements.satellites) elements.satellites.textContent = gps.satellites || 0
       },
 

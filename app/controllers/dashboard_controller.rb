@@ -1,25 +1,12 @@
 # frozen_string_literal: true
 
-require 'dashboard_data_builder'
-
-# DashboardController
-#
-# Handles dashboard display and provides JSON API for async data loading.
-# The index action responds to both HTML and JSON formats.
-#
 class DashboardController < ApplicationController
-  include DashboardDataBuilder
   layout 'welcome'
 
-  # GET /dashboard
-  # GET /dashboard.json
-  #
-  # HTML: Renders the dashboard view (data loaded via JavaScript)
-  # JSON: Returns current dashboard state including GPS, trip status, and weather data
   def index
     respond_to do |format|
       format.html do
-        # Just render the view - data will be loaded asynchronously via JavaScript
+        # data loaded asynchronously via JavaScript
       end
 
       format.json do
@@ -34,20 +21,29 @@ class DashboardController < ApplicationController
         trip_detector.todays_trips
         today_distance = calculate_today_distance(trip_detector)
 
-        data = build_dashboard_data(
+        data = Dashboard::DataPresenter.new(
           latest_log,
           trip_detector: trip_detector,
           today_distance: today_distance
-        )
+        ).as_json
 
-        # Add trip polyline points if currently travelling
         data[:trip_points] = trip_detector.currently_travelling? ? trip_detector.current_trip_points : []
 
-        # Add today's trips from TripLog (saved trips with geom)
         todays_trip_logs = TripLog.today.recent.to_a
+        summary = TripLog.summary_for(todays_trip_logs)
+        fuel_used = TelemetryLog.total_fuel_used(todays_trip_logs)
+        summary_presenter = TripLogs::DaySummaryPresenter.new(summary, fuel_used)
+
         data[:todays_trips] = {
           trips: todays_trip_logs.map { |trip_log| format_trip_log(trip_log) },
-          summary: calculate_trips_summary(todays_trip_logs)
+          summary: {
+            total_trips: summary[:total_trips],
+            distance: summary_presenter.distance,
+            duration: summary_presenter.duration,
+            max_speed: summary_presenter.max_speed,
+            fuel_used: summary_presenter.fuel_used,
+            fuel_efficiency: summary_presenter.fuel_efficiency
+          }
         }
 
         render json: data
@@ -55,8 +51,6 @@ class DashboardController < ApplicationController
     end
   end
 
-  # GET /dashboard/trips/today
-  # Returns all trips detected for today
   def todays_trips
     trip_detector = TripDetector.instance
     trips = trip_detector.todays_trips
@@ -75,7 +69,7 @@ class DashboardController < ApplicationController
     Units::Distance.new(distance_meters)
   end
 
-  def format_trip_log(trip_log) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+  def format_trip_log(trip_log)
     {
       id: trip_log.id,
       name: trip_log.name,
@@ -93,34 +87,6 @@ class DashboardController < ApplicationController
       end_location: trip_log.end_location,
       point_count: trip_log.point_count,
       coordinates: trip_log.coordinates.map { |coord| [coord[1], coord[0]] }
-    }
-  end
-
-  def calculate_trips_summary(trip_logs) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
-    return default_summary if trip_logs.empty?
-
-    total_distance = trip_logs.sum(&:distance)
-    total_duration = trip_logs.sum(&:duration)
-    max_speed = trip_logs.map(&:max_speed).compact.max || 0
-
-    {
-      total_trips: trip_logs.length,
-      total_distance_km: (total_distance / 1000.0).round(2),
-      total_duration_hours: (total_duration / 3600.0).round(2),
-      avg_trip_distance_km: (total_distance / trip_logs.length / 1000.0).round(2),
-      avg_trip_duration_minutes: (total_duration / trip_logs.length / 60.0).round(1),
-      max_speed_kmh: (max_speed * 3.6).round(1)
-    }
-  end
-
-  def default_summary
-    {
-      total_trips: 0,
-      total_distance_km: 0,
-      total_duration_hours: 0,
-      avg_trip_distance_km: 0,
-      avg_trip_duration_minutes: 0,
-      max_speed_kmh: 0
     }
   end
 end

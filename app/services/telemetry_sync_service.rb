@@ -83,8 +83,6 @@ require_relative 'telemetry_rabbitmq_consumer'
 # * Automatically detects and saves completed trips by comparing detected vs saved trip counts
 # * Uses DashboardDataBuilder concern for consistent data formatting across the application
 
-require 'dashboard_data_builder'
-
 class TelemetrySyncService # rubocop:disable Metrics/ClassLength
   include DashboardDataBuilder
 
@@ -159,20 +157,23 @@ class TelemetrySyncService # rubocop:disable Metrics/ClassLength
     return unless recent_log?(log)
     return unless valid_gps_data?(log)
 
-    # Ensure trip detector is initialized
     ensure_trip_detector_initialized
+    today_distance = calculate_today_distance
+    travelling = false
 
-    # Use the concern's build_dashboard_data method
-    data = build_dashboard_data(
-      log,
-      trip_detector: @trip_detector,
-      today_distance: calculate_today_distance
-    )
+    I18n.available_locales.each do |locale|
+      data = Dashboard::DataPresenter.new(
+        log,
+        trip_detector: @trip_detector,
+        today_distance: today_distance,
+        locale: locale
+      ).as_json
 
-    # Detect and save trip when it completes
-    check_and_save_trip(data[:travelling])
+      travelling ||= data[:travelling]
+      ActionCable.server.broadcast("dashboard_updates_#{locale}", data)
+    end
 
-    ActionCable.server.broadcast('dashboard_updates', data)
+    check_and_save_trip(travelling)
 
     Rails.logger.info "[✓] Broadcasted to dashboard: #{log.mongo_id}"
   rescue StandardError => e
