@@ -337,11 +337,11 @@ class TelemetryLog < ApplicationRecord
   def self.current_timezone
     Rails.cache.fetch('telemetry_log/current_timezone', expires_in: 1.minute) do
       location = current_location
-      return nil unless location
+      next Rails.application.config.time_zone if location.nil?
 
       Boundary.containing_point(
         location[:latitude], location[:longitude]
-      ).where.not(timezone: nil).order(level: :desc).pluck(:timezone).first
+      ).where.not(timezone: nil).order(level: :desc).pluck(:timezone).first || Rails.application.config.time_zone
     end
   end
 end

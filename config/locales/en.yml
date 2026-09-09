@@ -267,6 +267,16 @@ en:
       waypoint_end: "End Waypoint"
       start_time: "Start Time"
       submit: "Save Route"
+  stops:
+    edit:
+      title: "Edit Stop"
+      name: "Name"
+      stop_type: "Type"
+      notes: "Notes"
+      cancel: "Cancel"
+      save: "Save"
+    update:
+      success: "Stop updated"
   waypoints:
     overnight: "Overnight"
     lunch: "Lunch"

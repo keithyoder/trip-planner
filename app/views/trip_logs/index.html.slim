@@ -30,4 +30,5 @@
         data-trip-logs-target="container"
         style="min-height: 500px; height: 60vh;"
         data-trip-logs="#{@trip_logs.map { |tl| { coordinates: tl.coordinates.map { |c| [c[1], c[0]] }, name: tl.name } }.to_json}"
+        data-stops="#{@stops.map { |s| { lat: s.location[:lat], lon: s.location[:lon], stop_type: s.stop_type, name: s.display_name, duration_minutes: s.duration_minutes, edit_url: edit_stop_path(s) } }.to_json}"
       ]

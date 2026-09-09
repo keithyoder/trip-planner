@@ -264,6 +264,16 @@ es:
       waypoint_end: "Punto final"
       start_time: "Hora de salida"
       submit: "Guardar Ruta"
+  stops:
+    edit:
+      title: "Editar Parada"
+      name: "Nombre"
+      stop_type: "Tipo"
+      notes: "Notas"
+      cancel: "Cancelar"
+      save: "Guardar"
+    update:
+      success: "Parada actualizada"
   waypoints:
     overnight: "Alojamiento"
     lunch: "Almuerzo"

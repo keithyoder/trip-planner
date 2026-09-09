@@ -16,6 +16,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :stops, only: %i[edit update]
+
   resources :trips do
     resources :waypoints
     resources :routes do
