@@ -41,3 +41,14 @@ append :linked_files, '.env.production'
 
 # Uncomment the following to require manually verifying the host key before first deploy.
 # set :ssh_options, verify_host_key: :secure
+
+namespace :deploy do
+  desc 'Restart telemetry-sync service'
+  task :restart_telemetry_sync do
+    on roles(:app) do
+      execute :sudo, :systemctl, :restart, 'telemetry-sync.service'
+    end
+  end
+end
+
+after 'deploy:published', 'deploy:restart_telemetry_sync'
