@@ -7,20 +7,31 @@ module BarometricAltitude
   # standard-atmosphere constant (1013.25 hPa) -- P0 genuinely drifts by
   # roughly 0.1-1 hPa over the course of a day with real weather changes,
   # and a stale/wrong P0 shows up directly as an offset in every altitude
-  # reading (e.g. an uncorrected day showed -30m below sea level for a
-  # coastal city actually a few meters above it).
+  # reading (e.g. an uncorrected day showed -30 to -42m below sea level for
+  # a coastal city actually a few meters above it).
   #
   # Calibration only ever happens from STATIONARY windows (gps_speed
   # consistently below STATIONARY_SPEED_KMH), never while driving. While
-  # parked, true altitude is constant by definition, so GPS altitude noise
-  # across many samples averages out cleanly. While driving, true altitude
-  # is genuinely changing sample to sample, so there's no valid way to
+  # parked, true altitude is constant, so GPS altitude noise across many
+  # samples averages out cleanly. While driving, true altitude is
+  # genuinely changing sample to sample, so there's no valid way to
   # average away GPS noise without also blurring real signal -- confirmed
   # empirically: stationary-window calibration measured stddev ~0.05-0.07
   # hPa, vs. ~1.5-1.75 hPa using all data (moving + stationary) over the
   # same window, a ~20-25x difference that held even after tightening the
   # satellite-count filter, meaning the gap is the moving-altitude
   # confound itself, not GPS signal quality.
+  #
+  # The buffer clears after each successful recalibration rather than
+  # growing indefinitely while parked. Without that, a long stop kept
+  # recalibrating on every single new sample once the threshold was first
+  # crossed (30, 31, 32... continuing for as long as the car stayed
+  # still), with the buffer's ever-growing history slowly dragging the
+  # running average toward whatever the newest few readings happened to
+  # be -- observed in production as altitude drifting ~2m over a minute
+  # while genuinely parked. Clearing after each calibration makes each
+  # one a fresh, independent estimate from its own bounded batch of
+  # samples instead of one perpetually-recomputed average.
   #
   # State (the in-progress stationary buffer, and the current best P0) is
   # kept in Rails.cache (Redis in production), so it survives
@@ -35,6 +46,7 @@ module BarometricAltitude
     STATIONARY_SPEED_KMH = 2
     MIN_STATIONARY_SECONDS = 60
     MIN_SAMPLES = 30
+    MAX_BUFFER_SAMPLES = 120 # ~8 min at a 4s cadence -- bounds how far a long stop can grow the buffer
     MIN_SATELLITES = 5
     DEFAULT_P0 = 1013.25
     BUFFER_TTL = 1.hour
@@ -60,9 +72,9 @@ module BarometricAltitude
       # Call once per incoming TelemetryLog, after it's saved. Tracks a
       # rolling "currently stationary" buffer; any real movement clears
       # it immediately (a partial stationary window mixed with driving
-      # would reintroduce the moving-altitude confound), and once the
-      # buffer has enough samples over enough time, recalibrates P0 from
-      # it.
+      # would reintroduce the moving-altitude confound). Once the buffer
+      # has enough samples over enough time, recalibrates P0 from it and
+      # starts a fresh buffer for the next batch.
       #
       # @param pressure [Float, nil]
       # @param gps_altitude [Float, nil]
@@ -85,11 +97,14 @@ module BarometricAltitude
       def accumulate(pressure, gps_altitude, timestamp)
         buffer = Rails.cache.read(BUFFER_CACHE_KEY) || []
         buffer << { pressure: pressure, altitude: gps_altitude, timestamp: timestamp }
-        Rails.cache.write(BUFFER_CACHE_KEY, buffer, expires_in: BUFFER_TTL)
+        buffer = buffer.last(MAX_BUFFER_SAMPLES)
 
-        return unless ready_to_calibrate?(buffer)
-
-        recalibrate(buffer)
+        if ready_to_calibrate?(buffer)
+          recalibrate(buffer)
+          Rails.cache.delete(BUFFER_CACHE_KEY)
+        else
+          Rails.cache.write(BUFFER_CACHE_KEY, buffer, expires_in: BUFFER_TTL)
+        end
       end
 
       def ready_to_calibrate?(buffer)
