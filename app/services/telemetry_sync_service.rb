@@ -12,6 +12,9 @@ require_relative 'telemetry_rabbitmq_consumer'
 #
 # * Processes incoming telemetry log messages from RabbitMQ
 # * Upserts telemetry logs to the local PostgreSQL database
+# * Computes and stores barometric_altitude on each log, calibrated via
+#   BarometricAltitude::Calibrator against real driving data rather than
+#   a fixed standard-atmosphere constant
 # * Detects trip status and calculates real-time statistics
 # * Broadcasts dashboard updates to connected clients for recent logs (<10 seconds old)
 # * Automatically detects and saves completed trips to the database
@@ -48,30 +51,9 @@ require_relative 'telemetry_rabbitmq_consumer'
 #
 # == Dashboard Updates
 #
-# The service broadcasts real-time updates to the 'dashboard_updates' ActionCable channel
-# with the following data structure:
-#   {
-#     travelling: true,
-#     distance_km: 12.5,
-#     speed_kmh: 55.8,
-#     gps: {
-#       lat: 40.7128,
-#       lon: -74.0060,
-#       altitude: 10.0,
-#       heading: 45.0,
-#       direction: "NE",
-#       climb: 0.5,
-#       satellites: 12
-#     },
-#     temperature: 22.5,
-#     weather: {
-#       temperature: 22.5,
-#       humidity: 65.0,
-#       pressure: 1013.2,
-#       dewpoint: 15.3
-#     },
-#     timestamp: "2025-11-01T12:00:00Z"
-#   }
+# The service broadcasts real-time updates, once per supported locale, to
+# "dashboard_updates_<locale>" ActionCable channels, formatted via
+# Dashboard::DataPresenter.
 #
 # The direction field is calculated from the heading using cardinal directions:
 # N (0°), NE (45°), E (90°), SE (135°), S (180°), SW (225°), W (270°), NW (315°)
@@ -81,7 +63,6 @@ require_relative 'telemetry_rabbitmq_consumer'
 # * Trip detection results are cached for 5 seconds to reduce computation
 # * Only broadcasts updates for recent logs (<10 seconds old) to avoid unnecessary network traffic
 # * Automatically detects and saves completed trips by comparing detected vs saved trip counts
-# * Uses DashboardDataBuilder concern for consistent data formatting across the application
 
 class TelemetrySyncService # rubocop:disable Metrics/ClassLength
   TRIP_DETECTION_CACHE_SECONDS = 5
@@ -125,11 +106,17 @@ class TelemetrySyncService # rubocop:disable Metrics/ClassLength
     broadcast_dashboard_update(log)
   end
 
-  def upsert_telemetry_log(document) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+  def upsert_telemetry_log(document)
+    data = document.except('_id', 'timestamp')
+    if data['bmp581_pressure']
+      data['barometric_altitude'] =
+        BarometricAltitude::Calibrator.altitude_for(data['bmp581_pressure']).round(1)
+    end
+
     attributes = {
       mongo_id: document['_id'].to_s,
       timestamp: parse_timestamp(document['timestamp']),
-      data: document.except('_id', 'timestamp')
+      data: data
     }
 
     log = TelemetryLog.find_or_initialize_by(mongo_id: attributes[:mongo_id])
@@ -137,11 +124,24 @@ class TelemetrySyncService # rubocop:disable Metrics/ClassLength
 
     if log.save
       Rails.logger.info "[✓] Saved: #{log.mongo_id}"
+      observe_for_calibration(log)
       log
     else
       Rails.logger.error "Failed to save: #{log.errors.full_messages.join(', ')}"
       raise ActiveRecord::RecordInvalid, log
     end
+  end
+
+  def observe_for_calibration(log)
+    BarometricAltitude::Calibrator.observe(
+      pressure: log.data['bmp581_pressure'],
+      gps_altitude: log.data['gps_altitude']&.to_f,
+      gps_speed_kmh: log.data['gps_speed'].to_f * 3.6,
+      satellites: log.data['gps_satellites'],
+      timestamp: log.timestamp
+    )
+  rescue StandardError => e
+    log_error('Calibration observe error', e)
   end
 
   def parse_timestamp(timestamp)
@@ -210,28 +210,23 @@ class TelemetrySyncService # rubocop:disable Metrics/ClassLength
   end
 
   def check_and_save_trip(is_currently_travelling)
-    # Log state for debugging
     if @was_travelling != is_currently_travelling
       Rails.logger.info "[*] Trip state changed: was_travelling=#{@was_travelling}, now=#{is_currently_travelling}"
     end
 
-    # Log trip start
     Rails.logger.info '[*] Trip started' if !@was_travelling && is_currently_travelling
 
     @was_travelling = is_currently_travelling
 
-    # Check if there are unsaved trips by comparing counts
     check_for_unsaved_trips
   end
 
   def check_for_unsaved_trips
     return unless @trip_detector
 
-    # Get counts of detected trips vs saved trips
     detected_trips_count = @trip_detector.all_trips.length
     saved_trips_count = TripLog.today.count
 
-    # If we have more detected trips than saved trips, save them
     return unless detected_trips_count > saved_trips_count
 
     Rails.logger.info "[*] Found #{detected_trips_count - saved_trips_count} unsaved trip(s), saving..."
@@ -243,14 +238,12 @@ class TelemetrySyncService # rubocop:disable Metrics/ClassLength
 
     today = Time.find_zone(TelemetryLog.current_timezone).now
 
-    # Get all detected trips for today
     detected_trips = @trip_detector.detect_trips(
       start_date: today.beginning_of_day,
       end_date: today.end_of_day,
       use_cache: true
     )
 
-    # Save all trips
     saved_trips = @trip_detector.save_trips(detected_trips)
 
     if saved_trips.any?
