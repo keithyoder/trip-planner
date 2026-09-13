@@ -221,12 +221,19 @@ GEM
       logger
     mini_mime (1.1.5)
     minitest (5.27.0)
+    monetize (2.0.0)
+      money (~> 7.0)
     money (7.1.1)
       bigdecimal
       i18n (~> 1.9)
     money-open-exchange-rates (2.0.1)
       money (~> 7.0)
       ostruct (~> 0.6)
+    money-rails (3.0.0)
+      activesupport (>= 7.0)
+      monetize (~> 2.0)
+      money (~> 7.0)
+      railties (>= 7.0)
     msgpack (1.8.4)
     multi_json (1.21.1)
     multi_xml (0.9.1)
@@ -521,8 +528,8 @@ DEPENDENCIES
   jsbundling-rails
   matrix
   mini_magick
-  money
   money-open-exchange-rates
+  money-rails
   omniauth
   omniauth-google-oauth2
   omniauth-rails_csrf_protection

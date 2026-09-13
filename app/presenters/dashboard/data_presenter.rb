@@ -30,7 +30,8 @@ module Dashboard
       {
         travelling: travelling?,
         distance: distance,
-        speed_kmh: speed_kmh,
+        speed: speed_data,
+        elevation: elevation_data,
         gps: gps_data,
         device: log.data['device'],
         transport_mode: log.data['ios_activity'],
@@ -54,11 +55,26 @@ module Dashboard
       localized(today_distance, 1).value.to_f
     end
 
-    def speed_kmh
+    def speed_data
       gps_speed = log.data['gps_speed']
-      return 0 unless gps_speed
+      return { value: 0.0, unit: Units::Speed::UNITS[locale_speed_unit] } unless gps_speed
 
-      (gps_speed.to_f * 3.6).round(1)
+      mps = gps_speed.to_f
+      converted = localized(Units::Speed.new(mps), 1)
+      { value: converted.value.to_f, unit: Units::Speed::UNITS[locale_speed_unit] }
+    end
+
+    def locale_speed_unit
+      @locale_speed_unit ||= I18n.t('units.speed', locale: locale).to_sym
+    end
+
+    def elevation_data
+      meters = log.data['barometric_altitude']
+      return nil if meters.nil?
+
+      unit = I18n.t('units.elevation', locale: locale).to_sym
+      converted = Units::Distance.new(meters).to_units(unit).round(0)
+      { value: converted.value.to_f, unit: Units::Distance::UNITS[unit] }
     end
 
     def gps_data

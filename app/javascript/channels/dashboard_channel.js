@@ -2,6 +2,17 @@ import consumer from "./consumer"
 
 const DISTANCE_UNIT = document.querySelector('meta[name="distance-unit"]')?.content || 'km'
 
+// Rails' bare "pt" locale means Brazilian Portuguese in this app, not
+// European Portuguese -- Intl needs the region to pick the right
+// thousands/decimal separator convention (pt-BR uses '.' for thousands,
+// ',' for decimals; pt-PT differs).
+const RAW_LOCALE = document.querySelector('meta[name="app-locale"]')?.content || 'en'
+const APP_LOCALE = RAW_LOCALE === 'pt' ? 'pt-BR' : RAW_LOCALE
+
+function formatNumber(value) {
+  return new Intl.NumberFormat(APP_LOCALE).format(value)
+}
+
 // Dashboard Data Fetcher class
 class DashboardDataFetcher {
   constructor() {
@@ -136,22 +147,20 @@ function initializeDashboard() {
           return
         }
         
-        // Update last telemetry timestamp
         window.lastTelemetryUpdate = new Date(data.timestamp).getTime()
         
         this.updateTravellingStatus(data.travelling, data.transport_mode)
         this.updateOdometer(data.distance || 0)
         
         if (data.gps && data.gps.direction) {
-          this.updateHeadingIndicator(data.gps.direction, data.travelling, data.speed_kmh)
-          // Rotate car icon when travelling and heading is available
+          this.updateHeadingIndicator(data.gps.direction, data.travelling, data.speed)
           if (data.travelling && data.gps.heading !== undefined) {
             this.rotateCarIcon(data.gps.heading)
           }
         }
-    
-        // Update speed circle (show/hide based on travelling status)
-        this.updateSpeedCircle(data.speed_kmh, data.travelling)
+
+        this.updateSpeedCircle(data.speed, data.travelling)
+        this.updateElevationIndicator(data.elevation)
         
         if (data.gps) {
           this.updateGPSWidget(data.gps)
@@ -165,18 +174,60 @@ function initializeDashboard() {
           this.updateMapLocation(data.gps)
         }
         
-        // Only resync when the server explicitly included trip_points (i.e. this came
-        // from a /dashboard.json fetch, not a live ActionCable broadcast — those never
-        // include this key and shouldn't wipe what we're incrementally building).
         if (data.trip_points !== undefined) {
           window.currentTripPoints = data.trip_points
           console.log(`📍 Syncing ${window.currentTripPoints.length} trip point(s)`)
           this.updateTripPolyline()
         }
         
-        // Plot today's completed trips
         if (data.todays_trips && data.todays_trips.trips) {
           this.plotTodaysTrips(data.todays_trips.trips)
+        }
+      },
+
+      // Shared container for the top-right widget stack (heading, speed,
+      // elevation). All three append into this via flex column layout, so
+      // removing any one of them (e.g. speed-circle when stale) closes
+      // the gap automatically instead of leaving a hole or needing pixel
+      // math in JS.
+      getWidgetsRightContainer() {
+        let container = document.getElementById('dashboard-widgets-right')
+        if (!container) {
+          container = document.createElement('div')
+          container.id = 'dashboard-widgets-right'
+          document.getElementById('dashboard-container').appendChild(container)
+        }
+        return container
+      },
+
+      updateElevationIndicator(elevation) {
+        if (elevation && elevation.value !== undefined) {
+          window.lastKnownElevation = elevation
+        }
+
+        let elevationIndicator = document.getElementById('elevation-indicator')
+        const toShow = window.lastKnownElevation
+
+        if (!toShow) {
+          if (elevationIndicator) elevationIndicator.remove()
+          return
+        }
+
+        const rounded = formatNumber(Math.round(toShow.value))
+
+        if (!elevationIndicator) {
+          elevationIndicator = document.createElement('div')
+          elevationIndicator.id = 'elevation-indicator'
+          elevationIndicator.innerHTML = `
+            <div class="elevation-value">${rounded}</div>
+            <div class="elevation-unit">${toShow.unit}</div>
+          `
+          this.getWidgetsRightContainer().appendChild(elevationIndicator)
+        } else {
+          const valueEl = elevationIndicator.querySelector('.elevation-value')
+          if (valueEl) valueEl.textContent = rounded
+          const unitEl = elevationIndicator.querySelector('.elevation-unit')
+          if (unitEl) unitEl.textContent = toShow.unit
         }
       },
 
@@ -235,36 +286,30 @@ function initializeDashboard() {
         }).join('')
       },
     
-      updateHeadingIndicator(direction, travelling, speedKmh) {
+      updateHeadingIndicator(direction, travelling, speed) {
         let headingIndicator = document.getElementById('heading-indicator')
-        const speedRounded = Math.round(speedKmh)
+        const speedRounded = speed ? Math.round(speed.value) : 0
         
-        // Check if data is stale (no updates in last 5 minutes)
         const isStale = window.lastTelemetryUpdate && 
                         (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
         
-        console.log(`🧭 Heading: ${direction}, Travelling: ${travelling}, Speed: ${speedRounded} km/h, Stale: ${isStale}`)
+        console.log(`🧭 Heading: ${direction}, Travelling: ${travelling}, Speed: ${speedRounded}${speed?.unit || ''}, Stale: ${isStale}`)
         
-        // Show heading indicator unless Not Connected (stale data)
         if (!isStale && direction) {
-          // Show/update heading indicator
           if (!headingIndicator) {
-            // Create heading indicator
             console.log(`✨ Creating heading indicator: ${direction}`)
             headingIndicator = document.createElement('div')
             headingIndicator.id = 'heading-indicator'
             headingIndicator.innerHTML = `
               <div class="heading-direction">${direction}</div>
             `
-            document.getElementById('dashboard-container').appendChild(headingIndicator)
+            this.getWidgetsRightContainer().appendChild(headingIndicator)
           } else {
-            // Update existing direction
             console.log(`🔄 Updating heading indicator: ${direction}`)
             const directionElement = headingIndicator.querySelector('.heading-direction')
             if (directionElement) directionElement.textContent = direction
           }
         } else {
-          // Remove heading indicator when Not Connected (stale data)
           if (headingIndicator) {
             console.log(`🚫 Removing heading indicator (stale: ${isStale})`)
             headingIndicator.remove()
@@ -272,33 +317,30 @@ function initializeDashboard() {
         }
       },
 
-      updateSpeedCircle(speedKmh, travelling) {
+      updateSpeedCircle(speed, travelling) {
         let speedCircle = document.getElementById('speed-circle')
-        const speedRounded = Math.round(speedKmh)
+        const speedRounded = speed ? formatNumber(Math.round(speed.value)) : formatNumber(0)
+        const speedUnit = speed?.unit || 'km/h'
         
-        // Check if data is stale (no updates in last 5 minutes)
         const isStale = window.lastTelemetryUpdate && 
                         (Date.now() - window.lastTelemetryUpdate) > 5 * 60 * 1000
         
-        // Show speed circle unless Not Connected (stale data)
         if (!isStale) {
-          // Show/update speed circle
           if (!speedCircle) {
-            // Create speed circle
             speedCircle = document.createElement('div')
             speedCircle.id = 'speed-circle'
             speedCircle.innerHTML = `
               <div class="speed-circle-value">${speedRounded}</div>
-              <div class="speed-circle-unit">km/h</div>
+              <div class="speed-circle-unit">${speedUnit}</div>
             `
-            document.getElementById('dashboard-container').appendChild(speedCircle)
+            this.getWidgetsRightContainer().appendChild(speedCircle)
           } else {
-            // Update existing speed value
             const speedValue = speedCircle.querySelector('.speed-circle-value')
             if (speedValue) speedValue.textContent = speedRounded
+            const speedUnitEl = speedCircle.querySelector('.speed-circle-unit')
+            if (speedUnitEl) speedUnitEl.textContent = speedUnit
           }
         } else {
-          // Remove speed circle when Not Connected (stale data)
           if (speedCircle) {
             speedCircle.remove()
           }
@@ -315,7 +357,7 @@ function initializeDashboard() {
         
         if (elements.lat) elements.lat.textContent = gps.lat.toFixed(5)
         if (elements.lon) elements.lon.textContent = gps.lon.toFixed(5)
-        if (elements.alt) elements.alt.textContent = `${Math.round(gps.altitude || 0)} ${gps.altitude_unit || 'm'}`
+        if (elements.alt) elements.alt.textContent = `${formatNumber(Math.round(gps.altitude || 0))} ${gps.altitude_unit || 'm'}`
         if (elements.satellites) elements.satellites.textContent = gps.satellites || 0
       },
 
@@ -337,7 +379,7 @@ function initializeDashboard() {
           elements.dewpoint.innerHTML = `${weather.dewpoint.toFixed(1)}<span class="widget-unit-small">°C</span>`
         }
         if (elements.pressure && weather.pressure !== undefined && weather.pressure !== null) {
-          elements.pressure.innerHTML = `${weather.pressure.toFixed(1)}<span class="widget-unit-small">hPa</span>`
+          elements.pressure.innerHTML = `${formatNumber(weather.pressure.toFixed(1))}<span class="widget-unit-small">hPa</span>`
         }
       },
 

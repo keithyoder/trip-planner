@@ -66,6 +66,7 @@ require_relative 'telemetry_rabbitmq_consumer'
 
 class TelemetrySyncService # rubocop:disable Metrics/ClassLength
   TRIP_DETECTION_CACHE_SECONDS = 5
+  MAX_PROCESSING_DELAY = 2.minutes
 
   def self.start
     new.start
@@ -108,16 +109,13 @@ class TelemetrySyncService # rubocop:disable Metrics/ClassLength
 
   def upsert_telemetry_log(document)
     data = document.except('_id', 'timestamp')
-    if data['bmp581_pressure']
-      data['barometric_altitude'] =
-        BarometricAltitude::Calibrator.altitude_for(data['bmp581_pressure']).round(1)
+    timestamp = parse_timestamp(document['timestamp'])
+
+    if data['bmp581_pressure'] && (Time.current - timestamp) <= MAX_PROCESSING_DELAY
+      data['barometric_altitude'] = BarometricAltitude::Calibrator.altitude_for(data['bmp581_pressure']).round(1)
     end
 
-    attributes = {
-      mongo_id: document['_id'].to_s,
-      timestamp: parse_timestamp(document['timestamp']),
-      data: data
-    }
+    attributes = { mongo_id: document['_id'].to_s, timestamp: timestamp, data: data }
 
     log = TelemetryLog.find_or_initialize_by(mongo_id: attributes[:mongo_id])
     log.assign_attributes(attributes)
