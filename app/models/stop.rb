@@ -5,7 +5,7 @@
 # Table name: stops
 #
 #  id         :bigint           not null, primary key
-#  trip_id    :bigint           not null
+#  trip_id    :bigint
 #  name       :string
 #  stop_type  :integer          not null
 #  start_time :datetime         not null
@@ -16,7 +16,7 @@
 #  updated_at :datetime         not null
 #
 class Stop < ApplicationRecord
-  belongs_to :trip
+  belongs_to :trip, optional: true
   has_many :expenses, dependent: :destroy
 
   # Reuses Waypoint's exact type set (and therefore its integer mapping,

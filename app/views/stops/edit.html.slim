@@ -22,3 +22,33 @@
         .d-flex.justify-content-between
           = link_to t('stops.edit.cancel'), trip_logs_path(date: @stop.start_time.to_date), class: 'btn btn-outline-secondary'
           = form.submit t('stops.edit.save'), class: 'btn btn-primary'
+
+      hr.my-4
+
+      h5 = t('expenses.title')
+
+      - if @stop.expenses.any?
+        ul.list-group.mb-3
+          - @stop.expenses.each do |expense|
+            li.list-group-item.d-flex.justify-content-between.align-items-center
+              div
+                = t("expenses.categories.#{expense.category}")
+                - if expense.receipt?
+                  i.bi.bi-receipt.text-muted.ms-1 title=t('expenses.from_receipt_tooltip')
+              span.fw-semibold = expense.amount.format
+      - else
+        p.text-muted.small = t('expenses.none_yet')
+
+      = form_tag from_receipt_stop_expenses_path(@stop), method: :post, local: true do
+        .mb-3
+          = label_tag :receipt_url, t('expenses.receipt_url'), class: 'form-label'
+          = url_field_tag :receipt_url, nil, class: 'form-control', placeholder: 'https://nfce.sefaz.pe.gov.br/...', required: true
+
+        .mb-3
+          = label_tag :category, t('expenses.category'), class: 'form-label'
+          = select_tag :category,
+              options_for_select(Expense.categories.keys.map { |k| [t("expenses.categories.#{k}"), k] }),
+              class: 'form-select'
+
+        .d-flex.justify-content-end
+          = submit_tag t('expenses.import_receipt'), class: 'btn btn-primary'

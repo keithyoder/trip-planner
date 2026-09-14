@@ -16,7 +16,13 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :stops, only: %i[edit update]
+  resources :stops, only: %i[edit update] do
+    resources :expenses, only: [:create] do
+      collection do
+        post :from_receipt
+      end
+    end
+  end
 
   resources :trips do
     resources :waypoints

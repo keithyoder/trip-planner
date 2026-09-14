@@ -1,47 +1,64 @@
-# frozen_string_literal: true
-
 module Stops
-  # Finds gaps between consecutive TripLogs belonging to the same Trip and
-  # persists them as Stop records -- the inverse of TripDetector's trip
-  # segmentation. Every gap qualifies automatically: TripDetector only
-  # splits driving into separate TripLogs when stationary for at least
-  # max_stop_duration (300s), so the gap between any two saved TripLogs is
-  # already guaranteed to meet that bar -- no separate threshold needed
-  # here.
-  #
-  # Idempotent: re-running only creates Stops for gaps that don't already
-  # have one (matched on trip_id + start_time, backed by the unique index
-  # on stops), so it's safe to call repeatedly as new TripLogs land.
   class Detector
-    def initialize(trip)
+    def initialize(trip = nil)
       @trip = trip
     end
 
-    # @param date [Date]
-    # @return [Array<Stop>] stops for every gap that day (pre-existing
-    #   ones included, so callers get the full picture)
     def detect_for_date(date)
-      trip_logs = TripLog.where(trip_id: trip.id).on_date(date).order(:start_time).to_a
+      trip_logs = scoped_trip_logs(date)
       return [] if trip_logs.size < 2
 
-      trip_logs.each_cons(2).filter_map do |prev_log, next_log|
-        find_or_create_stop(prev_log, next_log)
+      trip_logs.each_cons(2).filter_map { |prev_log, next_log| find_or_create_stop(prev_log, next_log) }
+    end
+
+    # Re-runs detection for a date. Matches existing Stops by start_time
+    # (stable -- it's set from the end of the preceding TripLog, which
+    # doesn't move when new TripLogs get added later in the same gap).
+    # Updates end_time if it's changed, since inserting a new TripLog
+    # into what used to be one long gap shortens it. Preserves
+    # name/stop_type/notes. Never deletes.
+    def redetect_for_date(date)
+      trip_logs = scoped_trip_logs(date)
+
+      updated = []
+      created = []
+
+      trip_logs.each_cons(2) do |prev_log, next_log|
+        existing = Stop.find_by(trip_id: trip&.id, start_time: prev_log.end_time)
+
+        if existing
+          if existing.end_time != next_log.start_time
+            existing.update!(end_time: next_log.start_time)
+            updated << existing
+          end
+        else
+          stop = build_stop(prev_log, next_log)
+          created << stop if stop
+        end
       end
+
+      { updated: updated, created: created }
     end
 
     private
 
     attr_reader :trip
 
-    def find_or_create_stop(prev_log, next_log)
-      existing = Stop.find_by(trip_id: trip.id, start_time: prev_log.end_time)
-      return existing if existing
+    def scoped_trip_logs(date)
+      scope = trip ? TripLog.where(trip_id: trip.id) : TripLog.where(trip_id: nil)
+      scope.on_date(date).order(:start_time).to_a
+    end
 
+    def find_or_create_stop(prev_log, next_log)
+      Stop.find_by(trip_id: trip&.id, start_time: prev_log.end_time) || build_stop(prev_log, next_log)
+    end
+
+    def build_stop(prev_log, next_log)
       location = prev_log.end_location || next_log.start_location
       return nil unless location
 
       Stop.create!(
-        trip_id: trip.id,
+        trip_id: trip&.id,
         start_time: prev_log.end_time,
         end_time: next_log.start_time,
         geom: RGeo::Geographic.spherical_factory(srid: 4326).point(location[:lon], location[:lat])
