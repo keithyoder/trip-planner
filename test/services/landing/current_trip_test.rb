@@ -36,11 +36,24 @@ module Landing
       assert_equal todays, CurrentTrip.find(today: TODAY)
     end
 
-    test 'otherwise the most recent completed trip' do
+    test 'otherwise the most recent trip that has started' do
       Trip.create!(name: 'old', start_on: TODAY - 800, status: :completed)
       recent = Trip.create!(name: 'recent', start_on: TODAY - 300, status: :completed)
 
       assert_equal recent, CurrentTrip.find(today: TODAY)
+    end
+
+    test 'a trip whose start date passed but was never marked in progress still counts' do
+      Trip.create!(name: 'old', start_on: TODAY - 800, status: :completed)
+      forgotten = Trip.create!(name: 'forgot to flip', start_on: TODAY - 3)
+
+      assert_equal forgotten, CurrentTrip.find(today: TODAY)
+    end
+
+    test 'skipped trips are never chosen' do
+      Trip.create!(name: 'skipped', start_on: TODAY - 3, status: :skipped)
+
+      assert_nil CurrentTrip.find(today: TODAY)
     end
   end
 end
