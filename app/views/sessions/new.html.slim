@@ -1,0 +1,12 @@
+.hero-section style="--hero-image: url(#{asset_path('welcome-hero.png')})"
+  .hero-content
+    h1.hero-title.text-white.fw-bold.mb-0 Road Trip Planner
+    - if flash[:alert]
+      .alert.alert-danger.mt-3 = flash[:alert]
+    - if flash[:notice]
+      .alert.alert-success.mt-3 = flash[:notice]
+
+  .hero-button-container
+    / OmniAuth 2 only accepts POST (CSRF-protected), so this must be a button, not a link.
+    = button_to t('auth.sign_in_with_google'), user_google_oauth2_omniauth_authorize_path,
+      method: :post, class: 'btn btn-primary btn-lg px-5 py-3', data: { turbo: false }

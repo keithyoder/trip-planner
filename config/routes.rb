@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  # devise_for :users, controllers: {
-  #   omniauth_callbacks: 'users/omniauth_callbacks'
-  # }
+  devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
+  devise_scope :user do
+    # Devise's failure app redirects to new_user_session, so this name is required.
+    get '/login', to: 'sessions#new', as: :new_user_session
+    delete '/logout', to: 'sessions#destroy', as: :destroy_user_session
+  end
 
   root 'welcome#index'
   post '/locale/:locale', to: 'locales#update', as: :locale

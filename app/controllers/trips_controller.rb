@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class TripsController < ApplicationController
-  # before_action :authenticate_user!
   layout 'welcome'
   before_action :set_trip, only: %i[show edit update destroy]
 

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class LocalesController < ApplicationController
+  # The locale switcher also renders on the public landing/login pages.
+  skip_before_action :authenticate_user!
   skip_before_action :verify_authenticity_token, only: [:update]
 
   LOCALE_MAPPING = {
