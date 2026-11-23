@@ -1,25 +1,15 @@
-# == Schema Information
-#
-# Table name: waypoints
-#
-#  id            :bigint           not null, primary key
-#  name          :string
-#  address       :string
-#  sequence      :integer
-#  lonlat        :geography        point, 4326
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  waypoint_type :integer
-#  toll          :decimal(, )
-#  delay         :integer
-#  osm_poi_id    :bigint
-#  trip_id       :bigint
-#
-
+# Waypoints belong to a trip, and (trip_id, sequence) is unique, so the two
+# rows need distinct sequences.
 one:
-  name: MyString
+  trip: one
+  name: Fixture Waypoint One
   sequence: 1
+  waypoint_type: 1
+  lonlat: POINT(-46.6333 -23.5505)
 
 two:
-  name: MyString
-  sequence: 1
+  trip: one
+  name: Fixture Waypoint Two
+  sequence: 2
+  waypoint_type: 1
+  lonlat: POINT(-49.2733 -25.4284)

@@ -70,7 +70,7 @@ class WaypointsController < ApplicationController
     @waypoint.destroy
 
     respond_to do |format|
-      format.html { redirect_to waypoints_url, notice: 'Waypoint was successfully destroyed.' }
+      format.html { redirect_to trip_waypoints_url(@trip), notice: 'Waypoint was successfully destroyed.' }
       format.json { head :no_content }
     end
   end

@@ -3,10 +3,6 @@
 require 'test_helper'
 
 class GoogleSignInTest < ActionDispatch::IntegrationTest
-  # Auth needs only the users table; the shared scaffold fixtures (trips,
-  # waypoints, osm_pois) no longer satisfy the schema, so don't load them.
-  self.fixture_table_names = []
-
   setup do
     OmniAuth.config.test_mode = true
     @user = User.create!(email: 'me@example.com')

@@ -4,9 +4,6 @@ require 'test_helper'
 
 module ApplicationCable
   class ConnectionTest < ActionCable::Connection::TestCase
-    # Only the users table matters here; the scaffold fixtures are stale.
-    self.fixture_table_names = []
-
     test 'rejects sockets with no signed-in user' do
       assert_reject_connection { connect }
     end
