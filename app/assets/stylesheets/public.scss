@@ -165,3 +165,31 @@ html,body{margin:0;background:#141414}
 .back + .login-mark{margin-top:20px}
 .login-hint{margin-top:16px}
 .alert{margin-bottom:20px}
+
+// Desktop only: a tighter hero so the follow links sit in the first screen on a
+// laptop (about 1440x812). The design's 280/340px side columns left the text
+// 370px wide, which stacked a four-line headline over a ten-line description.
+// Phones keep the design's own sizes (the max-width:720px rules above).
+@media (min-width:721px){
+.hero{grid-template-columns:200px minmax(0,1fr) 260px;gap:40px;padding-top:32px;padding-bottom:24px}
+.patch{width:200px;height:200px}
+.eyebrow{margin-bottom:12px}
+.hero-title{font-size:44px;line-height:48px;margin-bottom:16px}
+.lead{font-size:17px;line-height:27px}
+.stats{margin-top:24px;padding-top:20px;gap:16px 32px}
+.stat-num{font-size:34px;line-height:38px}
+.stat-count{padding:10px 16px}
+.follow{padding-bottom:24px}
+.follow-head{margin-bottom:16px}
+.follow-head h2{font-size:24px;line-height:30px}
+.invited{margin-top:16px}
+}
+
+// Between phone and laptop (iPad portrait, a narrow window) the three-column
+// hero squeezed the text into about 100px. Patch and text sit side by side and
+// the map goes below, centred.
+@media (min-width:721px) and (max-width:1000px){
+.wrap{padding-left:40px;padding-right:40px}
+.hero{grid-template-columns:200px minmax(0,1fr)}
+.map{grid-column:1 / -1;width:100%;max-width:340px;justify-self:center}
+}
