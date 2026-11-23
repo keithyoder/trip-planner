@@ -37,16 +37,17 @@ class LandingPageTest < ActionDispatch::IntegrationTest
 
     assert_select 'html[lang="en"]'
     assert_select '.eyebrow', 'Leaving 30 January 2027 · Pesqueira, Pernambuco'
-    assert_select 'h1', 'Four months, five countries and Mocó.'
+    assert_select 'h1', 'Four months, five countries and the Mocó.'
   end
 
-  test 'Spanish works too, even though the switch only offers PT and EN' do
+  test 'Spanish, with its button marked as the current language' do
     cookies[:locale] = 'es'
     landing_on recife(2026, 12, 1)
 
     assert_select 'html[lang="es"]'
     assert_select 'h1', 'Cuatro meses, cinco países y el Mocó.'
-    assert_select '.lang-btn[aria-pressed="true"]', 0
+    assert_select '.lang-btn[lang="es"][aria-pressed="true"]'
+    assert_select '.lang-btn[aria-pressed="true"]', 1
   end
 
   test 'the language buttons mark the current language and switch it' do

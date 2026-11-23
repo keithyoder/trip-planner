@@ -30,15 +30,19 @@ class LandingTest < ApplicationSystemTestCase
     assert_selector 'h1', text: 'Quatro meses, cinco países e o Mocó.'
 
     within('header') { click_button 'EN' }
-    assert_selector 'h1', text: 'Four months, five countries and Mocó.'
+    assert_selector 'h1', text: 'Four months, five countries and the Mocó.'
     assert_equal 'en', locale_cookie
 
     visit root_path # a later visit, no param: the cookie decides
-    assert_selector 'h1', text: 'Four months, five countries and Mocó.'
+    assert_selector 'h1', text: 'Four months, five countries and the Mocó.'
 
     within('header') { click_button 'PT' }
     assert_selector 'h1', text: 'Quatro meses, cinco países e o Mocó.'
     assert_equal 'pt', locale_cookie
+
+    within('header') { click_button 'ES' }
+    assert_selector 'h1', text: 'Cuatro meses, cinco países y el Mocó.'
+    assert_equal 'es', locale_cookie
   end
 
   test '?lang= sets the language and leaves a clean URL' do
