@@ -50,7 +50,7 @@ jobs:
 
       # The test run triggers the esbuild/sass asset build (jsbundling and
       # cssbundling hook into test:prepare), so node_modules must exist.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: yarn
