@@ -1,0 +1,39 @@
+# Security checks that don't need a database: dependency advisories and static
+# analysis. Tests and RuboCop are intentionally not here yet (see CLAUDE.md,
+# Open work: schema.rb can't load into an empty DB and RuboCop has a backlog).
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # New advisories appear without any code change, so also check weekly (Mon 09:00 UTC).
+    - cron: '0 9 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  bundler-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+      # Installed standalone, not via the Gemfile, so the audit never needs the
+      # app's native gems (pg, rgeo, ...) and the lockfile stays free of tooling.
+      - run: gem install bundler-audit
+      - run: bundler-audit check --update
+
+  brakeman:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+      - run: gem install brakeman
+      # Reads config/brakeman.ignore; anything not in it fails the job.
+      - run: brakeman -q --no-pager --ignore-config config/brakeman.ignore
