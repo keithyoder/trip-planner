@@ -55,8 +55,41 @@ class FollowPageTest < ActionDispatch::IntegrationTest
     assert_select 'h1', 'Day 1 · wp100 → wp200'
     assert_select '[data-controller="follow-map"]'
     assert_select '.tl', 2
-    assert_select '.stat-box .stat-num', '111'
+    assert_select '.stat-box .stat-num', '69 mi' # English shows miles, like the rest of the app
     assert_select 'a.btn-ghost[href=?]', follow_route_path(@trip.routes.joins(:waypoint_start).order('waypoints.sequence').last)
+  end
+
+  test 'distances, heights and temperatures follow the locale' do
+    cookies[:locale] = 'pt'
+    route = @trip.routes.joins(:waypoint_start).order('waypoints.sequence').first
+    route.update_columns(segments: [{ 'distance' => 111_000, 'duration' => 5400 }])
+    get follow_route_path(route)
+
+    assert_select '.stat-box .stat-num', '111 km'
+  end
+
+  test 'the highest point says how far from the start it is' do
+    cookies[:locale] = 'pt'
+    route = @trip.routes.joins(:waypoint_start).order('waypoints.sequence').first
+    route.update_columns(segments: [{ 'distance' => 111_000, 'duration' => 5400 }])
+    Route.where(id: route.id).update_all(
+      "geom = ST_GeogFromText('SRID=4326;LINESTRING ZM(-46.6 -23 0 0, -46.6 -24 3000 1)')"
+    )
+    get follow_route_path(route)
+
+    # The line climbs to 3000 m at its far end, so the top is the whole day away.
+    assert_select '.stat-box .stat-num', '3.000 m'
+    assert_select '.stat-box .stat-sub', /a 111 km da saída/
+  end
+
+  test 'the day plan is the waypoint notes, in the visitor\'s language or the default' do
+    route = @trip.routes.joins(:waypoint_start).order('waypoints.sequence').first
+    route.update_columns(segments: [{ 'distance' => 111_000, 'duration' => 5400 }])
+    Waypoint.where(trip: @trip, sequence: 200).update_all(notes: { 'en' => 'Lunch **early**.' })
+    cookies[:locale] = 'pt' # no Portuguese note: falls back to English
+    get follow_route_path(route)
+
+    assert_select '.plan-text strong', 'early'
   end
 
   test 'a route that has not been calculated fails loudly' do

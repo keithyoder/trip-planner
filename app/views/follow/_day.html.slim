@@ -1,6 +1,6 @@
 / One row of the day list. A rest day has no route behind it, so it is not a link.
 - title = day.rest? ? t('follow.rest_in', place: day.to) : "#{day.from} → #{day.to}"
-- sub = [l(day.date, format: :landing), (day.rest? ? nil : "#{day.km} km")].compact.join(' · ')
+- sub = [l(day.date, format: :landing), (day.rest? ? nil : follow_distance(day.meters))].compact.join(' · ')
 - classes = ['day', ("is-#{day.state}" if day.state == :today), ('is-rest' if day.rest?)].compact.join(' ')
 - body = capture do
   span.day-n

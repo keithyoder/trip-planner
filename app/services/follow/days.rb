@@ -13,7 +13,7 @@ module Follow
   # is broken (e.g. a route running backwards), and a day list that quietly
   # dropped it would hide the data bug.
   class Days
-    Day = Struct.new(:route_id, :number, :date, :from, :to, :country, :km, :state, :rest, keyword_init: true) do
+    Day = Struct.new(:route_id, :number, :date, :from, :to, :country, :meters, :state, :rest, keyword_init: true) do
       def rest? = rest
     end
     Group = Struct.new(:country, :days)
@@ -56,7 +56,7 @@ module Follow
     def build_day(sequence, route, country)
       Day.new(route_id: route.id, number: sequence.day, date: sequence.date,
               from: route.waypoint_start.name, to: route.waypoint_end.name, country: country,
-              km: (sequence.distance.to_f / 1000).round, state: state_for(route, sequence.date), rest: false)
+              meters: sequence.distance.to_f, state: state_for(route, sequence.date), rest: false)
     end
 
     def state_for(route, date)
@@ -79,7 +79,7 @@ module Follow
       days.each_cons(2).with_object([days.first].compact) do |(prev, nxt), out|
         ((prev.number + 1)...nxt.number).each do |n|
           out << Day.new(number: n, date: prev.date + (n - prev.number), from: prev.to, to: prev.to,
-                         country: prev.country, km: 0, state: nxt.state == :done ? :done : :planned, rest: true)
+                         country: prev.country, meters: 0, state: nxt.state == :done ? :done : :planned, rest: true)
         end
         out << nxt
       end

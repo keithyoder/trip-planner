@@ -428,6 +428,16 @@ en:
     cobblestone: Cobblestone
     ice: Ice
     snow: Snow
+    compacted_gravel: Compacted gravel
+    fine_gravel: Fine gravel
+    metal: Metal
+    wood: Wood
+    woodchips: Wood chips
+    grass_paver: Grass pavers
+    sett: Setts
+    hiking: Hiking trail
+    rail: Rail
+    bus: Bus
   auth:
     sign_in: "Sign in"
     lets_go: "Let's Go"
@@ -456,11 +466,12 @@ en:
     all_days: "All days"
     prev_day: "Previous day"
     next_day: "Next day"
-    stat_km: "km planned"
+    stat_km: "planned distance"
     stat_time: "estimated time"
     stat_time_sub: "not counting stops"
     stat_stops: "planned stops"
     stat_altitude: "max altitude"
+    peak_where: "%{distance} from the start"
     plan_title: "The plan"
     route_planned: "Planned route"
     stops_planned: "Planned stops"
@@ -500,7 +511,7 @@ en:
     sun_note: "We drive from ~%{from} to ~%{to}. We arrive about %{margin} before sunset."
     sun_note_dark: "We arrive after dark (sunset is at %{sunset})."
     border: "Border: %{name}"
-    border_val: "At km %{km}"
+    border_val: "At %{distance}"
     road_val: "%{surface} for %{percent}% of the way"
     overnight_val: "%{place}"
     hours_min: "%{h} h %{m}"

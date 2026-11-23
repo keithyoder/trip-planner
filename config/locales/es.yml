@@ -424,6 +424,16 @@ es:
     cobblestone: Empedrado
     ice: Hielo
     snow: Nieve
+    compacted_gravel: Grava compactada
+    fine_gravel: Grava fina
+    metal: Metal
+    wood: Madera
+    woodchips: Astillas de madera
+    grass_paver: Adoquín con césped
+    sett: Adoquín
+    hiking: Sendero
+    rail: Tren
+    bus: Autobús
   auth:
     sign_in: "Iniciar sesión"
     lets_go: "Vamos"
@@ -452,11 +462,12 @@ es:
     all_days: "Todos los días"
     prev_day: "Día anterior"
     next_day: "Día siguiente"
-    stat_km: "km planificados"
+    stat_km: "distancia planificada"
     stat_time: "tiempo estimado"
     stat_time_sub: "sin contar las paradas"
     stat_stops: "paradas planificadas"
     stat_altitude: "altitud máx."
+    peak_where: "a %{distance} de la salida"
     plan_title: "El plan"
     route_planned: "Ruta planificada"
     stops_planned: "Paradas planificadas"
@@ -496,7 +507,7 @@ es:
     sun_note: "Manejamos de ~%{from} a ~%{to}. Llegamos unas %{margin} antes del atardecer."
     sun_note_dark: "Llegamos después de que oscurece (el sol se pone a las %{sunset})."
     border: "Frontera: %{name}"
-    border_val: "En el km %{km}"
+    border_val: "A los %{distance}"
     road_val: "%{surface} en el %{percent}% del camino"
     overnight_val: "%{place}"
     hours_min: "%{h} h %{m}"

@@ -6,7 +6,29 @@ module FollowHelper
   CHART_LEFT = 16.0
   CHART_WIDTH = 288.0
 
+  # Distances, heights and temperatures follow the locale (units.* in the locale
+  # files), like the rest of the app. The services hand over metres and Celsius.
+  def follow_distance(meters)
+    follow_measure(meters, t('units.distance'), t('units.distance_abbr'))
+  end
+
+  def follow_elevation(meters, abbr: true)
+    follow_measure(meters, t('units.elevation'), abbr ? t('units.elevation_abbr') : nil)
+  end
+
+  def follow_temp(celsius, degree_only: false)
+    value = Units::Temperature.new(celsius, units: :celsius).to_units(t('units.temperature')).value.to_f.round
+    degree_only ? "#{value}°" : "#{value} #{t('units.temperature_abbr')}"
+  end
+
   # Seconds from midnight -> "08:30".
+  # Road surface in the visitor's language; the key is the ORS type name, so a
+  # type nobody has translated yet still reads sensibly instead of raising.
+  def follow_surface(surface_type)
+    key = surface_type.to_s
+    t("surface_types.#{key}", default: key.tr('_', ' ').capitalize)
+  end
+
   def follow_clock(seconds)
     format('%<h>02d:%<m>02d', h: (seconds / 3600).floor % 24, m: ((seconds % 3600) / 60).round % 60)
   end
@@ -57,6 +79,16 @@ module FollowHelper
     low, high = hourly.values.minmax
     span = [high - low, 1].max
     y = ->(temp) { (118 - 90.0 * (temp - low) / span).round(1) }
-    { line: hourly.map { |h, temp| "#{follow_hour_x(h)},#{y.call(temp)}" }.join(' '), y: y }
+    # Gridlines at the day's low, middle and high, so the curve can be read as numbers.
+    grid = [low, (low + high) / 2.0, high].map { |temp| { y: y.call(temp), label: follow_temp(temp) } }
+    { line: hourly.map { |h, temp| "#{follow_hour_x(h)},#{y.call(temp)}" }.join(' '), y: y, grid: grid }
+  end
+
+  private
+
+  def follow_measure(meters, unit, abbr)
+    value = Units::Distance.new(meters.to_f).to_units(unit).value.to_f.round
+    text = number_with_delimiter(value, delimiter: t('number.format.delimiter'))
+    abbr ? "#{text} #{abbr}" : text
   end
 end

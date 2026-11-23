@@ -58,7 +58,7 @@ main.main.wrap
         section.card.panel aria-labelledby="elev-h"
           .panel-head
             h2#elev-h = t('follow.altitude')
-            span.small.muted = "#{paths[:low]}–#{paths[:high]} m"
+            span.small.muted = "#{follow_elevation(paths[:low], abbr: false)}–#{follow_elevation(paths[:high])}"
           svg.elev viewBox="0 0 640 140" role="img" aria-label=t('follow.altitude')
             polygon points=paths[:area] fill="#3a3835"
             polyline points=paths[:line] fill="none" stroke="#f4efe6" stroke-width="2.5" stroke-linejoin="round"
@@ -76,13 +76,13 @@ main.main.wrap
                 strong = stop.name
                 span
                   - kind = %w[departure arrival].include?(stop.type) ? t("follow.#{stop.type}") : t("waypoints.#{stop.type}", default: stop.type.to_s.humanize)
-                  = [kind, "km #{stop.km}", (stop.delay_minutes.positive? ? "#{stop.delay_minutes} #{t('follow.min')}" : nil), (stop.temp_c ? "~#{stop.temp_c} °C" : nil)].compact.join(' · ')
+                  = [kind, follow_distance(stop.meters), (stop.delay_minutes.positive? ? "#{stop.delay_minutes} #{t('follow.min')}" : nil), (stop.temp_c ? "~#{follow_temp(stop.temp_c)}" : nil)].compact.join(' · ')
 
     .col
       section.card.panel
         .stat-grid
           .stat-box
-            span.stat-num = @day.km
+            span.stat-num = follow_distance(@day.meters)
             span.stat-label = t('follow.stat_km')
           .stat-box
             span.stat-num = follow_duration(@day.driving_minutes)
@@ -93,8 +93,10 @@ main.main.wrap
             span.stat-label = t('follow.stat_stops')
           - if @day.max_altitude_m
             .stat-box
-              span.stat-num = "#{@day.max_altitude_m} m"
+              span.stat-num = follow_elevation(@day.max_altitude_m)
               span.stat-label = t('follow.stat_altitude')
+              - peak = @day.peak
+              span.stat-sub = [t('follow.peak_where', distance: follow_distance(peak.meters)), peak.places.join(', ')].reject(&:blank?).join(' · ')
 
       - sun = @day.sun
       - if sun
@@ -160,11 +162,11 @@ main.main.wrap
           .wx-top
             - if weather.max_c
               .wx-big
-                = "#{weather.max_c}°"
+                = follow_temp(weather.max_c, degree_only: true)
                 small = t('follow.t_max')
             - if weather.min_c
               .wx-big
-                = "#{weather.min_c}°"
+                = follow_temp(weather.min_c, degree_only: true)
                 small = t('follow.t_min')
             - if weather.rain_percent
               .wx-rain
@@ -175,6 +177,9 @@ main.main.wrap
           - if curve.present?
             h3.curve-title = t('follow.curve_title')
             svg.tcurve viewBox="0 0 320 150" role="img" aria-label=t('follow.curve_aria')
+              - curve[:grid].each do |g|
+                line x1="16" y1=g[:y] x2="304" y2=g[:y] stroke="#3a3835" stroke-width="1" stroke-dasharray="3 4"
+                text x="18" y=(g[:y] - 4).round(1) font-family="Poppins, system-ui, sans-serif" font-size="11" fill="#bdb6aa" = g[:label]
               line x1="16" y1="118" x2="304" y2="118" stroke="#3a3835" stroke-width="2"
               polyline points=curve[:line] fill="none" stroke="#f4efe6" stroke-width="3" stroke-linejoin="round"
               - @day.stops.each do |stop|
@@ -184,6 +189,7 @@ main.main.wrap
                   circle cx=follow_hour_x(hour) cy=curve[:y].call(temp) r="10" fill="#ffc20e" stroke="#141414" stroke-width="2"
                   text x=follow_hour_x(hour) y=(curve[:y].call(temp) + 4).round(1) text-anchor="middle" font-family="Poppins, system-ui, sans-serif" font-size="11" font-weight="700" fill="#141414" = stop.number
               - [0, 6, 12, 18, 23].each do |hour|
+                line x1=follow_hour_x(hour) y1="118" x2=follow_hour_x(hour) y2="123" stroke="#3a3835" stroke-width="2"
                 text x=follow_hour_x(hour) y="138" text-anchor="middle" font-family="Poppins, system-ui, sans-serif" font-size="12" fill="#bdb6aa" = "#{hour}h"
             p.note = t('follow.curve_note')
 
@@ -204,10 +210,10 @@ main.main.wrap
               li
                 div
                   strong = t('follow.border', name: border[:waypoint].name)
-                  span = t('follow.border_val', km: border[:km])
+                  span = t('follow.border_val', distance: follow_distance(border[:metres]))
             - if surfaces.any?
               - top = surfaces.first
               li
                 div
                   strong = t('follow.road')
-                  span = t('follow.road_val', surface: top.surface_type.to_s.tr('_', ' ').capitalize, percent: top.percent.round)
+                  span = t('follow.road_val', surface: follow_surface(top.surface_type), percent: top.percent.round)
