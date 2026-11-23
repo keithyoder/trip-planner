@@ -1,7 +1,7 @@
 - content_for :title, t('landing.brand')
 - content_for :header_actions do
   - if user_signed_in?
-    = link_to t('landing.open_app'), trips_path, class: 'btn btn-primary btn-sm', data: { turbo: false }
+    = link_to t('landing.open_app'), home_path_for(current_user), class: 'btn btn-primary btn-sm', data: { turbo: false }
   - else
     = link_to t('landing.login'), new_user_session_path, class: 'btn btn-primary btn-sm'
 

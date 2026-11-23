@@ -70,7 +70,7 @@ class LoginPageTest < ActionDispatch::IntegrationTest
   end
 
   test 'a signed-in user is sent on to the app' do
-    sign_in User.create!(email: 'in@example.com')
+    sign_in User.create!(email: 'in@example.com', role: :admin)
     get new_user_session_path
 
     assert_redirected_to trips_path

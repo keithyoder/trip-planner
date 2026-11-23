@@ -89,7 +89,7 @@ class LandingTest < ApplicationSystemTestCase
   end
 
   test 'a restricted page sends you to the login and signing in brings you back' do
-    User.create!(email: 'invited@example.com')
+    User.create!(email: 'invited@example.com', role: :admin)
     mock_google(email: 'invited@example.com')
 
     visit new_trip_path

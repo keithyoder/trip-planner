@@ -12,6 +12,9 @@ Rails.application.routes.draw do
   post '/locale/:locale', to: 'locales#update', as: :locale
   get 'routes/new'
   get 'dashboard', to: 'dashboard#index'
+  # The read-only side: what viewers (non-admins) see after signing in.
+  get 'follow', to: 'follow#index'
+  get 'follow/routes/:id', to: 'follow/routes#show', as: :follow_route
 
   resources :trip_logs, only: %i[index show] do
     collection do

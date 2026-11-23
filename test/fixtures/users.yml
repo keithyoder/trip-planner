@@ -3,3 +3,9 @@
 keith:
   email: fixture-user@example.com
   name: Fixture User
+  role: 1
+
+watcher:
+  email: watcher@example.com
+  name: Watcher
+  role: 0

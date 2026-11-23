@@ -3,6 +3,7 @@ header.hdr
     = link_to root_path, class: 'brand' do
       = image_tag 'landing/avatar-128.png', class: 'mark', alt: '', width: 40, height: 40
       span = t('landing.brand')
+    = content_for(:header_nav)
     .hdr-actions
       = render 'public/language_switch'
       = content_for(:header_actions)

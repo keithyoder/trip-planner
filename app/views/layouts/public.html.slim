@@ -15,6 +15,8 @@ html lang=public_html_lang
     = csp_meta_tag
     = favicon_link_tag 'landing/avatar-128.png', type: 'image/png'
     = stylesheet_link_tag 'public'
+    / Only pages that need JavaScript (the day map) ask for it; the landing and login stay script-free.
+    = yield(:scripts)
   body
     .page class=yield(:page_class)
       = render 'public/stripe'

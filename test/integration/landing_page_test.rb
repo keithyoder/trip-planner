@@ -84,7 +84,7 @@ class LandingPageTest < ActionDispatch::IntegrationTest
   end
 
   test 'signed-in visitors get a way into the app instead' do
-    sign_in User.create!(email: 'in@example.com')
+    sign_in User.create!(email: 'in@example.com', role: :admin)
     landing_on recife(2026, 12, 1)
 
     assert_select 'header a.btn-primary[href=?]', trips_path, 'Abrir a viagem'

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class DashboardController < ApplicationController
+  # The "Live" link of the viewer pages leads here, so viewers may open it.
+  skip_before_action :require_admin!
   layout 'welcome'
 
   def index

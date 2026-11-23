@@ -1,0 +1,28 @@
+/ One row of the day list. A rest day has no route behind it, so it is not a link.
+- title = day.rest? ? t('follow.rest_in', place: day.to) : "#{day.from} → #{day.to}"
+- sub = [l(day.date, format: :landing), (day.rest? ? nil : "#{day.km} km")].compact.join(' · ')
+- classes = ['day', ("is-#{day.state}" if day.state == :today), ('is-rest' if day.rest?)].compact.join(' ')
+- body = capture do
+  span.day-n
+    small = t('follow.day')
+    = day.number
+  span.day-main
+    span.day-title class=('rest' if day.rest?) = title
+    span.day-sub = sub
+  - case day.state
+  - when :done
+    span.chip.chip-done
+      svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+        path d="M5 12.5 10 17.5 19 7.5"
+      = t('follow.done')
+  - when :today
+    span.chip.chip-today
+      span.live-dot aria-hidden="true"
+      = t('follow.today')
+  - else
+    span.chip.chip-planned = t('follow.planned')
+- if day.rest?
+  div class=classes = body
+- else
+  = link_to follow_route_path(day.route_id), class: classes do
+    = body

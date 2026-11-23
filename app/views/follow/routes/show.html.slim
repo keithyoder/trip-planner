@@ -1,0 +1,213 @@
+- content_for :title, t('follow.page_title')
+- content_for :page_class, 'page-day'
+- content_for :scripts do
+  = javascript_include_tag 'application', defer: true
+= render 'follow/header', current: :days
+- prev_id, next_id = @day.neighbours
+
+main.main.wrap
+  .crumbs
+    = link_to follow_path, class: 'crumb' do
+      svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+        path d="M15 6l-6 6 6 6"
+      = t('follow.all_days')
+    .daynav
+      - if prev_id
+        = link_to follow_route_path(prev_id), class: 'btn-ghost', aria: { label: t('follow.prev_day') } do
+          svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+            path d="M15 6l-6 6 6 6"
+          = t('follow.day')
+      - if next_id
+        = link_to follow_route_path(next_id), class: 'btn-ghost', aria: { label: t('follow.next_day') } do
+          = t('follow.day')
+          svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+            path d="M9 6l6 6-6 6"
+
+  .day-head
+    div
+      p.eyebrow = l(@day.date, format: :landing)
+      h1.h1 = "#{t('follow.day')} #{@day.number} · #{@day.from} → #{@day.to}"
+    span.chip.chip-planned = t('follow.planned')
+
+  .day-grid
+    .col
+      - plan = @day.day_plan_html(I18n.locale)
+      - if plan.present?
+        section.card.panel aria-labelledby="plan-h"
+          .panel-head
+            h2#plan-h = t('follow.plan_title')
+          .plan-text = plan
+
+      section.card.panel aria-labelledby="map-h"
+        .panel-head
+          h2#map-h = t('follow.route_planned')
+        .map-wrap
+          div.daymap-leaflet data-controller="follow-map" data-follow-map-line-value=@day.line.to_json data-follow-map-stops-value=@day.stops.to_json role="img" aria-label=t('follow.map_aria')
+        .legend
+          span
+            svg viewBox="0 0 28 8" aria-hidden="true"
+              path d="M2 4h24" stroke="#f4efe6" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round"
+            = t('follow.leg_planned')
+          span
+            svg viewBox="0 0 28 8" aria-hidden="true"
+              circle cx="14" cy="4" r="4" fill="#ffc20e"
+            = t('follow.leg_stops')
+
+      - paths = follow_elevation_paths(@day.elevation_profile)
+      - if paths.present?
+        section.card.panel aria-labelledby="elev-h"
+          .panel-head
+            h2#elev-h = t('follow.altitude')
+            span.small.muted = "#{paths[:low]}–#{paths[:high]} m"
+          svg.elev viewBox="0 0 640 140" role="img" aria-label=t('follow.altitude')
+            polygon points=paths[:area] fill="#3a3835"
+            polyline points=paths[:line] fill="none" stroke="#f4efe6" stroke-width="2.5" stroke-linejoin="round"
+
+      section.card.panel aria-labelledby="log-h"
+        .panel-head
+          h2#log-h = t('follow.stops_planned')
+          span.small.muted = t('follow.stops_sub')
+        ol.timeline
+          - @day.stops.each do |stop|
+            li.tl
+              span.tl-time = "~#{follow_clock(stop.time)}"
+              span.tl-dot = stop.number
+              .tl-body
+                strong = stop.name
+                span
+                  - kind = %w[departure arrival].include?(stop.type) ? t("follow.#{stop.type}") : t("waypoints.#{stop.type}", default: stop.type.to_s.humanize)
+                  = [kind, "km #{stop.km}", (stop.delay_minutes.positive? ? "#{stop.delay_minutes} #{t('follow.min')}" : nil), (stop.temp_c ? "~#{stop.temp_c} °C" : nil)].compact.join(' · ')
+
+    .col
+      section.card.panel
+        .stat-grid
+          .stat-box
+            span.stat-num = @day.km
+            span.stat-label = t('follow.stat_km')
+          .stat-box
+            span.stat-num = follow_duration(@day.driving_minutes)
+            span.stat-label = t('follow.stat_time')
+            span.stat-sub = t('follow.stat_time_sub')
+          .stat-box
+            span.stat-num = @day.stops.size
+            span.stat-label = t('follow.stat_stops')
+          - if @day.max_altitude_m
+            .stat-box
+              span.stat-num = "#{@day.max_altitude_m} m"
+              span.stat-label = t('follow.stat_altitude')
+
+      - sun = @day.sun
+      - if sun
+        section.card.panel aria-labelledby="sun-h"
+          .panel-head
+            h2#sun-h = t('follow.sun')
+          p.note.first = t('follow.sun_sub', from: @day.from, to: @day.to)
+          svg.sunbar viewBox="0 0 320 70" role="img" aria-label=t('follow.sun_aria')
+            rect x="16" y="10" width="288" height="18" rx="9" fill="#141414" stroke="#3a3835"
+            - dawn_x, rise_x, set_x, dusk_x = [sun.dawn, sun.sunrise, sun.sunset, sun.dusk].map { |time| follow_time_x(time) }
+            rect x=dawn_x y="10" width=(rise_x - dawn_x).round(1) height="18" fill="#bdb6aa"
+            rect x=set_x y="10" width=(dusk_x - set_x).round(1) height="18" fill="#bdb6aa"
+            rect x=rise_x y="10" width=(set_x - rise_x).round(1) height="18" fill="#f4efe6"
+            - drive_from = follow_seconds_x(sun.driving_from)
+            rect x=drive_from y="34" width=(follow_seconds_x(sun.driving_to) - drive_from).round(1) height="8" rx="4" fill="#ffc20e"
+            - [0, 6, 12, 18, 24].each do |hour|
+              text x=follow_hour_x(hour) y="62" text-anchor="middle" font-family="Poppins, system-ui, sans-serif" font-size="12" fill="#bdb6aa" = "#{hour}h"
+          .legend
+            span
+              svg viewBox="0 0 28 8" aria-hidden="true"
+                rect x="2" y="0" width="24" height="8" rx="2" fill="#f4efe6"
+              = t('follow.leg_day')
+            span
+              svg viewBox="0 0 28 8" aria-hidden="true"
+                rect x="2" y="0" width="24" height="8" rx="2" fill="#bdb6aa"
+              = t('follow.leg_twilight')
+            span
+              svg viewBox="0 0 28 8" aria-hidden="true"
+                rect x="2" y="0" width="24" height="8" rx="4" fill="#ffc20e"
+              = t('follow.leg_driving')
+          dl.sun-list
+            div
+              dt = t('follow.dawn')
+              dd = follow_time(sun.dawn)
+            div
+              dt = t('follow.sunrise')
+              dd = follow_time(sun.sunrise)
+            div
+              dt = t('follow.noon')
+              dd = follow_time(sun.noon)
+            div
+              dt = t('follow.sunset')
+              dd = follow_time(sun.sunset)
+            div
+              dt = t('follow.dusk')
+              dd = follow_time(sun.dusk)
+            div
+              dt = t('follow.daylight')
+              dd = follow_duration((sun.daylight.to_i / 60.0).round)
+          - arrive_h = sun.driving_to / 3600.0
+          - set_h = sun.sunset.hour + sun.sunset.min / 60.0
+          - if arrive_h < set_h
+            p.note = t('follow.sun_note', from: follow_clock(sun.driving_from), to: follow_clock(sun.driving_to), margin: follow_duration(((set_h - arrive_h) * 60).round))
+          - else
+            p.note = t('follow.sun_note_dark', sunset: follow_time(sun.sunset))
+
+      - weather = @day.weather
+      - if weather
+        section.card.panel aria-labelledby="wx-h"
+          .panel-head
+            h2#wx-h = t('follow.weather')
+          p.note.first = t('follow.weather_sub', place: @day.to)
+          .wx-top
+            - if weather.max_c
+              .wx-big
+                = "#{weather.max_c}°"
+                small = t('follow.t_max')
+            - if weather.min_c
+              .wx-big
+                = "#{weather.min_c}°"
+                small = t('follow.t_min')
+            - if weather.rain_percent
+              .wx-rain
+                span
+                  = "#{weather.rain_percent}% "
+                  span.muted = t('follow.rain_chance')
+          - curve = follow_curve(weather.hourly)
+          - if curve.present?
+            h3.curve-title = t('follow.curve_title')
+            svg.tcurve viewBox="0 0 320 150" role="img" aria-label=t('follow.curve_aria')
+              line x1="16" y1="118" x2="304" y2="118" stroke="#3a3835" stroke-width="2"
+              polyline points=curve[:line] fill="none" stroke="#f4efe6" stroke-width="3" stroke-linejoin="round"
+              - @day.stops.each do |stop|
+                - hour = (stop.time / 3600.0)
+                - temp = weather.hourly[hour.floor % 24]
+                - if temp
+                  circle cx=follow_hour_x(hour) cy=curve[:y].call(temp) r="10" fill="#ffc20e" stroke="#141414" stroke-width="2"
+                  text x=follow_hour_x(hour) y=(curve[:y].call(temp) + 4).round(1) text-anchor="middle" font-family="Poppins, system-ui, sans-serif" font-size="11" font-weight="700" fill="#141414" = stop.number
+              - [0, 6, 12, 18, 23].each do |hour|
+                text x=follow_hour_x(hour) y="138" text-anchor="middle" font-family="Poppins, system-ui, sans-serif" font-size="12" fill="#bdb6aa" = "#{hour}h"
+            p.note = t('follow.curve_note')
+
+      - overnight = @day.overnight
+      - borders = @day.borders
+      - surfaces = @day.surfaces
+      - if overnight || borders.any? || surfaces.any?
+        section.card.panel aria-labelledby="know-h"
+          .panel-head
+            h2#know-h = t('follow.good_to_know')
+          ul.facts
+            - if overnight
+              li
+                div
+                  strong = t('follow.overnight')
+                  span = t('follow.overnight_val', place: overnight.name)
+            - borders.each do |border|
+              li
+                div
+                  strong = t('follow.border', name: border[:waypoint].name)
+                  span = t('follow.border_val', km: border[:km])
+            - if surfaces.any?
+              - top = surfaces.first
+              li
+                div
+                  strong = t('follow.road')
+                  span = t('follow.road_val', surface: top.surface_type.to_s.tr('_', ' ').capitalize, percent: top.percent.round)

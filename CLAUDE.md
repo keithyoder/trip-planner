@@ -48,6 +48,7 @@ Use service objects and concerns rather than fat models. Code is grouped into na
 | `Fuel::` | `Fuel::FillUp` (table `fuel_fill_ups`) → `Expense` → `Stop` → `Trip`. It is both the transaction record and the live fuel-state cache; `TelemetrySyncService` updates its running totals |
 | `Stops::` | `Stops::Detector` finds stops from gaps between `TripLog` segments |
 | `NetworkCoverage::` | `Union` is scoped **per route**, not per trip; `RouteCoverageBuilder` dispatches by country |
+| `Follow::` | Read-only viewer pages under `/follow`: `Days` (a route is a day; rest days fill the gaps, grouped by arrival country) and `PlannedDay` (stats, timed stops, altitude, sun, expected weather). Weather is read from cached `WeatherEstimate` rows only, never fetched during a viewer request |
 | `Landing::` | Data for the public landing page: `Overview` (trip phase, km, daily-cached map), `TripPhase`, `TripDistances`, `CurrentTrip`, `RouteMap` (+ pure `RouteRemainder`, `MapProjection`, `CountryOutlines`) |
 | `Units::` | Locale-aware units through `default_unit_for_locale` (from locale YAML); `LocalizedUnits` presenter concern |
 | `BarometricAltitude::` | `Calibrator`, with P0 persisted in Redis |
@@ -67,6 +68,7 @@ Front end: Stimulus controllers, with Leaflet logic kept in a `MapManager` class
 Google sign-in, **invite-only**: a `User` row must already exist for the Google account's email. There is no sign-up path and the callback never creates users.
 
 - Add a user from the console: `User.create!(email: "...", name: "...")`. The email must match the Google account. Prod has no users until you add one, so create yours **before** the first deploy of auth or you lock yourself out.
+- **Roles:** `users.role` is `viewer` (0, the default) or `admin` (1). Admins use the planner; viewers only see the read-only `/follow` pages. `ApplicationController` also has `before_action :require_admin!`, so every controller is admin-only unless it opts out with `skip_before_action :require_admin!` (currently `WelcomeController`, `LocalesController`, `SessionsController`, `FollowController`, `Follow::RoutesController`, `DashboardController`, which the viewers' "Live" link opens). Promote from the console: `User.find_by(email: "...").admin!`. The migration made everyone who existed at the time an admin.
 - `ApplicationController` has `before_action :authenticate_user!`. Public controllers opt out with `skip_before_action :authenticate_user!` (currently `WelcomeController`, `LocalesController`, `SessionsController`). New controllers are protected by default.
 - Devise only generates session routes for `database_authenticatable`, which we don't use. `/login` (`new_user_session`) and `/logout` are plain routes to `SessionsController`; Devise's failure app needs the `new_user_session` name to exist.
 - OmniAuth 2 only accepts **POST** to `/users/auth/google_oauth2`, so the login control is a `button_to`, never a link.

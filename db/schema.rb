@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_23_102726) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_23_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "ltree"
   enable_extension "pg_catalog.plpgsql"
@@ -250,6 +250,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_102726) do
     t.string "last_sign_in_ip"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "role", default: 0, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
   end
