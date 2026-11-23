@@ -10,10 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_11_22_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_23_102726) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "ltree"
-  enable_extension "plpgsql"
+  enable_extension "pg_catalog.plpgsql"
   enable_extension "postgis"
 
   create_table "boundaries", force: :cascade do |t|
@@ -123,7 +123,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_11_22_230000) do
     t.index ["calculation_type"], name: "index_holidays_on_calculation_type"
   end
 
-  create_table "osm_pois", primary_key: "old_id", id: :bigint, default: -> { "nextval('osm_pois_id_seq'::regclass)" }, force: :cascade do |t|
+  create_table "osm_pois", primary_key: "old_id", force: :cascade do |t|
     t.string "name"
     t.integer "poi_type"
     t.string "city"
