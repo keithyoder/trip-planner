@@ -483,7 +483,6 @@ pt:
       new_tab: "(abre em nova aba)"
     invited: "O diário da viagem e o rastreio ao vivo são só para convidados."
     invited_link: "Entrar"
-    countries: "Brasil · Uruguai · Argentina · Chile · Peru"
   login:
     page_title: "Entrar · Aqui no meu mocó"
     back: "Voltar ao início"
