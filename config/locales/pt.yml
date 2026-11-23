@@ -6,6 +6,7 @@ pt:
       short: "%d de %b"        # 05 de nov
       day_plan: "%A, %-d de %B de %Y"   # quarta-feira, 21 de abril de 2027
       route_index: "%a, %b %-d"
+      landing: "%-d de %B de %Y"   # 30 January 2027 / 30 de janeiro de 2027
     month_names: [~, janeiro, fevereiro, março, abril, maio, junho, julho, agosto, setembro, outubro, novembro, dezembro]
     abbr_month_names: [~, jan, fev, mar, abr, mai, jun, jul, ago, set, out, nov, dez]
     day_names: [domingo, segunda-feira, terça-feira, quarta-feira, quinta-feira, sexta-feira, sábado]
@@ -438,3 +439,55 @@ pt:
     unverified_email: "O e-mail da sua conta Google não foi verificado."
     failed: "O login com o Google falhou ou foi cancelado."
     sign_out: "Sair"
+  landing:
+    brand: "Aqui no meu mocó"
+    language: "Idioma"
+    login: "Entrar"
+    open_app: "Abrir a viagem"
+    meta_description: "Quatro meses de carro por cinco países, numa Pajero TR4 preta chamada Mocó."
+    dates: "Saída em %{date} · Pesqueira, PE"
+    headline: "Quatro meses, cinco países e o Mocó."
+    description: "Vamos de carro pelo Brasil, Uruguai, Argentina, Chile e Peru, numa Pajero TR4 preta chamada Mocó. Saímos de Pesqueira, Pernambuco, em %{date} e voltamos em maio. O mocó é um pequeno roedor do sertão que sempre tem um esconderijo entre as pedras; nessa viagem, o nosso é o carro."
+    patch_alt: "Logo da viagem Aqui no meu mocó: o mocó sobre as pedras, sob o Cruzeiro do Sul, com as bandeiras dos cinco países e 2027"
+    counter:
+      before:
+        one: "dia para a partida"
+        other: "dias para a partida"
+      today_number: "Hoje"
+      today: "partimos hoje"
+      during:
+        one: "dia de viagem"
+        other: "dias de viagem"
+      home: "dias de viagem, já em casa"
+    km:
+      planned: "km planejados"
+      driven: "km rodados"
+      left: "km faltando"
+      total: "km rodados no total"
+      progress_label: "Quanto da viagem já fizemos"
+    map:
+      aria: "Mapa da América do Sul com a rota da viagem"
+      done: "Feito"
+      todo: "Falta"
+      note: "Atualizado todo dia"
+      now_before: "Partida: Pesqueira, PE"
+      now_during: "Hoje: perto de %{place}"
+      now_during_unplaced: "Hoje: em rota"
+      now_after: "De volta a Pesqueira, PE"
+    follow: "Acompanhe a viagem"
+    social:
+      substack: "A história escrita"
+      instagram: "Fotos do caminho"
+      youtube: "Vídeos"
+      facebook: "Novidades para a família"
+      new_tab: "(abre em nova aba)"
+    invited: "O diário da viagem e o rastreio ao vivo são só para convidados."
+    invited_link: "Entrar"
+    countries: "Brasil · Uruguai · Argentina · Chile · Peru"
+  login:
+    page_title: "Entrar · Aqui no meu mocó"
+    back: "Voltar ao início"
+    title: "Entrar"
+    subtitle: "O diário da viagem e o rastreio ao vivo são para quem foi convidado."
+    hint: "Use a conta Google que recebeu o convite."
+    error_title: "Não foi possível entrar."

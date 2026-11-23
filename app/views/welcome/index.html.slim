@@ -1,10 +1,22 @@
-.hero-section style="--hero-image: url(#{asset_path('welcome-hero.png')})"
-  .hero-content
-    h1.hero-title.text-white.fw-bold.mb-0
-      | Road Trip Planner
+- content_for :title, t('landing.brand')
+- content_for :header_actions do
+  - if user_signed_in?
+    = link_to t('landing.open_app'), trips_path, class: 'btn btn-primary btn-sm', data: { turbo: false }
+  - else
+    = link_to t('landing.login'), new_user_session_path, class: 'btn btn-primary btn-sm'
 
-  .hero-button-container
-    - if user_signed_in?
-      = link_to t('auth.lets_go'), trips_path, class: "btn btn-primary btn-lg px-5 py-3", data: { turbo: false }
-    - else
-      = link_to t('auth.sign_in'), new_user_session_path, class: "btn btn-primary btn-lg px-5 py-3", data: { turbo: false }
+main#inicio
+  section.hero.wrap aria-labelledby="hero-title"
+    .hero-patch
+      = image_tag 'landing/patch-560.png', class: 'patch', width: 280, height: 280, alt: t('landing.patch_alt')
+    .hero-text
+      - date = l(@overview.start_on, format: :landing)
+      p.eyebrow = t('landing.dates', date: date)
+      h1#hero-title.hero-title = t('landing.headline')
+      p.lead = t('landing.description', date: date)
+      = render 'welcome/stats', overview: @overview
+    = render 'welcome/map', overview: @overview, map: @map
+  = render 'welcome/follow'
+
+= render 'public/horizon'
+= render 'welcome/footer'

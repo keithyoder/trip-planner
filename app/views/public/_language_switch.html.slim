@@ -1,0 +1,9 @@
+/ Posts to LocalesController (the app's existing language cookie), so the choice
+/ sticks and works without JavaScript.
+.lang role="group" aria-label=t('landing.language')
+  - public_language_choices.each_with_index do |(code, label, name), index|
+    - if index.positive?
+      span.lang-sep aria-hidden="true" |
+    = button_to label, locale_path(locale: code), method: :post, class: 'lang-btn', form_class: 'lang-form',
+      lang: code, data: { turbo: false },
+      aria: { label: name, pressed: (I18n.locale.to_s == code).to_s }

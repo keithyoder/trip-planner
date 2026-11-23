@@ -60,3 +60,8 @@ jobs:
       # empty database, which is what a fresh checkout or new machine relies on.
       - run: bin/rails db:create db:schema:load
       - run: bin/rails test
+
+      # Browser tests for the public landing and login pages. Chrome and a
+      # matching chromedriver come with the runner image. The older scaffold
+      # system tests under test/system are stale (no login) and not run here.
+      - run: bin/rails test test/system/landing_test.rb

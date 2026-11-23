@@ -11,7 +11,7 @@ module Users
       user = User.from_omniauth(auth)
       return reject_unregistered(auth.info.email) unless user
 
-      sign_out_all_scopes
+      reset_session_keeping_return_to
       flash[:notice] = t('auth.signed_in')
       sign_in_and_redirect user, event: :authentication
     end
@@ -21,6 +21,14 @@ module Users
     end
 
     private
+
+    # sign_out_all_scopes clears the session, which would drop the page the
+    # visitor was originally trying to reach.
+    def reset_session_keeping_return_to
+      return_to = stored_location_for(:user)
+      sign_out_all_scopes
+      store_location_for(:user, return_to) if return_to
+    end
 
     # Google accounts can carry an unverified email; matching on it would let
     # someone claim a registered address.

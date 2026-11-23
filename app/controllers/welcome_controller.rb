@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+# The public landing page. Everything on it is computed on the server (see
+# Landing::Overview) so it is right on first load, without JavaScript.
 class WelcomeController < ApplicationController
   skip_before_action :authenticate_user!
-  layout 'welcome'
+  layout 'public'
 
   def index
-    # Add any logic needed for the welcome page
+    @overview = Landing::Overview.build
+    @map = @overview.map
+    @social_links = Rails.application.config_for(:social_links)
   end
 end

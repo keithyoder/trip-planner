@@ -48,6 +48,7 @@ Use service objects and concerns rather than fat models. Code is grouped into na
 | `Fuel::` | `Fuel::FillUp` (table `fuel_fill_ups`) → `Expense` → `Stop` → `Trip`. It is both the transaction record and the live fuel-state cache; `TelemetrySyncService` updates its running totals |
 | `Stops::` | `Stops::Detector` finds stops from gaps between `TripLog` segments |
 | `NetworkCoverage::` | `Union` is scoped **per route**, not per trip; `RouteCoverageBuilder` dispatches by country |
+| `Landing::` | Data for the public landing page: `Overview` (trip phase, km, daily-cached map), `TripPhase`, `TripDistances`, `CurrentTrip`, `RouteMap` (+ pure `RouteRemainder`, `MapProjection`, `CountryOutlines`) |
 | `Units::` | Locale-aware units through `default_unit_for_locale` (from locale YAML); `LocalizedUnits` presenter concern |
 | `BarometricAltitude::` | `Calibrator`, with P0 persisted in Redis |
 | `SpeedBumps::`, `SpeedLimitAudit::` | Tooling for OSM contributions (detection, matching, GPX export) |
@@ -73,6 +74,18 @@ Google sign-in, **invite-only**: a `User` row must already exist for the Google 
 - ActionCable: `ApplicationCable::Connection` rejects sockets without a Warden user (the dashboard stream carries live position).
 - Config: `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env.development` and `.env.production`. The OAuth client already had older redirect URIs without the `/users` prefix (`/auth/google_oauth2/callback` for localhost, `trip.tessi.com.br` and `aquinomeumoco.com.br`), so it may be used by something else: leave those alone and only add ours. Ours must be registered under Authorized redirect URIs with the `/users` prefix, because Devise mounts OmniAuth there: `https://trip.tessi.com.br/users/auth/google_oauth2/callback` and `http://localhost:3000/users/auth/google_oauth2/callback`. The app builds the callback from the browser's host, so `127.0.0.1:3000` would need its own entry. Consent screen, test users and the secret are shared with that other app too. A missing key only logs a warning at boot (so prod workers still start); the login button then fails.
 - The `users` table exists in prod without ever having had a migration. `CreateUsers` uses `if_not_exists`, so it is a no-op on prod and builds the table elsewhere.
+
+### Public pages (landing and login)
+
+`/` and `/login` use `layouts/public` and `public.scss`: no Bootstrap, only the brand tokens and self-hosted Poppins. (The `welcome` layout is still used by trips and dashboard.) They use the app's own `locale` cookie; the PT | EN buttons post to `LocalesController`, and `?lang=` sets the cookie then redirects to the clean URL. Strings are `landing.*` and `login.*` in en/pt/es.
+
+- Everything on the landing page is computed on the server by `Landing::Overview`. **"Back home" is the trip's `completed` status**, set by hand; there is never a fixed return date. Days are counted in `America/Recife`. The trip shown is `Landing::CurrentTrip` (in progress, else next planned, else latest started).
+- Km driven comes from `trip_logs` since the trip's start date (`TripLog` has no `trip_id`); planned km is the sum of the real route legs.
+- The hero map is cached for a day (key includes today's date). `bin/rails landing:refresh_map` rebuilds it on demand. There is no Sidekiq here, so no job.
+- Follow-the-trip URLs are in `config/social_links.yml` (placeholders until the channels exist).
+- Login is Google only, so the design's password fields and reset link do not exist. A failed sign-in shows the red alert with the reason from the `auth.*` messages. After sign-in the visitor returns to the page that sent them to `/login`.
+- The woodcut strip and logos are used as supplied. The strip's ground stops about 78px short of the right edge at 1440 (the SVG path under-runs), which is in the source art.
+- `docs/landing/` holds the design handoff and screens (reference only).
 
 ## Conventions and preferences
 
@@ -106,6 +119,9 @@ Google sign-in, **invite-only**: a `User` row must already exist for the Google 
 - `db/schema.rb` loads into an empty database, and Rails' `maintain_test_schema` rebuilds `trip_test` from it automatically when the stored schema SHA doesn't match, so `bin/rails test` just works after a migration. To rebuild by hand: `RAILS_ENV=test bin/rails db:drop db:create db:schema:load`. (It used to fail on `osm_pois`; migration `RenameOsmPoisIdSequence` fixed that. Prod's sequence is renamed once that migration runs there.)
 - Fixtures (`fixtures :all`) load again: keep them in step with the schema when columns change (e.g. `osm_pois.osm_id` is NOT NULL and unique, `waypoints` need a `trip` and a distinct `sequence` per trip, and the schema allows only one `in_progress` trip, so fixture trips stay on the default status). Controller tests call `sign_in users(:keith)` (Devise's integration helpers are included in `test_helper.rb`).
 - `db:migrate` rewrites `db/schema.rb` from the local DB, so a local DB that is missing something silently drops it from the file. Diff `schema.rb` after migrating.
+- Past 50 tests Rails runs the suite in forked workers. On macOS the libpq inside the pg gem segfaults when a forked child connects, and the parent hangs forever at `# Running:`. `test_helper.rb` sets `PGGSSENCMODE=disable` to prevent it; keep that line. Parallel runs leave `trip_test_0..N` databases behind in the local Postgres; they are reused.
+- System tests need headless Chrome and a chromedriver that matches it. A stale Homebrew `chromedriver` on PATH wins over the one Selenium downloads and fails with "only supports Chrome version N"; set `CHROMEDRIVER_PATH` to a matching binary (e.g. under `~/.cache/selenium/chromedriver/`). CI runs only `test/system/landing_test.rb`: `trips_test.rb` and `waypoints_test.rb` are old scaffold (no login) and fail.
+- Tests that need routes/waypoints/logs build them with direct inserts (`LandingTripHelpers`): `Route` and `Waypoint` callbacks enqueue routing and boundary work that a test must never trigger.
 
 **Eager loading (production)**
 - Production eager-loads all of `app/`. A `NameError`/`LoadError` in **any** class crashes every worker at boot, even when the request never touches that class. Use lazy string `.constantize` in orchestrators that reference stub adapters.

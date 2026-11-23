@@ -6,6 +6,7 @@ en:
       short: "%b %d"
       day_plan: "%A, %B %-d, %Y"   # Wednesday, April 21, 2027
       route_index: "%a, %b %-d"
+      landing: "%-d %B %Y"   # 30 January 2027 / 30 de janeiro de 2027
     month_names: [~, January, February, March, April, May, June, July, August, September, October, November, December]
     abbr_month_names: [~, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec]
     day_names: [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
@@ -437,3 +438,55 @@ en:
     unverified_email: "Your Google email address is not verified."
     failed: "Google sign-in failed or was cancelled."
     sign_out: "Sign out"
+  landing:
+    brand: "Aqui no meu mocó"
+    language: "Language"
+    login: "Log in"
+    open_app: "Open the trip"
+    meta_description: "Four months by car through five countries, in a black Pajero TR4 named Mocó."
+    dates: "Leaving %{date} · Pesqueira, Pernambuco"
+    headline: "Four months, five countries and Mocó."
+    description: "We are driving through Brazil, Uruguay, Argentina, Chile and Peru in a black Pajero TR4 named Mocó. We leave Pesqueira, Pernambuco on %{date} and come home in May. A mocó is a rock cavy from the Brazilian northeast that always has a hideout among the rocks; on this trip, ours is the car."
+    patch_alt: "Aqui no meu mocó trip logo: the mocó on rocks under the Southern Cross, with the flags of the five countries and 2027"
+    counter:
+      before:
+        one: "day until we leave"
+        other: "days until we leave"
+      today_number: "Today"
+      today: "we leave today"
+      during:
+        one: "day into the trip"
+        other: "days into the trip"
+      home: "days of travel, now home"
+    km:
+      planned: "km planned"
+      driven: "km driven"
+      left: "km to go"
+      total: "km driven in all"
+      progress_label: "How much of the trip we have done"
+    map:
+      aria: "Map of South America with the trip route"
+      done: "Done"
+      todo: "Still to go"
+      note: "Updated daily"
+      now_before: "Starting point: Pesqueira, Pernambuco"
+      now_during: "Today: near %{place}"
+      now_during_unplaced: "Today: on the move"
+      now_after: "Back home in Pesqueira"
+    follow: "Follow the trip"
+    social:
+      substack: "The written story"
+      instagram: "Photos along the way"
+      youtube: "Videos"
+      facebook: "Updates for family"
+      new_tab: "(opens in a new tab)"
+    invited: "The trip diary and live tracking are for invited people."
+    invited_link: "Log in"
+    countries: "Brazil · Uruguay · Argentina · Chile · Peru"
+  login:
+    page_title: "Log in · Aqui no meu mocó"
+    back: "Back to home"
+    title: "Log in"
+    subtitle: "The trip diary and live tracking are for invited people."
+    hint: "Use the Google account your invitation was sent to."
+    error_title: "We couldn't log you in."

@@ -1,0 +1,167 @@
+// Public pages (landing and login). Deliberately independent of Bootstrap and
+// application.bootstrap.scss: only the brand tokens and Poppins (self-hosted, so
+// there is no third-party request and no CSP exception). Values come straight
+// from docs/landing/screens; the colours are the "Noite de frevo" tokens.
+// Poppins is licensed under the SIL Open Font License 1.1.
+//
+// Contrast notes: text is paper (#f4efe6) or muted (#bdb6aa) on ink (#141414);
+// white-on-green and white-on-red are used for the counter and for errors.
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(font-path("poppins/poppins-latin-400.woff2")) format("woff2");
+}
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(font-path("poppins/poppins-latin-600.woff2")) format("woff2");
+}
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(font-path("poppins/poppins-latin-700.woff2")) format("woff2");
+}
+
+// The dark ground also behind overscroll and below short pages.
+html,body{margin:0;background:#141414}
+.page{min-height:100vh;min-height:100dvh;background:#141414;color:#f4efe6;font-family:"Poppins",system-ui,sans-serif;font-size:16px;line-height:26px;-webkit-font-smoothing:antialiased}
+.page *{box-sizing:border-box}
+.page a{color:#f4efe6;text-decoration:underline;text-underline-offset:3px}
+.page a:hover{text-decoration-thickness:2px}
+.page :focus-visible{outline:2px solid #f4efe6;outline-offset:2px;border-radius:4px}
+.wrap{max-width:1280px;margin:0 auto;padding-left:80px;padding-right:80px}
+.hdr{border-bottom:1px solid #3a3835}
+.hdr-in{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:88px}
+.page a.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:700;font-size:20px;line-height:24px}
+.mark{width:40px;height:40px;border-radius:9999px;display:block;flex:none}
+.hdr-actions{display:flex;align-items:center;gap:16px}
+.lang{display:inline-flex;align-items:center;gap:2px;border:1px solid #bdb6aa;border-radius:10px;padding:3px}
+.lang-btn{font:600 13px/18px "Poppins",system-ui,sans-serif;letter-spacing:.04em;min-width:44px;min-height:38px;padding:0 10px;border:0;border-radius:7px;background:transparent;color:#f4efe6;cursor:pointer}
+.lang-btn[aria-pressed="true"]{background:#f4efe6;color:#141414}
+.lang-btn:hover{text-decoration:underline}
+.lang-sep{color:#bdb6aa;font-size:13px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 16px/20px "Poppins",system-ui,sans-serif;min-height:48px;padding:0 24px;border-radius:10px;border:0;cursor:pointer}
+.page a.btn{text-decoration:none}
+.btn-primary,.page a.btn-primary{background:#ffc20e;color:#141414}
+.btn-primary:hover,.page a.btn-primary:hover{background:#f4efe6}
+.btn-sm{min-height:44px;padding:0 20px;font-size:15px}
+.muted{color:#bdb6aa}
+.small{font-size:13px;line-height:20px;margin:0}
+.stripe{display:flex;height:6px}
+.stripe span{flex:1}
+.horizon{display:block;width:100%;height:120px;color:#f4efe6}
+.horizon svg{display:block;width:100%;height:120px}
+
+.hero{display:grid;grid-template-columns:280px minmax(0,1fr) 340px;gap:64px;align-items:center;padding-top:64px;padding-bottom:56px}
+.hero-patch{padding:35px;margin:-35px}
+.patch{width:280px;height:280px;display:block}
+.eyebrow{font-weight:600;font-size:13px;line-height:18px;color:#ffc20e;margin:0 0 16px}
+.hero-title{font-size:56px;line-height:58px;font-weight:700;margin:0 0 24px;letter-spacing:-.01em}
+.lead{font-size:20px;line-height:30px;margin:0;max-width:34em}
+.stats{list-style:none;margin:32px 0 0;padding:24px 0 0;border-top:1px solid #3a3835;display:flex;flex-wrap:wrap;gap:16px 40px;align-items:center}
+.stat{display:flex;flex-direction:column}
+.stat-num{font-weight:700;font-size:40px;line-height:44px}
+.stat-label{font-weight:600;font-size:13px;line-height:18px;color:#bdb6aa}
+.stat-count{background:#17803d;color:#ffffff;border-radius:10px;padding:12px 20px}
+.stat-count .stat-label{color:#ffffff}
+.map{margin:0;border:1px solid #3a3835;border-radius:10px;background:#141414;padding:12px;display:flex;flex-direction:column;gap:12px}
+.map-svg{display:block;width:100%;height:auto;aspect-ratio:4/5}
+.map-cap{display:flex;flex-direction:column;gap:6px;padding:0 4px 4px}
+.map-now{font-weight:700;font-size:15px;line-height:22px}
+.map-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;line-height:18px;font-weight:600}
+.map-legend span{display:inline-flex;align-items:center;gap:6px}
+.map-legend svg{width:28px;height:8px;flex:none}
+.map-note{font-size:13px;line-height:20px;color:#bdb6aa}
+.progress{margin-top:16px;height:10px;border-radius:9999px;background:#3a3835;overflow:hidden}
+.progress-fill{display:block;height:100%;border-radius:9999px;background:#ffc20e}
+.follow{padding-bottom:40px}
+.follow-head{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.follow-head h2{font-size:28px;line-height:34px;margin:0;font-weight:700}
+.socials{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.page a.social{display:flex;align-items:center;gap:16px;min-height:72px;padding:12px 20px;border:1px solid #3a3835;border-radius:10px;background:#22211f;text-decoration:none}
+.page a.social:hover{border-color:#ffc20e}
+.social-ico{width:28px;height:28px;flex:none}
+.social-txt{display:flex;flex-direction:column;min-width:0;flex:1}
+.social-name{font-weight:700;font-size:16px;line-height:22px}
+.social-sub{font-size:13px;line-height:18px;color:#bdb6aa}
+.social-arrow{width:18px;height:18px;flex:none;color:#bdb6aa}
+.invited{display:flex;align-items:center;gap:8px;margin:20px 0 0;font-size:15px;line-height:24px;color:#bdb6aa}
+.invited svg{width:18px;height:18px;flex:none}
+.ftr{background:#141414;border-top:1px solid #3a3835}
+.ftr-in{display:flex;align-items:center;gap:32px;padding-top:28px;padding-bottom:28px}
+.ftr-patch{width:96px;height:96px;display:block;margin:12px;flex:none}
+.ftr-text{flex:1;display:flex;flex-direction:column;gap:2px}
+.ftr-name{font-weight:700;font-size:16px;line-height:24px;margin:0}
+@media (max-width:720px){
+.wrap{padding-left:16px;padding-right:16px}
+.hdr-in{min-height:72px;gap:8px}
+.page a.brand{font-size:15px;line-height:18px;gap:8px;max-width:148px}
+.hdr-actions{gap:8px}
+.btn-sm{padding:0 14px}
+.hero{grid-template-columns:minmax(0,1fr);gap:32px;padding-top:40px;padding-bottom:48px}
+.hero-patch{justify-self:center;margin:0;padding:28px}
+.patch{width:224px;height:224px}
+.hero-title{font-size:40px;line-height:44px;margin-bottom:16px}
+.lead{font-size:18px;line-height:28px}
+.stats{flex-wrap:nowrap;gap:12px;margin-top:28px;padding-top:20px}
+.stat{flex:1 1 0;min-width:0}
+.stat-num{font-size:28px;line-height:32px}
+.stat-count{padding:10px 12px}
+.follow-head{flex-wrap:wrap;gap:8px}
+.socials{grid-template-columns:minmax(0,1fr);gap:12px}
+.invited{align-items:flex-start}
+.invited svg{margin-top:3px}
+.ftr-in{flex-direction:column;align-items:flex-start;gap:16px;padding-top:24px;padding-bottom:32px}
+.ftr-patch{margin:12px}
+}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.page-login{display:flex;flex-direction:column}
+.page a.back{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-weight:600;font-size:15px}
+.login-main{flex:1;display:flex;justify-content:center;padding-top:72px;padding-bottom:56px}
+.login-card{width:100%;max-width:440px;background:#22211f;border:1px solid #3a3835;border-radius:10px;padding:40px}
+.login-mark{width:64px;height:64px;border-radius:9999px;display:block;margin-bottom:20px}
+.login-title{font-size:40px;line-height:44px;font-weight:700;margin:0 0 8px}
+.login-sub{margin:0 0 28px;color:#bdb6aa;font-size:15px;line-height:24px}
+.form{display:flex;flex-direction:column;gap:20px}
+.field{display:flex;flex-direction:column;gap:8px}
+.field-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.field label{font-weight:600;font-size:13px;line-height:18px}
+.page a.forgot{font-size:13px;line-height:18px}
+.input{font:400 16px/24px "Poppins",system-ui,sans-serif;color:#f4efe6;background:#141414;border:1px solid #bdb6aa;border-radius:4px;min-height:48px;padding:11px 14px;width:100%}
+.input::placeholder{color:#bdb6aa}
+.input.is-error{border:2px solid #d7262e;padding:10px 13px}
+.alert{display:flex;gap:12px;align-items:flex-start;background:#d7262e;color:#ffffff;border-radius:10px;padding:14px 16px}
+.alert svg{width:22px;height:22px;flex:none;margin-top:2px}
+.alert strong{display:block;font-weight:700;font-size:15px;line-height:22px}
+.alert span{display:block;font-size:14px;line-height:21px}
+.field-err{display:flex;gap:6px;align-items:center;font-size:13px;line-height:18px;font-weight:600}
+.field-err svg{width:16px;height:16px;flex:none;color:#d7262e}
+.btn-block{width:100%;margin-top:4px}
+@media (max-width:720px){
+.wrap{padding-left:16px;padding-right:16px}
+.hdr-in{min-height:72px;gap:8px}
+.page a.brand{font-size:15px;line-height:18px;gap:8px;max-width:148px}
+.hdr-actions{gap:8px}
+.login-main{padding-top:32px;padding-bottom:40px}
+.login-card{padding:24px 20px;border:0;background:transparent}
+.login-title{font-size:32px;line-height:38px}
+}
+
+// Stripe colours live here, not in inline style attributes, so the markup stays
+// compatible with a strict CSP if one is switched on later.
+.stripe span:nth-child(1){background:#d7262e}
+.stripe span:nth-child(2){background:#ffc20e}
+.stripe span:nth-child(3){background:#17803d}
+.stripe span:nth-child(4){background:#1a4d9c}
+// button_to wraps each language button in a form.
+.lang-form{display:flex;margin:0}
+.back + .login-mark{margin-top:20px}
+.login-hint{margin-top:16px}
+.alert{margin-bottom:20px}

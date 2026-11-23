@@ -1,0 +1,7 @@
+footer.ftr
+  .wrap.ftr-in
+    = image_tag 'landing/patch-192.png', class: 'ftr-patch', width: 96, height: 96, alt: "#{t('landing.brand')} 2027"
+    .ftr-text
+      p.ftr-name = "#{t('landing.brand')} · 2027"
+      p.small.muted = t('landing.countries')
+    = render 'public/language_switch'
