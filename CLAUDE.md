@@ -1,12 +1,12 @@
 # CLAUDE.md — trip-planner
 
-Rails app behind **trip.tessi.com.br**: planning, live telemetry, expenses and fuel tracking for a road trip by car through Brazil, Bolivia, Peru, Argentina and Chile. The vehicle is a 2014 Mitsubishi Pajero TR4 2.0L flex-fuel. The trip is **underway now**: it's in Brazil and heading inland toward the Bolivian altiplano. Production is in daily use, so a broken deploy means a broken dashboard on the road.
+Rails app behind **trip.tessi.com.br**: planning, live telemetry, expenses and fuel tracking for a road trip by car through Brazil, Bolivia, Peru, Argentina and Chile. The vehicle is a 2014 Mitsubishi Pajero TR4 2.0L flex-fuel. The trip has **not started yet** (as of 2026-11-23), so there is room for upgrades and risky changes now. Once it is underway, production is in daily use and a broken deploy means a broken dashboard on the road.
 
 I'm the only developer and the only user. Prefer simple, direct solutions over generality.
 
 ## Stack
 
-- Ruby 3.4.7, Rails 7.2 (`load_defaults 7.0`), app module `RoadTrip`
+- Ruby 3.4.12, Rails 7.2 (`load_defaults 7.0`), app module `RoadTrip`
 - PostgreSQL + PostGIS (`activerecord-postgis-adapter`, RGeo, `rgeo-geojson`), Scenic views, Redis (cache + calibration state)
 - Slim templates, Bootstrap 5 + Bootstrap Icons, Stimulus + Turbo, Leaflet, `jsbundling-rails` / `cssbundling-rails`
 - ActionCable for the live dashboard; ActiveJob/Sidekiq for background jobs
