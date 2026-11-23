@@ -85,6 +85,7 @@ Google sign-in, **invite-only**: a `User` row must already exist for the Google 
 - Follow-the-trip URLs are in `config/social_links.yml`.
 - Login is Google only, so the design's password fields and reset link do not exist. A failed sign-in shows the red alert with the reason from the `auth.*` messages. After sign-in the visitor returns to the page that sent them to `/login`.
 - Desktop is deliberately tighter than the design so the follow links are in the first screen at about 1440x812 (a `min-width:721px` block at the end of `public.scss`); 721-1000px stacks the map under the patch and text, and phones keep the design's own sizes. Measure with a real viewport, not a resized window: headless Chrome will not lay out narrower than about 500px.
+- Map colours: driven track solid yellow, route still to go green dots, the car a red dot with a paper ring. To-go is green rather than the brand guide's paper dots because paper dots blended into the paper-coloured country borders (green on the land is 3.4:1, fine for graphics per the guide's contrast notes).
 - The woodcut strip and logos are used as supplied. The strip's ground stops about 78px short of the right edge at 1440 (the SVG path under-runs), which is in the source art.
 - `docs/landing/` holds the design handoff and screens (reference only).
 
