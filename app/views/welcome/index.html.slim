@@ -1,9 +1,10 @@
-.welcome-container style="--hero-image: url(#{asset_path('welcome-hero.png')})"
-  .hero-section
-    .hero-content
-      h1.hero-title.text-white.fw-bold.mb-0
-        | Road Trip Planner
-      
-    .hero-button-container
-      = link_to "Let's Go", trips_path, class: "btn btn-primary btn-lg px-5 py-3", data: { turbo: false }
-      = link_to "Login with Google", "/users/auth/google_oauth2", class: "btn btn-primary btn-lg px-5 py-3", data: { turbo: false }
+.hero-section style="--hero-image: url(#{asset_path('welcome-hero.png')})"
+  .hero-content
+    h1.hero-title.text-white.fw-bold.mb-0
+      | Road Trip Planner
+
+  .hero-button-container
+    - if user_signed_in?
+      = link_to t('auth.lets_go'), trips_path, class: "btn btn-primary btn-lg px-5 py-3", data: { turbo: false }
+    - else
+      = link_to t('auth.sign_in'), new_user_session_path, class: "btn btn-primary btn-lg px-5 py-3", data: { turbo: false }

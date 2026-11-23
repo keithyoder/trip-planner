@@ -9,6 +9,9 @@ html
     = stylesheet_link_tag "dashboard", "data-turbo-track": "reload"
     = javascript_include_tag "application", "data-turbo-track": "reload", defer: true
 
-  body
+  body class=("#{controller_name}-#{action_name}")
     = render 'shared/locale_switcher'
+    - if user_signed_in?
+      .position-fixed.top-0.start-0.m-2.small style="z-index: 1030"
+        = button_to t('auth.sign_out'), destroy_user_session_path, method: :delete, class: 'btn btn-sm btn-link p-1', data: { turbo: false }
     = yield

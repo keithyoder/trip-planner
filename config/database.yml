@@ -19,7 +19,8 @@ development:
 # Do not set this db to the same as development or production.
 test:
   <<: *default
-  database: db/test.sqlite3
+  # Fallback only; .env.test normally supplies DATABASE_URL (also local).
+  database: trip_test
 
 production:
   <<: *default

@@ -4,6 +4,13 @@ ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 require 'rails/test_help'
 
+# Fixtures delete and reinsert rows, and DATABASE_URL (from dotenv or the shell)
+# overrides database.yml, so refuse to run against anything but a local database.
+test_host = ActiveRecord::Base.connection_db_config.host.to_s
+unless test_host.empty? || %w[localhost 127.0.0.1 ::1].include?(test_host) || test_host.start_with?('/')
+  abort "Refusing to run tests against non-local database host #{test_host.inspect}"
+end
+
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers

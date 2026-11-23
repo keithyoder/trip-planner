@@ -423,3 +423,13 @@ es:
     cobblestone: Empedrado
     ice: Hielo
     snow: Nieve
+  auth:
+    sign_in: "Iniciar sesión"
+    lets_go: "Vamos"
+    sign_in_with_google: "Iniciar sesión con Google"
+    signed_in: "Sesión iniciada."
+    signed_out: "Sesión cerrada."
+    not_registered: "%{email} no está registrado en esta aplicación."
+    unverified_email: "El correo de tu cuenta de Google no está verificado."
+    failed: "El inicio de sesión con Google falló o fue cancelado."
+    sign_out: "Cerrar sesión"

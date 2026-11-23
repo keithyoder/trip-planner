@@ -427,3 +427,13 @@ en:
     cobblestone: Cobblestone
     ice: Ice
     snow: Snow
+  auth:
+    sign_in: "Sign in"
+    lets_go: "Let's Go"
+    sign_in_with_google: "Sign in with Google"
+    signed_in: "Signed in."
+    signed_out: "Signed out."
+    not_registered: "%{email} is not registered for this app."
+    unverified_email: "Your Google email address is not verified."
+    failed: "Google sign-in failed or was cancelled."
+    sign_out: "Sign out"

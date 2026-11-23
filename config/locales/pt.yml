@@ -428,3 +428,13 @@ pt:
     cobblestone: Calçamento
     ice: Gelo
     snow: Neve
+  auth:
+    sign_in: "Entrar"
+    lets_go: "Vamos lá"
+    sign_in_with_google: "Entrar com o Google"
+    signed_in: "Login realizado."
+    signed_out: "Você saiu."
+    not_registered: "%{email} não está cadastrado neste aplicativo."
+    unverified_email: "O e-mail da sua conta Google não foi verificado."
+    failed: "O login com o Google falhou ou foi cancelado."
+    sign_out: "Sair"
