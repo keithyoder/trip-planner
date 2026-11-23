@@ -1,6 +1,6 @@
 # Security checks that don't need a database: dependency advisories and static
-# analysis. Tests and RuboCop are intentionally not here yet (see CLAUDE.md,
-# Open work: schema.rb can't load into an empty DB and RuboCop has a backlog).
+# analysis. Tests live in tests.yml. RuboCop is intentionally not in CI yet: it
+# has a large backlog that needs a baseline first.
 name: Security
 
 on:
