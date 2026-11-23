@@ -445,7 +445,7 @@ en:
     open_app: "Open the trip"
     meta_description: "Four months by car through five countries, in a black Pajero TR4 named Mocó."
     dates: "Leaving %{date} · Pesqueira, Pernambuco"
-    headline: "Four months, five countries and Mocó."
+    headline: "Four months, five countries and the Mocó."
     description: "We are driving through Brazil, Uruguay, Argentina, Chile and Peru in a black Pajero TR4 named Mocó. We leave Pesqueira, Pernambuco on %{date} and come home in May. A mocó is a rock cavy from the Brazilian northeast that always has a hideout among the rocks; on this trip, ours is the car."
     patch_alt: "Aqui no meu mocó trip logo: the mocó on rocks under the Southern Cross, with the flags of the five countries and 2027"
     counter:
