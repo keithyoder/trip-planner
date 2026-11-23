@@ -1,48 +1,18 @@
-# == Schema Information
-#
-# Table name: osm_pois
-#
-#  id          :bigint           not null, primary key
-#  name        :string
-#  poi_type    :integer
-#  city        :string
-#  country     :string
-#  district    :string
-#  housenumber :string
-#  milestone   :string
-#  postcode    :string
-#  province    :string
-#  state       :string
-#  street      :string
-#  geom        :geography        point, 4326
-#  created_at  :datetime         not null
-#  updated_at  :datetime         not null
-#
-
+# osm_id is NOT NULL and unique (it is what waypoints.osm_poi_osm_id points at).
 one:
-  name: MyString
+  name: Fixture Fuel Station
   poi_type: 1
-  city: MyString
-  country: MyString
-  district: MyString
-  housenumber: MyString
-  milestone: MyString
-  postcode: MyString
-  province: MyString
-  state: MyString
-  street: MyString
-  geom: 
+  osm_type: node
+  osm_id: "1001"
+  city: São Paulo
+  country: BR
+  geom: POINT(-46.6333 -23.5505)
 
 two:
-  name: MyString
-  poi_type: 1
-  city: MyString
-  country: MyString
-  district: MyString
-  housenumber: MyString
-  milestone: MyString
-  postcode: MyString
-  province: MyString
-  state: MyString
-  street: MyString
-  geom: 
+  name: Fixture Hotel
+  poi_type: 2
+  osm_type: node
+  osm_id: "1002"
+  city: Curitiba
+  country: BR
+  geom: POINT(-49.2733 -25.4284)

@@ -1,18 +1,9 @@
-# == Schema Information
-#
-# Table name: trips
-#
-#  id         :bigint           not null, primary key
-#  name       :string
-#  start_on   :date
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#
-
+# status is left at its default (planning): the schema allows only one
+# in_progress trip, so fixtures must not claim that slot.
 one:
-  name: MyString
+  name: Fixture Trip One
   start_on: 2025-06-18
 
 two:
-  name: MyString
-  start_on: 2025-06-18
+  name: Fixture Trip Two
+  start_on: 2025-07-01

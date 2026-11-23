@@ -1,0 +1,5 @@
+# Registered (invited) user for sign-in in controller tests. Email is only a
+# label here; no Google round trip happens in tests.
+keith:
+  email: fixture-user@example.com
+  name: Fixture User

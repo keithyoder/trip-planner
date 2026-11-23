@@ -22,3 +22,12 @@ module ActiveSupport
     # Add more helper methods to be used by all tests here...
   end
 end
+
+# The whole app is behind Devise sign-in, so controller/integration tests call
+# `sign_in users(:keith)` in setup. There are no passwords (Google-only), which
+# is why this uses Warden's test helpers rather than posting credentials.
+module ActionDispatch
+  class IntegrationTest
+    include Devise::Test::IntegrationHelpers
+  end
+end

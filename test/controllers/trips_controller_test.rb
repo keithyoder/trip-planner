@@ -4,6 +4,7 @@ require 'test_helper'
 
 class TripsControllerTest < ActionDispatch::IntegrationTest
   setup do
+    sign_in users(:keith)
     @trip = trips(:one)
   end
 
