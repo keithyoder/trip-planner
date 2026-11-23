@@ -10,9 +10,9 @@ module PublicHelper
     HTML_LANGS.fetch(I18n.locale, I18n.locale.to_s)
   end
 
-  # The PT | EN switch only offers the two languages the design covers. Spanish
-  # still works (cookie or Accept-Language) and simply shows neither pressed.
+  # The PT | EN | ES switch: code, button label, and the language's own name
+  # (used as the accessible label).
   def public_language_choices
-    [%w[pt PT Português], %w[en EN English]]
+    [%w[pt PT Português], %w[en EN English], %w[es ES Español]]
   end
 end

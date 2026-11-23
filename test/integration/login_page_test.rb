@@ -37,7 +37,7 @@ class LoginPageTest < ActionDispatch::IntegrationTest
   test 'the header has the language switch but no login button' do
     get new_user_session_path
 
-    assert_select '.lang-btn', 2
+    assert_select '.lang-btn', 3
     assert_select 'header a.btn-primary', 0
   end
 
