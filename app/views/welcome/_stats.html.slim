@@ -1,0 +1,12 @@
+- number, label = landing_counter(overview)
+ul.stats
+  li.stat.stat-count
+    span.stat-num = number
+    span.stat-label = label
+  - landing_km_stats(overview).each do |km_number, km_label|
+    li.stat
+      span.stat-num = km_number
+      span.stat-label = km_label
+- if overview.phase == :during
+  .progress role="progressbar" aria-label=t('landing.km.progress_label') aria-valuemin="0" aria-valuemax="100" aria-valuenow=overview.percent
+    span.progress-fill style="width: #{overview.percent}%"

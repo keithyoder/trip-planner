@@ -29,8 +29,9 @@
   src: url(font-path("poppins/poppins-latin-700.woff2")) format("woff2");
 }
 
-body{margin:0}
-.page{min-height:100%;background:#141414;color:#f4efe6;font-family:"Poppins",system-ui,sans-serif;font-size:16px;line-height:26px;-webkit-font-smoothing:antialiased}
+// The dark ground also behind overscroll and below short pages.
+html,body{margin:0;background:#141414}
+.page{min-height:100vh;min-height:100dvh;background:#141414;color:#f4efe6;font-family:"Poppins",system-ui,sans-serif;font-size:16px;line-height:26px;-webkit-font-smoothing:antialiased}
 .page *{box-sizing:border-box}
 .page a{color:#f4efe6;text-decoration:underline;text-underline-offset:3px}
 .page a:hover{text-decoration-thickness:2px}
@@ -101,7 +102,7 @@ body{margin:0}
 @media (max-width:720px){
 .wrap{padding-left:16px;padding-right:16px}
 .hdr-in{min-height:72px;gap:8px}
-.page a.brand{font-size:15px;line-height:18px;gap:8px;max-width:100px}
+.page a.brand{font-size:15px;line-height:18px;gap:8px;max-width:148px}
 .hdr-actions{gap:8px}
 .btn-sm{padding:0 14px}
 .hero{grid-template-columns:minmax(0,1fr);gap:32px;padding-top:40px;padding-bottom:48px}
@@ -121,7 +122,7 @@ body{margin:0}
 .ftr-patch{margin:12px}
 }
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.page{display:flex;flex-direction:column}
+.page-login{display:flex;flex-direction:column}
 .page a.back{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-weight:600;font-size:15px}
 .login-main{flex:1;display:flex;justify-content:center;padding-top:72px;padding-bottom:56px}
 .login-card{width:100%;max-width:440px;background:#22211f;border:1px solid #3a3835;border-radius:10px;padding:40px}
@@ -146,7 +147,7 @@ body{margin:0}
 @media (max-width:720px){
 .wrap{padding-left:16px;padding-right:16px}
 .hdr-in{min-height:72px;gap:8px}
-.page a.brand{font-size:15px;line-height:18px;gap:8px;max-width:100px}
+.page a.brand{font-size:15px;line-height:18px;gap:8px;max-width:148px}
 .hdr-actions{gap:8px}
 .login-main{padding-top:32px;padding-bottom:40px}
 .login-card{padding:24px 20px;border:0;background:transparent}
@@ -161,3 +162,6 @@ body{margin:0}
 .stripe span:nth-child(4){background:#1a4d9c}
 // button_to wraps each language button in a form.
 .lang-form{display:flex;margin:0}
+.back + .login-mark{margin-top:20px}
+.login-hint{margin-top:16px}
+.alert{margin-bottom:20px}

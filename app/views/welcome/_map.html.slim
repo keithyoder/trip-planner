@@ -1,0 +1,28 @@
+/ Server-rendered from Landing::RouteMap (cached for a day) and the static outlines.
+/ Colours are the brand tokens: land on the raised surface, route still to go in
+/ paper dots, driven part in solid yellow, the car as a red dot with a paper ring.
+- home_x, home_y = map[:home]
+- x, y = map[:position]
+figure.map data-slot="route-map"
+  svg.map-svg viewBox="0 0 320 400" role="img" aria-label=t('landing.map.aria')
+    path d=Landing::CountryOutlines.other_d fill="none" stroke="#3a3835" stroke-width="2" stroke-linejoin="round"
+    path d=Landing::CountryOutlines.trip_d fill="#22211f" stroke="#bdb6aa" stroke-width="1.5" stroke-linejoin="round"
+    - if map[:todo_d].present?
+      path d=map[:todo_d] fill="none" stroke="#f4efe6" stroke-width="2.5" stroke-dasharray="1 6" stroke-linecap="round" stroke-linejoin="round"
+    - if map[:done_d].present?
+      path d=map[:done_d] fill="none" stroke="#ffc20e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+    rect x=(home_x - 5) y=(home_y - 5) width="10" height="10" fill="#f4efe6" stroke="#141414" stroke-width="2"
+    circle cx=x cy=y r="12" fill="none" stroke="#f4efe6" stroke-width="2.5"
+    circle cx=x cy=y r="6" fill="#d7262e"
+  figcaption.map-cap
+    span.map-now = landing_map_caption(overview, map)
+    span.map-legend
+      span
+        svg viewBox="0 0 28 8" aria-hidden="true"
+          path d="M2 4h24" stroke="#ffc20e" stroke-width="4" stroke-linecap="round"
+        = t('landing.map.done')
+      span
+        svg viewBox="0 0 28 8" aria-hidden="true"
+          path d="M2 4h24" stroke="#f4efe6" stroke-width="2.5" stroke-dasharray="1 6" stroke-linecap="round"
+        = t('landing.map.todo')
+    span.map-note = t('landing.map.note')

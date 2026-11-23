@@ -1,9 +1,10 @@
 # status is left at its default (planning): the schema allows only one
-# in_progress trip, so fixtures must not claim that slot.
+# in_progress trip, so fixtures must not claim that slot. Dates are relative to
+# now so the landing page, which looks for an upcoming trip, keeps finding one.
 one:
   name: Fixture Trip One
-  start_on: 2025-06-18
+  start_on: <%= 3.months.from_now.to_date %>
 
 two:
   name: Fixture Trip Two
-  start_on: 2025-07-01
+  start_on: <%= 6.months.from_now.to_date %>

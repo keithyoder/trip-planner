@@ -1,0 +1,23 @@
+section.follow.wrap aria-labelledby="follow-title"
+  .follow-head
+    h2#follow-title = t('landing.follow')
+  ul.socials
+    - LandingHelper::SOCIAL_CHANNELS.each do |channel|
+      li
+        a.social href=@social_links.fetch(channel) target="_blank" rel="noopener"
+          = social_icon(channel)
+          span.social-txt
+            span.social-name = LandingHelper::SOCIAL_NAMES.fetch(channel)
+            span.social-sub = t("landing.social.#{channel}")
+          svg.social-arrow viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+            path d="M7 17 17 7M9 7h8v8"
+          span.sr = t('landing.social.new_tab')
+  - unless user_signed_in?
+    p.invited
+      svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"
+        rect x="4.5" y="10.5" width="15" height="10" rx="2"
+        path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"
+      span
+        = t('landing.invited')
+        = ' '
+        = link_to t('landing.invited_link'), new_user_session_path
