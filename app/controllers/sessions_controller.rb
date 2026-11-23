@@ -4,7 +4,7 @@
 # app doesn't use, so login/logout are plain controller actions.
 class SessionsController < ApplicationController
   skip_before_action :authenticate_user!
-  layout 'welcome'
+  layout 'public'
 
   def new
     redirect_to trips_path if user_signed_in?

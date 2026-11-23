@@ -1,12 +1,27 @@
-.hero-section style="--hero-image: url(#{asset_path('welcome-hero.png')})"
-  .hero-content
-    h1.hero-title.text-white.fw-bold.mb-0 Road Trip Planner
-    - if flash[:alert]
-      .alert.alert-danger.mt-3 = flash[:alert]
-    - if flash[:notice]
-      .alert.alert-success.mt-3 = flash[:notice]
+- content_for :title, t('login.page_title')
+- content_for :page_class, 'page-login'
 
-  .hero-button-container
+main.login-main.wrap
+  .login-card
+    = link_to root_path, class: 'back' do
+      svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+        path d="M15 6l-6 6 6 6"
+      = t('login.back')
+    = image_tag 'landing/avatar-128.png', class: 'login-mark', width: 64, height: 64, alt: ''
+    h1.login-title = t('login.title')
+    p.login-sub = t('login.subtitle')
+    - if flash[:alert]
+      / The message says why (not invited, unverified email, cancelled); it never
+      / reveals whether an address belongs to an invited user beyond what Google gave us.
+      .alert#login-error role="alert"
+        svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+          path d="M12 2 1.5 21h21zm-1.3 7h2.6l-.4 6.2h-1.8zm1.3 7.6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"
+        div
+          strong = t('login.error_title')
+          span = flash[:alert]
     / OmniAuth 2 only accepts POST (CSRF-protected), so this must be a button, not a link.
     = button_to t('auth.sign_in_with_google'), user_google_oauth2_omniauth_authorize_path,
-      method: :post, class: 'btn btn-primary btn-lg px-5 py-3', data: { turbo: false }
+      method: :post, class: 'btn btn-primary btn-block', form_class: 'form', data: { turbo: false }
+    p.login-hint.small.muted = t('login.hint')
+
+= render 'public/horizon'

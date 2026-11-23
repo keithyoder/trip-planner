@@ -16,7 +16,7 @@ html lang=public_html_lang
     = favicon_link_tag 'landing/avatar-128.png', type: 'image/png'
     = stylesheet_link_tag 'public'
   body
-    .page
+    .page class=yield(:page_class)
       = render 'public/stripe'
       = render 'public/header'
       = yield
