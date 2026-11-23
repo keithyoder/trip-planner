@@ -18,6 +18,30 @@ class LandingTest < ApplicationSystemTestCase
     page.driver.browser.manage.cookie_named('locale')&.dig(:value)
   end
 
+  # Reads the heading with a script instead of a found element. Right after a
+  # language button reloads the page, Chrome can answer "Node with given id does
+  # not belong to the document" for an element found a moment earlier; Capybara
+  # only retries stale-element errors, so that one failed the test now and then
+  # (seen on CI). A script runs in whatever document is current, so just retry it
+  # until the page has settled.
+  def assert_headline(expected)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + Capybara.default_max_wait_time
+    actual = nil
+    loop do
+      actual = current_headline
+      break if actual == expected || Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
+      sleep 0.1
+    end
+    assert_equal expected, actual
+  end
+
+  def current_headline
+    page.evaluate_script("(document.querySelector('h1') || {}).textContent")
+  rescue Selenium::WebDriver::Error::WebDriverError
+    nil # mid-navigation
+  end
+
   def mock_google(email:, uid: 'g-1')
     OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(
       provider: 'google_oauth2', uid: uid, info: { email: email, name: 'Tester' },
@@ -27,21 +51,21 @@ class LandingTest < ApplicationSystemTestCase
 
   test 'the language switch changes the page, sets the cookie and is remembered' do
     visit root_path(lang: 'pt')
-    assert_selector 'h1', text: 'Quatro meses, cinco países e o Mocó.'
+    assert_headline 'Quatro meses, cinco países e o Mocó.'
 
     within('header') { click_button 'EN' }
-    assert_selector 'h1', text: 'Four months, five countries and the Mocó.'
+    assert_headline 'Four months, five countries and the Mocó.'
     assert_equal 'en', locale_cookie
 
     visit root_path # a later visit, no param: the cookie decides
-    assert_selector 'h1', text: 'Four months, five countries and the Mocó.'
+    assert_headline 'Four months, five countries and the Mocó.'
 
     within('header') { click_button 'PT' }
-    assert_selector 'h1', text: 'Quatro meses, cinco países e o Mocó.'
+    assert_headline 'Quatro meses, cinco países e o Mocó.'
     assert_equal 'pt', locale_cookie
 
     within('header') { click_button 'ES' }
-    assert_selector 'h1', text: 'Cuatro meses, cinco países y el Mocó.'
+    assert_headline 'Cuatro meses, cinco países y el Mocó.'
     assert_equal 'es', locale_cookie
   end
 
