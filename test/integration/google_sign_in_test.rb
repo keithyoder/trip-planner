@@ -5,7 +5,7 @@ require 'test_helper'
 class GoogleSignInTest < ActionDispatch::IntegrationTest
   setup do
     OmniAuth.config.test_mode = true
-    @user = User.create!(email: 'me@example.com')
+    @user = User.create!(email: 'me@example.com', role: :admin)
   end
 
   teardown do
@@ -50,6 +50,16 @@ class GoogleSignInTest < ActionDispatch::IntegrationTest
     assert_redirected_to trips_path
     assert_equal 'g-123', @user.reload.uid
     get trips_path
+    assert_response :success
+  end
+
+  test 'a viewer signs in and lands on the read-only page' do
+    @user.viewer!
+    mock_google(email: 'me@example.com')
+    post user_google_oauth2_omniauth_authorize_path
+    follow_redirect!
+    assert_redirected_to follow_path
+    follow_redirect!
     assert_response :success
   end
 

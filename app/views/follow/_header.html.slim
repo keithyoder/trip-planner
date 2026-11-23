@@ -1,0 +1,9 @@
+/ Days / Live links and sign-out for every read-only page. current: :days marks the active link.
+- content_for :header_nav do
+  nav.nav aria-label=t('follow.nav_days')
+    = link_to t('follow.nav_days'), follow_path, class: 'nav-link', aria: { current: ('page' if current == :days) }
+    = link_to dashboard_path, class: 'nav-link', data: { turbo: false } do
+      span.live-dot aria-hidden="true"
+      = t('follow.nav_live')
+- content_for :header_actions do
+  = button_to t('follow.log_out'), destroy_user_session_path, method: :delete, class: 'logout', data: { turbo: false }

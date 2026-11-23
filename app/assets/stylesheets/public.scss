@@ -186,3 +186,119 @@ html,body{margin:0;background:#141414}
 .hero{grid-template-columns:200px minmax(0,1fr)}
 .map{grid-column:1 / -1;width:100%;max-width:340px;justify-self:center}
 }
+
+// ---- Follow pages (/follow): the read-only side, for signed-in viewers ----
+.hdr-in{flex-wrap:wrap}
+.nav{display:flex;align-items:center;gap:4px}
+.page a.nav-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;font-weight:600;font-size:15px;text-decoration:none;border-bottom:3px solid transparent}
+.page a.nav-link[aria-current="page"]{border-bottom-color:#ffc20e}
+.page a.nav-link:hover{text-decoration:underline}
+.live-dot{width:10px;height:10px;border-radius:9999px;background:#d7262e;box-shadow:0 0 0 2px #f4efe6;flex:none}
+.logout{font:600 14px/20px "Poppins",system-ui,sans-serif;min-height:44px;padding:0 4px;border:0;background:transparent;color:#f4efe6;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.main{padding-top:48px;padding-bottom:64px}
+.eyebrow{font-weight:600;font-size:13px;line-height:18px;color:#ffc20e;margin:0 0 12px}
+.h1{font-size:40px;line-height:44px;font-weight:700;margin:0}
+.h2{font-size:22px;line-height:28px;font-weight:700;margin:0}
+.card{background:#22211f;border:1px solid #3a3835;border-radius:10px}
+.title-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+.summary{display:grid;grid-template-columns:260px minmax(0,1fr);gap:32px;padding:24px;margin-bottom:48px;align-items:center}
+.summary .stats{margin:0;padding:0;border-top:0;flex-wrap:wrap}
+.summary .map{max-width:none;grid-column:auto}
+.now{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin-top:24px;padding-top:20px;border-top:1px solid #3a3835}
+.group{margin-bottom:36px}
+.group-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #3a3835}
+.days,.later{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.day{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:16px;min-height:68px;padding:10px 16px;background:#22211f;border:1px solid #3a3835;border-radius:10px}
+.page a.day{text-decoration:none}
+.page a.day:hover{border-color:#ffc20e}
+.day.is-today{border:2px solid #ffc20e;padding:9px 15px}
+.day.is-rest{background:transparent;border-style:dashed}
+.day-n{font-weight:700;font-size:24px;line-height:28px;text-align:center}
+.day-n small{display:block;font-size:11px;line-height:14px;font-weight:600;color:#bdb6aa;letter-spacing:.02em}
+.day-main{display:flex;flex-direction:column;min-width:0}
+.day-title{font-weight:600;font-size:16px;line-height:22px}
+.day-title.rest{font-weight:400;color:#bdb6aa}
+.day-sub{font-size:13px;line-height:20px;color:#bdb6aa}
+.chip{font:600 13px/18px "Poppins",system-ui,sans-serif;border-radius:9999px;padding:4px 12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chip-done{border:1px solid #bdb6aa;color:#f4efe6}
+.chip-today{background:#17803d;color:#ffffff}
+.chip-planned{border:1px dashed #bdb6aa;color:#bdb6aa}
+.chip svg{width:14px;height:14px}
+.later li{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:56px;padding:8px 16px;border:1px dashed #3a3835;border-radius:10px}
+@media (max-width:720px){
+  .nav{order:3;width:100%;border-top:1px solid #3a3835;justify-content:space-between}
+  .main{padding-top:28px;padding-bottom:40px}
+  .h1{font-size:32px;line-height:38px}
+  .summary{grid-template-columns:minmax(0,1fr);gap:20px;padding:16px;margin-bottom:36px}
+  .summary .map{max-width:260px;justify-self:center;width:100%}
+  .summary .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .day{grid-template-columns:44px minmax(0,1fr);gap:12px;padding:10px 12px}
+  .day.is-today{padding:9px 11px}
+  .day .chip{grid-column:2;justify-self:start;margin-top:2px}
+}
+
+// ---- Follow day pages ----
+.crumbs{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:28px}
+.page a.crumb{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-weight:600;font-size:15px}
+.daynav{display:flex;gap:8px}
+.page a.btn-ghost{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid #bdb6aa;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none}
+.page a.btn-ghost:hover{border-color:#ffc20e}
+.day-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+.day-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;align-items:start}
+.col{display:flex;flex-direction:column;gap:24px;min-width:0}
+.panel{padding:20px}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px}
+.panel-head h2{font-size:18px;line-height:24px;font-weight:700;margin:0}
+.plan-text{font-size:18px;line-height:30px;max-width:44em}
+.plan-text > :first-child{margin-top:0}
+.plan-text > :last-child{margin-bottom:0}
+.map-wrap{position:relative;border-radius:10px;overflow:hidden;background:#141414;border:1px solid #3a3835}
+.daymap-leaflet{height:340px;width:100%;background:#141414}
+.daymap-leaflet .leaflet-bar a{width:44px;height:44px;line-height:44px;background:#141414;color:#f4efe6;border-color:#bdb6aa}
+.follow-stop span{display:flex;width:28px;height:28px;border-radius:9999px;align-items:center;justify-content:center;background:#ffc20e;color:#141414;border:2px solid #141414;font:700 13px/1 "Poppins",system-ui,sans-serif}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;line-height:18px;font-weight:600;margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend svg{width:28px;height:8px}
+.elev{display:block;width:100%;height:auto;aspect-ratio:640/140}
+.stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stat-box{background:#141414;border:1px solid #3a3835;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column}
+.stat-box .stat-num{font-weight:700;font-size:28px;line-height:32px}
+.stat-box .stat-label{font-weight:600;font-size:13px;line-height:18px;color:#bdb6aa}
+.stat-box .stat-sub{font-size:13px;line-height:18px;color:#bdb6aa}
+.timeline{list-style:none;margin:0;padding:0}
+.tl{display:grid;grid-template-columns:64px 28px minmax(0,1fr);gap:12px;padding-bottom:20px;position:relative}
+.tl::before{content:"";position:absolute;left:89px;top:28px;bottom:0;width:2px;background:#3a3835}
+.tl:last-child::before{display:none}
+.tl-time{font-weight:600;font-size:14px;line-height:28px;text-align:right}
+.tl-dot{width:28px;height:28px;border-radius:9999px;background:#f4efe6;color:#141414;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.tl-body strong{display:block;font-weight:600;font-size:16px;line-height:28px}
+.tl-body span{display:block;font-size:13px;line-height:20px;color:#bdb6aa}
+.note{font-size:13px;line-height:20px;color:#bdb6aa;margin:12px 0 0}
+.note.first{margin:0 0 10px}
+.sunbar{display:block;width:100%;height:auto;aspect-ratio:320/70}
+.sun-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;margin:14px 0 0}
+.sun-list div{display:flex;flex-direction:column}
+.sun-list dt{font-size:13px;line-height:18px;color:#bdb6aa;font-weight:600}
+.sun-list dd{margin:0;font-weight:700;font-size:20px;line-height:26px}
+.wx-top{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.wx-big{font-weight:700;font-size:40px;line-height:44px}
+.wx-big small{display:block;font-size:13px;line-height:18px;font-weight:600;color:#bdb6aa}
+.wx-rain{font-weight:600}
+.curve-title{font-size:15px;line-height:22px;font-weight:600;margin:16px 0 0}
+.tcurve{display:block;width:100%;height:auto;aspect-ratio:320/150;margin-top:14px}
+.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.facts strong{display:block;font-weight:600}
+.facts span{display:block;font-size:13px;line-height:20px;color:#bdb6aa}
+@media (max-width:1000px){
+  .day-grid{grid-template-columns:minmax(0,1fr);gap:24px}
+}
+@media (max-width:720px){
+  .crumbs{margin-bottom:20px}
+  .daynav{width:100%}
+  .daynav a{flex:1;justify-content:center}
+  .panel{padding:16px}
+  .stat-box .stat-num{font-size:24px;line-height:28px}
+  .tl{grid-template-columns:56px 28px minmax(0,1fr);gap:10px}
+  .tl::before{left:79px}
+  .daymap-leaflet{height:280px}
+}

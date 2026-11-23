@@ -5,6 +5,9 @@ class ApplicationController < ActionController::Base
   # anonymous visitor to the login first.
   before_action :apply_lang_param
   before_action :authenticate_user!
+  # Fail closed: every controller is admin-only unless it opts out, so a new
+  # controller can never expose editing to viewers by being forgotten.
+  before_action :require_admin!
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :set_locale
 
@@ -31,7 +34,20 @@ class ApplicationController < ActionController::Base
   # Back to the page that required sign-in (Devise stores it when it sends an
   # anonymous visitor to /login), otherwise the trip list.
   def after_sign_in_path_for(resource)
-    stored_location_for(resource) || trips_path
+    stored_location_for(resource) || home_path_for(resource)
+  end
+
+  # Admins work in the planner; viewers only ever see the read-only pages.
+  def home_path_for(user)
+    user.admin? ? trips_path : follow_path
+  end
+  helper_method :home_path_for
+
+  def require_admin!
+    return if devise_controller? # Devise's own screens (the OAuth callback) run signed out
+    return if current_user&.admin?
+
+    redirect_to follow_path
   end
 
   private

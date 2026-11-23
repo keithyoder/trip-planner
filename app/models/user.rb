@@ -6,6 +6,9 @@
 class User < ApplicationRecord
   devise :omniauthable, :trackable, omniauth_providers: %i[google_oauth2]
 
+  # Explicit integer keys: these are stored, so they must never shift.
+  enum :role, { viewer: 0, admin: 1 }
+
   validates :email, presence: true, uniqueness: true
 
   # Matches on the stable Google uid once linked, falling back to email for the
