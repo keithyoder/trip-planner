@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  # Before authentication so a ?lang= link works even on pages that send an
+  # anonymous visitor to the login first.
+  before_action :apply_lang_param
   before_action :authenticate_user!
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :set_locale
@@ -25,11 +28,35 @@ class ApplicationController < ActionController::Base
     devise_parameter_sanitizer.permit(:account_update, keys: [:name])
   end
 
-  def after_sign_in_path_for(_resource)
-    trips_path
+  # Back to the page that required sign-in (Devise stores it when it sends an
+  # anonymous visitor to /login), otherwise the trip list.
+  def after_sign_in_path_for(resource)
+    stored_location_for(resource) || trips_path
   end
 
   private
+
+  # ?lang=pt|pt-BR|en|es stores the choice in the locale cookie, then redirects
+  # to the same URL without the param. Redirecting matters: otherwise a stale
+  # ?lang=en would keep overriding a later switch made with the language buttons,
+  # because those redirect back to the page they were clicked on.
+  def apply_lang_param
+    return unless request.get? && params.key?(:lang)
+
+    locale = lang_param_locale
+    cookies[:locale] = { value: locale.to_s, expires: 1.year.from_now } if locale
+    redirect_to path_without_lang_param
+  end
+
+  def path_without_lang_param
+    query = request.query_parameters.except('lang').to_query
+    [request.path, query.presence].compact.join('?')
+  end
+
+  def lang_param_locale
+    candidate = params[:lang].to_s.downcase.sub(/\Apt-br\z/, 'pt').to_sym
+    candidate if I18n.available_locales.include?(candidate)
+  end
 
   def locale_from_cookies
     locale = cookies[:locale]&.to_sym

@@ -53,6 +53,16 @@ class GoogleSignInTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test 'sign-in returns to the page that required it' do
+    get dashboard_path
+    assert_redirected_to new_user_session_path
+
+    mock_google(email: 'me@example.com')
+    post user_google_oauth2_omniauth_authorize_path
+    follow_redirect!
+    assert_redirected_to dashboard_path
+  end
+
   test 'unregistered Google account is rejected and not created' do
     mock_google(email: 'stranger@example.com')
     assert_no_difference 'User.count' do
