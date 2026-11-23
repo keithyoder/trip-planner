@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 ENV['RAILS_ENV'] ||= 'test'
+
+# Once the suite passes 50 tests Rails runs it in forked worker processes. On
+# macOS, libpq (bundled in the pg gem) segfaults when it opens a connection in a
+# forked child unless GSS encryption negotiation is off, and the parent then
+# waits forever on the dead worker. Harmless elsewhere.
+ENV['PGGSSENCMODE'] ||= 'disable'
+
 require_relative '../config/environment'
 require 'rails/test_help'
 
