@@ -1,0 +1,382 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "034d99881cd080e16b2ae2fdaa2f9dc742a57c9ca7ba0eb75a6c1cae83f6685e",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/telemetry_log.rb",
+      "line": 289,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "maximum(\"(data->>'#{field}')::float\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "TelemetryLog",
+        "method": "TelemetryLog.max_field"
+      },
+      "user_input": "field",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "08bc7aee40ac048e6b4236bfe397a0d585cc2e87d0bbdb17a848857ad72d5871",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/telemetry_log.rb",
+      "line": 27,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "where(\"(data->>'#{field}')::float < ?\", value)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "TelemetryLog",
+        "method": "field_less_than"
+      },
+      "user_input": "field",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "1cf08ec183ffc3bcf4378589c38a96e59307dd38e6c7f5c0711c4825c8ce9455",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/services/overpass.rb",
+      "line": 236,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "ActiveRecord::Base.connection.select_rows(\"SELECT idx, ST_Distance(\\n  #{\"'#{Route.with_bbox.find(route_id).geom.as_text}'::geography\"},\\n  CASE idx #{elements_with_geom.select do\n next true if valid_wkt?(item[:geom])\nRails.logger.warn(\"[Overpass] Skipping element with invalid WKT (#{item.dig(:element, :type)} #{item.dig(:element, :id)})\")\nfalse\n end.each_with_index.map do\n \"WHEN #{idx} THEN ST_MakeValid(ST_GeomFromText('#{item[:geom]}', 4326))::geography\"\n end.join(\" \")} END\\n) AS distance\\nFROM generate_series(0, #{(elements_with_geom.select do\n next true if valid_wkt?(item[:geom])\nRails.logger.warn(\"[Overpass] Skipping element with invalid WKT (#{item.dig(:element, :type)} #{item.dig(:element, :id)})\")\nfalse\n end.size - 1)}) AS idx\\n\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Overpass",
+        "method": "calculate_distances_batch"
+      },
+      "user_input": "Route.with_bbox.find(route_id)",
+      "confidence": "High",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "236e9b65f7fdf23f274bd24d48d30c1dd4a657eb4e8b5d8ebd92cbc7da667934",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/telemetry_log.rb",
+      "line": 285,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "average(\"(data->>'#{field}')::float\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "TelemetryLog",
+        "method": "TelemetryLog.avg_field"
+      },
+      "user_input": "field",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "2946487090c4983a922d12da14c9e4c8147e6129a69fa9faa9dcc790da9a5d43",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/services/routing/geometry_service.rb",
+      "line": 69,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "ActiveRecord::Base.connection.select_one(\"SELECT\\n  ST_Distance(\\n    geom::geography,\\n    ST_GeomFromText('#{GEO_FACTORY.point(lon, lat).as_text}', 4326)::geography\\n  ) AS distance,\\n  ST_LineLocatePoint(\\n    geom::geometry,\\n    ST_ClosestPoint(\\n      geom::geometry,\\n      ST_GeomFromText('#{GEO_FACTORY.point(lon, lat).as_text}', 4326)::geometry\\n    )\\n  ) AS fraction\\nFROM routes\\nWHERE id = #{route.id}\\n\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Routing::GeometryService",
+        "method": "closest_point_info"
+      },
+      "user_input": "GEO_FACTORY.point(lon, lat).as_text",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "35380ef234e4a21df0644925016f2bb740abfa33b320c1f5e86624ffe558f95f",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/services/claro_coverage_fetcher.rb",
+      "line": 92,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "ActiveRecord::Base.connection.select_all(\"WITH base AS (\\n  #{base_geom_sql}\\n),\\nsegments AS (\\n  SELECT (ST_Dump(ST_Transform(base.clipped, 3857))).geom AS seg\\n  FROM base\\n),\\nline_segments AS (\\n  SELECT seg FROM segments WHERE GeometryType(seg) = 'LINESTRING'\\n),\\nsampled AS (\\n  SELECT (ST_Dump(\\n    ST_LineInterpolatePoints(\\n      seg,\\n      LEAST(1.0, GREATEST(0.0001, #{spacing_meters} / ST_Length(seg)))\\n    )\\n  )).geom AS pt\\n  FROM line_segments\\n  WHERE ST_Length(seg) > 0\\n)\\nSELECT ST_AsGeoJSON(ST_Transform(pt, 4326)) AS pt FROM sampled\\n\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "ClaroCoverageFetcher",
+        "method": "points"
+      },
+      "user_input": "base_geom_sql",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "3f687ca85245b737809a88007bc6ba76fae8a1405e526c8e0e58e3ad0af82dae",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/network_coverage/feature.rb",
+      "line": 40,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "where(\"coverage_features.geom && (#{geom_sql})\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "NetworkCoverage::Feature",
+        "method": "overlapping"
+      },
+      "user_input": "geom_sql",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "3fbd7ef8814ccb31e7532e06da90d2c6e47b947dc1a1efbd2cbba9ce19bd7cf8",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/route.rb",
+      "line": 48,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "select(\"*\", \"ST_XMin(ST_Envelope(ST_Buffer(geom::geography, #{padding_meters})::geometry)) AS bbox_w\", \"ST_XMax(ST_Envelope(ST_Buffer(geom::geography, #{padding_meters})::geometry)) AS bbox_e\", \"ST_YMin(ST_Envelope(ST_Buffer(geom::geography, #{padding_meters})::geometry)) AS bbox_s\", \"ST_YMax(ST_Envelope(ST_Buffer(geom::geography, #{padding_meters})::geometry)) AS bbox_n\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Route",
+        "method": "with_bbox"
+      },
+      "user_input": "padding_meters",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "53e75ad008a9a34f62721b0d9355e818d8272c604491e05dc4862e5ff9e2f4a5",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/route.rb",
+      "line": 89,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "where(:trip_id => waypoint.trip_id).joins([:waypoint_start, :waypoint_end]).where(\"#{waypoint.sequence} BETWEEN waypoints.sequence AND waypoint_ends_routes.sequence\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Route",
+        "method": "Route.find_by_waypoint"
+      },
+      "user_input": "waypoint.sequence",
+      "confidence": "Weak",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "6e0456884aa61a2f8374f5a87468d1bf3f551f0ca1ac91f313e8c334cc54151e",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/boundary.rb",
+      "line": 26,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "where(\"ST_Within(ST_GeomFromText('#{waypoint.lonlat}', 4326), geom::geometry) AND level = #{level}\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Boundary",
+        "method": "waypoint"
+      },
+      "user_input": "waypoint.lonlat",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "707847d6046751f18577f6ddc4055f02d1dad142ce6723805253deaecf798f47",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/network_coverage/feature.rb",
+      "line": 95,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "connection.select_value(\"SELECT EXISTS (\\n  SELECT 1 FROM coverage_features\\n  WHERE trip_id = #{trip.id}\\n    AND provider = #{connection.quote(provider)}\\n    AND layer = #{connection.quote(layer)}\\n    AND ST_Intersects(geom::geometry, ST_SetSRID(ST_MakePoint(#{lon}, #{lat}), 4326))\\n)\\n\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "NetworkCoverage::Feature",
+        "method": "NetworkCoverage::Feature.covers_point?"
+      },
+      "user_input": "lon",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "9206bbaf2525b580065bd585a18647135bf2bc01b70ec3c30bebee004b8f0283",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/services/network_coverage/union.rb",
+      "line": 113,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "connection.select_value(\"SELECT ST_AsGeoJSON(\\n  #{Feature.clipped_union_sql(corridor_sql, :trip_id => trip_id, :provider => provider, :layer => layer)}\\n)\\n\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "NetworkCoverage::Union",
+        "method": "geojson_string"
+      },
+      "user_input": "Feature.clipped_union_sql(corridor_sql, :trip_id => trip_id, :provider => provider, :layer => layer)",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "ac0e02741f7223d2fa9b2945c66ef7faaa164b8ffceb1c455c385e07d3012fe5",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/telemetry_log.rb",
+      "line": 293,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "minimum(\"(data->>'#{field}')::float\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "TelemetryLog",
+        "method": "TelemetryLog.min_field"
+      },
+      "user_input": "field",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "c4034f30ca9dc765152c3ef6618f6b1e1e69a97e83c551a68d10ae2aaaab803e",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/telemetry_log.rb",
+      "line": 26,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "where(\"(data->>'#{field}')::float > ?\", value)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "TelemetryLog",
+        "method": "field_greater_than"
+      },
+      "user_input": "field",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "c7dd48e7f50eccb25a3f8d7e6f9d5a4277e03ccb1c830df0eddd12faba94e6bd",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/route.rb",
+      "line": 42,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "select([\"ST_Distance(geom, ST_Point(#{lng}, #{lat})) as distance\"])",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Route",
+        "method": "distance_to_point"
+      },
+      "user_input": "lng",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "Unmaintained Dependency",
+      "warning_code": 120,
+      "fingerprint": "d84924377155b41e094acae7404ec2e521629d86f97b0ff628e3d1b263f8101c",
+      "check_name": "EOLRails",
+      "message": "Support for Rails 8.0.5.2 ended on 2026-11-07",
+      "file": "Gemfile.lock",
+      "line": 343,
+      "link": "https://brakemanscanner.org/docs/warning_types/unmaintained_dependency/",
+      "code": null,
+      "render_path": null,
+      "location": null,
+      "user_input": null,
+      "confidence": "High",
+      "note": "Baselined 2026-11-23: Rails 8.0 reached end of support on 2026-11-07. Remove this entry when upgrading to Rails 8.1."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "e2ffe2d4b9160c6a22f455fa9ab19a4b6b8e8277146d5d22048ab336622b5cd1",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/telemetry_log.rb",
+      "line": 25,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "where(\"data->>'#{field}' = ?\", value.to_s)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "TelemetryLog",
+        "method": "with_field"
+      },
+      "user_input": "field",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "e69303d956fcf8f1c8b66603624167f4656949f8c007fcf2b28ce863ea55f80b",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/waypoint.rb",
+      "line": 75,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "where(\"id not in (SELECT waypoint_id FROM boundaries_waypoints JOIN boundaries ON boundaries_waypoints.boundary_id = boundaries.id WHERE level = #{level})\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Waypoint",
+        "method": "no_level"
+      },
+      "user_input": "level",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "ed9eec5e4558b0a58ee4a08dde09bd09290acd4a1207cdab0199f321030d21b0",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/network_coverage/feature.rb",
+      "line": 40,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "where(\"coverage_features.geom && (#{geom_sql})\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Feature",
+        "method": null
+      },
+      "user_input": "geom_sql",
+      "confidence": "Medium",
+      "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
+    }
+  ],
+  "updated": "2026-11-23",
+  "brakeman_version": "8.1.0"
+}
