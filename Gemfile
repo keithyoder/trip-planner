@@ -14,7 +14,7 @@ gem 'capistrano-passenger', require: false
 gem 'capistrano-rails', require: false
 gem 'capistrano-rbenv', require: false
 gem 'chartkick'
-gem 'connection_pool', '~> 2.4.0'
+gem 'connection_pool', '~> 3.0.3'
 gem 'cssbundling-rails'
 gem 'devise'
 gem 'dotenv-rails'
