@@ -82,7 +82,7 @@ Google sign-in, **invite-only**: a `User` row must already exist for the Google 
 - Everything on the landing page is computed on the server by `Landing::Overview`. **"Back home" is the trip's `completed` status**, set by hand; there is never a fixed return date. Days are counted in `America/Recife`. The trip shown is `Landing::CurrentTrip` (in progress, else next planned, else latest started).
 - Km driven comes from `trip_logs` since the trip's start date (`TripLog` has no `trip_id`); planned km is the sum of the real route legs.
 - The hero map is cached for a day (key includes today's date). `bin/rails landing:refresh_map` rebuilds it on demand. There is no Sidekiq here, so no job.
-- Follow-the-trip URLs are in `config/social_links.yml` (placeholders until the channels exist).
+- Follow-the-trip URLs are in `config/social_links.yml`.
 - Login is Google only, so the design's password fields and reset link do not exist. A failed sign-in shows the red alert with the reason from the `auth.*` messages. After sign-in the visitor returns to the page that sent them to `/login`.
 - The woodcut strip and logos are used as supplied. The strip's ground stops about 78px short of the right edge at 1440 (the SVG path under-runs), which is in the source art.
 - `docs/landing/` holds the design handoff and screens (reference only).
