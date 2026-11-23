@@ -1,0 +1,62 @@
+# Runs the Minitest suite against PostGIS. The image is pinned to the versions
+# production runs (PostgreSQL 16, PostGIS 3.4) so extension/SQL behavior
+# matches; local development uses PostgreSQL 17 + PostGIS 3.5.
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          # Throwaway container that only exists for this job, so trust auth
+          # (no password at all) instead of a credential-shaped string in the repo.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      RAILS_ENV: test
+      # Same variable .env.test sets locally. test_helper.rb refuses to run
+      # against a non-local host, and localhost is the service container.
+      DATABASE_URL: postgis://postgres@localhost:5432/trip_test
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # rgeo links against GEOS; libpq is for the pg gem.
+      - run: sudo apt-get update && sudo apt-get install -y libgeos-dev libpq-dev
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      # The test run triggers the esbuild/sass asset build (jsbundling and
+      # cssbundling hook into test:prepare), so node_modules must exist.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+
+      # schema:load (not migrate) on purpose: it proves schema.rb loads into an
+      # empty database, which is what a fresh checkout or new machine relies on.
+      - run: bin/rails db:create db:schema:load
+      - run: bin/rails test
