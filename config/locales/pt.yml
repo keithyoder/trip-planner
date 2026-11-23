@@ -467,9 +467,9 @@ pt:
       progress_label: "Quanto da viagem já fizemos"
     map:
       aria: "Mapa da América do Sul com a rota da viagem"
-      done: "Feito"
-      todo: "Falta"
-      note: "Atualizado todo dia"
+      done: "Percorrido"
+      todo: "A percorrer"
+      note: "Atualizado diariamente"
       now_before: "Partida: Pesqueira, PE"
       now_during: "Hoje: perto de %{place}"
       now_during_unplaced: "Hoje: em rota"
