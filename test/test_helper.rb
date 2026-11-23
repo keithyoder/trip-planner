@@ -11,6 +11,8 @@ ENV['PGGSSENCMODE'] ||= 'disable'
 require_relative '../config/environment'
 require 'rails/test_help'
 
+Dir[Rails.root.join('test/support/**/*.rb')].each { |f| require f }
+
 # Fixtures delete and reinsert rows, and DATABASE_URL (from dotenv or the shell)
 # overrides database.yml, so refuse to run against anything but a local database.
 test_host = ActiveRecord::Base.connection_db_config.host.to_s
