@@ -1,7 +1,6 @@
-# Where the landing page's "Follow the trip" buttons point. These are
-# placeholders until the channels exist: replace the four URLs.
+# Where the landing page's "Follow the trip" buttons point.
 shared:
-  substack: https://PLACEHOLDER-substack.example/aquinomeumoco
-  instagram: https://PLACEHOLDER-instagram.example/aquinomeumoco
-  youtube: https://PLACEHOLDER-youtube.example/@aquinomeumoco
-  facebook: https://PLACEHOLDER-facebook.example/aquinomeumoco
+  substack: https://substack.com/@aquinomeumoco
+  instagram: https://www.instagram.com/aquinomeumoco/
+  youtube: https://www.youtube.com/@aquinomeumoco
+  facebook: https://www.facebook.com/aquinomeumoco
