@@ -6,7 +6,7 @@ I'm the only developer and the only user. Prefer simple, direct solutions over g
 
 ## Stack
 
-- Ruby 3.4.12, Rails 7.2 (`load_defaults 7.0`), app module `RoadTrip`
+- Ruby 3.4.13, Rails 7.2 (`load_defaults 7.0`), app module `RoadTrip`
 - PostgreSQL + PostGIS (`activerecord-postgis-adapter`, RGeo, `rgeo-geojson`), Scenic views, Redis (cache + calibration state)
 - Slim templates, Bootstrap 5 + Bootstrap Icons, Stimulus + Turbo, Leaflet, `jsbundling-rails` / `cssbundling-rails`
 - ActionCable for the live dashboard; ActiveJob/Sidekiq for background jobs
