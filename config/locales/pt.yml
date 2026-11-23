@@ -444,10 +444,10 @@ pt:
     language: "Idioma"
     login: "Entrar"
     open_app: "Abrir a viagem"
-    meta_description: "Quatro meses de carro por cinco países, numa Pajero TR4 preta chamada Mocó."
+    meta_description: "Quatro meses de carro por cinco países, num Pajero TR4 preto chamado Mocó."
     dates: "Saída em %{date} · Pesqueira, PE"
     headline: "Quatro meses, cinco países e o Mocó."
-    description: "Vamos de carro pelo Brasil, Uruguai, Argentina, Chile e Peru, numa Pajero TR4 preta chamada Mocó. Saímos de Pesqueira, Pernambuco, em %{date} e voltamos em maio. O mocó é um pequeno roedor do sertão que sempre tem um esconderijo entre as pedras; nessa viagem, o nosso é o carro."
+    description: "Vamos de carro pelo Brasil, Uruguai, Argentina, Chile e Peru, num Pajero TR4 preto chamado Mocó. Saímos de Pesqueira, Pernambuco, em %{date} e voltamos em maio. O mocó é um pequeno roedor do sertão que sempre tem um esconderijo entre as pedras; nessa viagem, o nosso é o carro."
     patch_alt: "Logo da viagem Aqui no meu mocó: o mocó sobre as pedras, sob o Cruzeiro do Sul, com as bandeiras dos cinco países e 2027"
     counter:
       before:
@@ -479,7 +479,7 @@ pt:
       substack: "A história escrita"
       instagram: "Fotos do caminho"
       youtube: "Vídeos"
-      facebook: "Novidades para a família"
+      facebook: "Para a família"
       new_tab: "(abre em nova aba)"
     invited: "O diário da viagem e o rastreio ao vivo são só para convidados."
     invited_link: "Entrar"
