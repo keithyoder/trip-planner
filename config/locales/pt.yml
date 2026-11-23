@@ -429,6 +429,16 @@ pt:
     cobblestone: Calçamento
     ice: Gelo
     snow: Neve
+    compacted_gravel: Cascalho compactado
+    fine_gravel: Cascalho fino
+    metal: Metal
+    wood: Madeira
+    woodchips: Cavacos de madeira
+    grass_paver: Piso grama
+    sett: Paralelepípedos
+    hiking: Trilha
+    rail: Trem
+    bus: Ônibus
   auth:
     sign_in: "Entrar"
     lets_go: "Vamos lá"
@@ -457,11 +467,12 @@ pt:
     all_days: "Todos os dias"
     prev_day: "Dia anterior"
     next_day: "Próximo dia"
-    stat_km: "km planejados"
+    stat_km: "distância planejada"
     stat_time: "tempo estimado"
     stat_time_sub: "sem contar as paradas"
     stat_stops: "paradas planejadas"
     stat_altitude: "altitude máx."
+    peak_where: "a %{distance} da saída"
     plan_title: "O plano"
     route_planned: "Rota planejada"
     stops_planned: "Paradas planejadas"
@@ -501,7 +512,7 @@ pt:
     sun_note: "Dirigimos das ~%{from} às ~%{to}. Chegamos cerca de %{margin} antes do pôr do sol."
     sun_note_dark: "Chegamos depois de escurecer (o sol se põe às %{sunset})."
     border: "Divisa: %{name}"
-    border_val: "No km %{km}"
+    border_val: "Aos %{distance}"
     road_val: "%{surface} em %{percent}% do caminho"
     overnight_val: "%{place}"
     hours_min: "%{h} h %{m}"

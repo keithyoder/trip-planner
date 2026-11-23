@@ -101,6 +101,16 @@ class DayPlanPresenter
     !empty?(locale: locale.to_s)
   end
 
+  # Just the waypoint notes for a locale, joined into paragraphs (no header, meta
+  # line or surfaces table): the day's own words, for pages that supply their own
+  # framing.
+  #
+  # @param locale [String]
+  # @return [String, nil]
+  def notes_markdown(locale: @locale)
+    sections(locale: locale.to_s).join("\n\n").presence
+  end
+
   # Returns the list of locales for which this route has content.
   # Checks all three supported locales against the already-loaded waypoints —
   # no additional queries fired.
@@ -171,7 +181,7 @@ class DayPlanPresenter
     abbr = t('units.distance_abbr', locale: locale)
 
     rows = surfaces.map do |s|
-      name    = s.surface_type.to_s.tr('_', ' ').capitalize
+      name    = I18n.t("surface_types.#{s.surface_type}", locale: locale, default: s.surface_type.to_s.tr('_', ' ').capitalize)
       value   = s.distance.to_units(unit).value.round(0)
       percent = s.percent.round
       "#{name} · #{value} #{abbr} · #{percent}%"

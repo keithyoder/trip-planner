@@ -10,8 +10,9 @@ module Follow
   # visitor's page load must not wait on, or trigger, a third-party request.
   # Without cached weather the weather blocks are simply absent.
   class PlannedDay
-    Stop = Struct.new(:number, :time, :name, :type, :km, :delay_minutes, :temp_c, :lat, :lon, keyword_init: true)
+    Stop = Struct.new(:number, :time, :name, :type, :meters, :delay_minutes, :temp_c, :lat, :lon, keyword_init: true)
     Sun = Struct.new(:dawn, :sunrise, :noon, :sunset, :dusk, :daylight, :driving_from, :driving_to, keyword_init: true)
+    Peak = Struct.new(:altitude_m, :meters, :places, keyword_init: true)
     Weather = Struct.new(:max_c, :min_c, :rain_percent, :hourly, keyword_init: true)
 
     # Stop types that are not worth listing: routing points only shape the line.
@@ -35,19 +36,28 @@ module Follow
     def date = sequence.date
     def from = route.waypoint_start.name
     def to = route.waypoint_end.name
-    def km = (sequence.distance.to_f / 1000).round
+    def meters = sequence.distance.to_f
 
     # Driving time, excluding stops, rounded to the minute by RouteSequence.
     def driving_minutes = (sequence.driving_duration.to_i / 60.0).round
 
+    # The plan is what we wrote in the waypoint notes (the same text the admin
+    # route page shows), falling back to the generated narrative. Notes first: they
+    # are plain prose, whereas the generated text carries its own headings.
+    # Tries the visitor's language, then the app default, so a plan written in
+    # one language still shows.
     def day_plan_html(locale)
-      MarkdownRenderer.render(route.day_plan&.dig(locale.to_s)).html_safe # rubocop:disable Rails/OutputSafety -- our own generated text
+      markdown = [locale.to_s, I18n.default_locale.to_s].uniq.each do |code|
+        text = plan_notes(code) || route.day_plan&.dig(code).presence
+        break text if text
+      end
+      markdown.is_a?(String) ? MarkdownRenderer.render(markdown).html_safe : '' # rubocop:disable Rails/OutputSafety -- our own text
     end
 
     def stops
       @stops ||= timeline.reject { |entry| entry[:hidden] }.each_with_index.map do |entry, index|
         Stop.new(number: index + 1, time: entry[:arrival], name: entry[:waypoint].name, type: entry[:type],
-                 km: entry[:km], delay_minutes: entry[:waypoint].delay.to_i / 60, temp_c: temp_at(entry),
+                 meters: entry[:metres], delay_minutes: entry[:waypoint].delay.to_i / 60, temp_c: temp_at(entry),
                  lat: entry[:waypoint].lonlat.y.round(5), lon: entry[:waypoint].lonlat.x.round(5))
       end
     end
@@ -69,7 +79,16 @@ module Follow
       end
     end
 
-    def max_altitude_m = elevation_profile.map(&:last).max
+    def max_altitude_m = peak&.altitude_m
+
+    # The highest point of the day: how far from the start, and which region and
+    # country it is in. Measured on the full-resolution line rather than the 200 m
+    # profile, so a narrow pass is not missed.
+    def peak
+      return @peak if defined?(@peak)
+
+      @peak = build_peak
+    end
 
     # Leaflet wants [lat, lon]; thinned so the page does not carry every point.
     def line
@@ -104,6 +123,10 @@ module Follow
 
     private
 
+    def plan_notes(locale)
+      DayPlanPresenter.new(route, locale: locale).notes_markdown
+    end
+
     def waypoints
       @waypoints ||= begin
         list = route.waypoints.to_a
@@ -129,13 +152,13 @@ module Follow
       clock += segment['duration'].to_f if segment
       metres += segment['distance'].to_f if segment
       type = if index.zero? then 'departure' elsif index == waypoints.size - 1 then 'arrival' else waypoint.waypoint_type end
-      { waypoint: waypoint, type: type, arrival: clock, km: (metres / 1000).round, clock: clock + waypoint.delay.to_i,
+      { waypoint: waypoint, type: type, arrival: clock, clock: clock + waypoint.delay.to_i,
         metres: metres, hidden: HIDDEN_TYPES.include?(type) }
     end
 
     def temp_at(entry)
       curve = curve_for(entry[:waypoint])
-      curve&.at((entry[:arrival] / 3600).floor % 24)&.round
+      curve&.at((entry[:arrival] / 3600).floor % 24)
     end
 
     def estimate_for(waypoint)
@@ -156,6 +179,24 @@ module Follow
       SolarPosition.new(date, waypoint.lonlat, waypoint.timezone || SolarPosition::DEFAULT_TIMEZONE)
     end
 
+    def build_peak
+      walked = 0.0
+      previous = nil
+      best = nil
+      route.geom.points.each do |point|
+        walked += previous.distance(point) if previous
+        previous = point
+        best = [point, walked] if best.nil? || point.z.to_f > best[0].z.to_f
+      end
+      return unless best
+
+      point, metres = best
+      # Region (level 4) then country (level 2); without_geom because boundaries
+      # carry heavy multipolygons we only need the names of.
+      places = Boundary.without_geom.containing_point(point.y, point.x).order(level: :desc).map(&:name)
+      Peak.new(altitude_m: point.z.to_f.round, meters: metres, places: places)
+    end
+
     def build_sun
       first = waypoints.first
       last = waypoints.last
@@ -174,7 +215,7 @@ module Follow
       return unless result
 
       curve = curve_for(last)
-      Weather.new(max_c: result.temp_max_c&.round, min_c: result.temp_min_c&.round,
+      Weather.new(max_c: result.temp_max_c, min_c: result.temp_min_c,
                   rain_percent: result.precip_probability&.round, hourly: curve&.all)
     end
   end
