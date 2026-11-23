@@ -468,7 +468,7 @@ pt:
     map:
       aria: "Mapa da América do Sul com a rota da viagem"
       done: "Percorrido"
-      todo: "A percorrer"
+      todo: "Planejado"
       note: "Atualizado diariamente"
       now_before: "Partida: Pesqueira, PE"
       now_during: "Hoje: perto de %{place}"
