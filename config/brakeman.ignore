@@ -301,22 +301,6 @@
       "note": "Baselined 2026-11-23 so CI only flags new findings; not individually reviewed. Interpolated values are internal ids/geometry, not request params."
     },
     {
-      "warning_type": "Unmaintained Dependency",
-      "warning_code": 120,
-      "fingerprint": "d84924377155b41e094acae7404ec2e521629d86f97b0ff628e3d1b263f8101c",
-      "check_name": "EOLRails",
-      "message": "Support for Rails 8.0.5.2 ended on 2026-11-07",
-      "file": "Gemfile.lock",
-      "line": 343,
-      "link": "https://brakemanscanner.org/docs/warning_types/unmaintained_dependency/",
-      "code": null,
-      "render_path": null,
-      "location": null,
-      "user_input": null,
-      "confidence": "High",
-      "note": "Baselined 2026-11-23: Rails 8.0 reached end of support on 2026-11-07. Remove this entry when upgrading to Rails 8.1."
-    },
-    {
       "warning_type": "SQL Injection",
       "warning_code": 0,
       "fingerprint": "e2ffe2d4b9160c6a22f455fa9ab19a4b6b8e8277146d5d22048ab336622b5cd1",
