@@ -20,15 +20,16 @@
 # while line items retain their original currency for display.
 # Labels and translations are handled in the view layer.
 #
-class Budget
+class Budget # rubocop:disable Metrics/ClassLength
   # A single budget line item.
   # `amount` is in the waypoint's local currency.
   # The view is responsible for translation and formatting.
   BudgetItem = Data.define(
-    :waypoint,   # Waypoint — the source waypoint
-    :category,   # Symbol — one of the CATEGORY_MAP values or :other
-    :amount,     # Money — in the waypoint's original local currency
-    :country     # String — country name for context
+    :waypoint,   # Waypoint or nil — nil for trip-level expenses
+    :category,
+    :amount,
+    :country,    # nil for trip-level expenses (not country-specific)
+    :description # String — display label (waypoint name or expense name)
   )
 
   # Maps waypoint_type -> budget category.
@@ -48,6 +49,15 @@ class Budget
     laundry: :laundry
   }.freeze
 
+  # Trip-level expense categories map directly to their own budget category names
+  EXPENSE_CATEGORY_MAP = {
+    connectivity: :connectivity,
+    insurance: :insurance,
+    documents: :documents,
+    vehicle: :vehicle,
+    other: :other
+  }.freeze
+
   attr_reader :trip, :currency
 
   # @param trip [Trip] The trip to budget
@@ -61,7 +71,7 @@ class Budget
   #
   # @return [Array<BudgetItem>]
   def line_items
-    @line_items ||= build_line_items
+    @line_items ||= build_line_items + build_expense_items
   end
 
   # Total trip cost in target currency
@@ -128,6 +138,14 @@ class Budget
     by_category.fetch(:laundry, Money.new(0, currency))
   end
 
+  def connectivity_cost
+    by_category.fetch(:connectivity, Money.new(0, currency))
+  end
+
+  def insurance_cost
+    by_category.fetch(:insurance, Money.new(0, currency))
+  end
+
   # Percentage of total budget per category
   #
   # @return [Hash<Symbol, Float>]
@@ -145,8 +163,6 @@ class Budget
   def build_line_items
     costed_waypoints.filter_map do |waypoint|
       category = CATEGORY_MAP[waypoint.waypoint_type&.to_sym]
-
-      # Skip types explicitly mapped to nil (no budget cost)
       next if CATEGORY_MAP.key?(waypoint.waypoint_type&.to_sym) && category.nil?
 
       category ||= :other
@@ -163,7 +179,20 @@ class Budget
         waypoint: waypoint,
         category: category,
         amount: amount,
-        country: country_for(waypoint) || 'Unknown'
+        country: country_for(waypoint) || 'Unknown',
+        description: waypoint.name
+      )
+    end
+  end
+
+  def build_expense_items
+    trip.trip_expenses.map do |expense|
+      BudgetItem.new(
+        waypoint: nil,
+        category: EXPENSE_CATEGORY_MAP.fetch(expense.category.to_sym, :other),
+        amount: expense.money,
+        country: nil,
+        description: expense.name
       )
     end
   end
