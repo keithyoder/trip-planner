@@ -2,7 +2,10 @@ header.hdr
   .wrap.hdr-in
     = link_to root_path, class: 'brand' do
       = image_tag 'landing/avatar-128.png', class: 'mark', alt: '', width: 40, height: 40
-      span = t('landing.brand')
+      / The name is the carved wordmark; the text stays for screen readers and for
+      / screens too narrow to keep the wordmark at its 28px minimum height.
+      = image_tag 'landing/wordmark-xilo-756.png', class: 'wordmark', alt: '', width: 189, height: 36
+      span.brand-text = t('landing.brand')
     = content_for(:header_nav)
     .hdr-actions
       = render 'public/language_switch'
