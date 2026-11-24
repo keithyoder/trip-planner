@@ -206,8 +206,10 @@ html,body{margin:0;background:#141414}
 .summary .map{max-width:none;grid-column:auto}
 .now{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin-top:24px;padding-top:20px;border-top:1px solid #3a3835}
 .group{margin-bottom:36px}
-.group-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #3a3835}
-.days,.later{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pager{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin:8px 0;border:1px dashed #3a3835;border-radius:10px;color:#f4efe6;font-weight:600;text-decoration:none}
+.pager:hover{border-color:#ffc20e;color:#ffc20e}
+.pager svg{width:20px;height:20px}
+.days{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .day{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:16px;min-height:68px;padding:10px 16px;background:#22211f;border:1px solid #3a3835;border-radius:10px}
 .page a.day{text-decoration:none}
 .page a.day:hover{border-color:#ffc20e}
@@ -220,11 +222,12 @@ html,body{margin:0;background:#141414}
 .day-title.rest{font-weight:400;color:#bdb6aa}
 .day-sub{font-size:13px;line-height:20px;color:#bdb6aa}
 .chip{font:600 13px/18px "Poppins",system-ui,sans-serif;border-radius:9999px;padding:4px 12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-.chip-done{border:1px solid #bdb6aa;color:#f4efe6}
+.chip-done{border:1px solid #17803d;color:#f4efe6}
+.chip-done svg{color:#17803d}
+.day-badge{display:inline-block;background:#17803d;color:#ffffff;border-radius:10px;padding:0 12px}
 .chip-today{background:#17803d;color:#ffffff}
 .chip-planned{border:1px dashed #bdb6aa;color:#bdb6aa}
 .chip svg{width:14px;height:14px}
-.later li{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:56px;padding:8px 16px;border:1px dashed #3a3835;border-radius:10px}
 @media (max-width:720px){
   .nav{order:3;width:100%;border-top:1px solid #3a3835;justify-content:space-between}
   .main{padding-top:28px;padding-bottom:40px}
@@ -250,12 +253,25 @@ html,body{margin:0;background:#141414}
 .panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px}
 .panel-head h2{font-size:18px;line-height:24px;font-weight:700;margin:0}
 .plan-text{font-size:18px;line-height:30px;max-width:44em}
+.plan-text.is-clamped{max-height:calc(var(--clamp-lines) * 30px);overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
+.plan-toggle{margin-top:12px;padding:8px 0;min-height:44px;background:none;border:0;color:#ffc20e;font:inherit;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .plan-text > :first-child{margin-top:0}
 .plan-text > :last-child{margin-bottom:0}
 .map-wrap{position:relative;border-radius:10px;overflow:hidden;background:#141414;border:1px solid #3a3835}
 .daymap-leaflet{height:340px;width:100%;background:#141414}
-.daymap-leaflet .leaflet-bar a{width:44px;height:44px;line-height:44px;background:#141414;color:#f4efe6;border-color:#bdb6aa}
-.follow-stop span{display:flex;width:28px;height:28px;border-radius:9999px;align-items:center;justify-content:center;background:#ffc20e;color:#141414;border:2px solid #141414;font:700 13px/1 "Poppins",system-ui,sans-serif}
+// Leaflet's own rule is .leaflet-container .leaflet-control-attribution (injected from JS, so later in
+// the cascade): matching its specificity is not enough, hence the extra .page.
+.page .leaflet-container .leaflet-control-attribution{background:#141414;color:#f4efe6;font:400 11px/16px "Poppins",system-ui,sans-serif;padding:2px 8px;border-radius:6px 0 0 0}
+.page .leaflet-container .leaflet-control-attribution a{color:#f4efe6;text-decoration:underline;text-underline-offset:2px}
+.page .leaflet-container .leaflet-control-attribution a:hover{color:#ffc20e}
+// The + and − are drawn as bars instead of text: a font's plus sits above or below the middle of the
+// box depending on the font, so no line-height centres it reliably. The text stays for screen readers.
+.page .daymap-leaflet .leaflet-bar a{position:relative;width:44px;height:44px;line-height:44px;font-size:0;text-indent:0;text-decoration:none;background:#141414;color:#f4efe6;border-color:#bdb6aa}
+.page .daymap-leaflet .leaflet-bar a::before,.page .daymap-leaflet .leaflet-bar a.leaflet-control-zoom-in::after{content:"";position:absolute;left:50%;top:50%;background:currentColor;border-radius:1px;transform:translate(-50%,-50%)}
+.page .daymap-leaflet .leaflet-bar a::before{width:16px;height:2px}
+.page .daymap-leaflet .leaflet-bar a.leaflet-control-zoom-in::after{width:2px;height:16px}
+.follow-stop span{display:flex;width:28px;height:28px;border-radius:9999px;align-items:center;justify-content:center;background:#1a4d9c;color:#ffffff;border:2px solid #f4efe6;font:700 13px/1 "Poppins",system-ui,sans-serif}
+.chart-label{fill:#ffc20e;stroke:#141414;stroke-width:4px;stroke-linejoin:round;paint-order:stroke}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;line-height:18px;font-weight:600;margin-top:10px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend svg{width:28px;height:8px}
@@ -270,7 +286,7 @@ html,body{margin:0;background:#141414}
 .tl::before{content:"";position:absolute;left:89px;top:28px;bottom:0;width:2px;background:#3a3835}
 .tl:last-child::before{display:none}
 .tl-time{font-weight:600;font-size:14px;line-height:28px;text-align:right}
-.tl-dot{width:28px;height:28px;border-radius:9999px;background:#f4efe6;color:#141414;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.tl-dot{width:28px;height:28px;border-radius:9999px;background:#1a4d9c;color:#ffffff;border:2px solid #f4efe6;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .tl-body strong{display:block;font-weight:600;font-size:16px;line-height:28px}
 .tl-body span{display:block;font-size:13px;line-height:20px;color:#bdb6aa}
 .note{font-size:13px;line-height:20px;color:#bdb6aa;margin:12px 0 0}

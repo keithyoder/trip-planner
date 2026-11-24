@@ -13,7 +13,7 @@ module Follow
     Stop = Struct.new(:number, :time, :name, :type, :meters, :delay_minutes, :temp_c, :lat, :lon, keyword_init: true)
     Sun = Struct.new(:dawn, :sunrise, :noon, :sunset, :dusk, :daylight, :driving_from, :driving_to, keyword_init: true)
     Peak = Struct.new(:altitude_m, :meters, :places, keyword_init: true)
-    Weather = Struct.new(:max_c, :min_c, :rain_percent, :hourly, keyword_init: true)
+    Weather = Struct.new(:max_c, :min_c, :rain_percent, :hourly, :band, keyword_init: true)
 
     # Stop types that are not worth listing: routing points only shape the line.
     HIDDEN_TYPES = %w[routing toll_booth].freeze
@@ -25,7 +25,9 @@ module Follow
     def initialize(route)
       @route = route
       @sequence = route.route_sequence
-      raise ArgumentError, "route #{route.id} has no date: the trip's start_time chain is broken" unless @sequence&.start_time_sequence
+      unless @sequence&.start_time_sequence
+        raise ArgumentError, "route #{route.id} has no date: the trip's start_time chain is broken"
+      end
 
       raise ArgumentError, "route #{route.id} has no calculated segments yet" if route.segments.blank?
 
@@ -51,7 +53,8 @@ module Follow
         text = plan_notes(code) || route.day_plan&.dig(code).presence
         break text if text
       end
-      markdown.is_a?(String) ? MarkdownRenderer.render(markdown).html_safe : '' # rubocop:disable Rails/OutputSafety -- our own text
+      # html_safe is fine here: the markdown is our own notes, rendered by MarkdownRenderer.
+      markdown.is_a?(String) ? MarkdownRenderer.render(markdown).html_safe : ''
     end
 
     def stops
@@ -112,12 +115,17 @@ module Follow
     def borders = timeline.select { |e| e[:type] == 'border_crossing' }
     def surfaces = route.significant_surfaces.first(3)
 
-    # The previous/next day: neighbours by sequence within the same trip.
+    # The previous/next day as [route_id, day_number] (nil at the ends): neighbours
+    # by sequence within the same trip. The number is for the link label, and can
+    # skip one when a rest day sits between the two.
     def neighbours
       @neighbours ||= begin
-        ids = route.trip.route_sequences.order(:sequence).pluck(:route_id)
-        idx = ids.index(route.id)
-        [idx&.positive? ? ids[idx - 1] : nil, idx ? ids[idx + 1] : nil]
+        pairs = route.trip.route_sequences.order(:sequence).map do |rs|
+          rs.trip = route.trip
+          [rs.route_id, rs.day]
+        end
+        idx = pairs.index { |id, _| id == route.id }
+        [idx&.positive? ? pairs[idx - 1] : nil, idx ? pairs[idx + 1] : nil]
       end
     end
 
@@ -143,7 +151,12 @@ module Follow
       @timeline ||= begin
         clock = route.start_time.to_f % 86_400
         metres = 0.0
-        waypoints.each_with_index.map { |wp, i| entry_for(wp, i, clock, metres).tap { |e| clock, metres = e.values_at(:clock, :metres) } }
+        waypoints.each_with_index.map do |wp, i|
+          entry = entry_for(wp, i, clock, metres)
+          clock = entry[:clock]
+          metres = entry[:metres]
+          entry
+        end
       end
     end
 
@@ -151,7 +164,13 @@ module Follow
       segment = index.positive? ? route.segments[index - 1] : nil
       clock += segment['duration'].to_f if segment
       metres += segment['distance'].to_f if segment
-      type = if index.zero? then 'departure' elsif index == waypoints.size - 1 then 'arrival' else waypoint.waypoint_type end
+      type = if index.zero?
+               'departure'
+             elsif index == waypoints.size - 1
+               'arrival'
+             else
+               waypoint.waypoint_type
+             end
       { waypoint: waypoint, type: type, arrival: clock, clock: clock + waypoint.delay.to_i,
         metres: metres, hidden: HIDDEN_TYPES.include?(type) }
     end
@@ -164,7 +183,8 @@ module Follow
     def estimate_for(waypoint)
       return unless waypoint.lonlat && date
 
-      WeatherEstimate.for_location(waypoint.lonlat.y.to_f.round(2), waypoint.lonlat.x.to_f.round(2), date)&.to_weather_result
+      WeatherEstimate.for_location(waypoint.lonlat.y.to_f.round(2), waypoint.lonlat.x.to_f.round(2),
+                                   date)&.to_weather_result
     end
 
     def curve_for(waypoint)
@@ -209,14 +229,85 @@ module Follow
               driving_from: timeline.first[:arrival], driving_to: timeline.last[:arrival])
     end
 
+    # The day's weather is one curve that follows the car from waypoint to
+    # waypoint. Each waypoint with a cached estimate has its own hourly curve;
+    # while the car is at a waypoint the chart follows that curve, and between
+    # two waypoints it fades from one curve to the next in proportion to the
+    # driving time elapsed. Nothing is looked up between waypoints: the places
+    # on the curve are exactly the places we have estimates for, so a day that
+    # drops from the altiplano to the coast shows the change instead of the
+    # arrival point's weather all day.
     def build_weather
-      last = waypoints.last
-      result = estimate_for(last)
-      return unless result
+      stays = weather_stays
+      return if stays.empty?
 
-      curve = curve_for(last)
-      Weather.new(max_c: result.temp_max_c, min_c: result.temp_min_c,
-                  rain_percent: result.precip_probability&.round, hourly: curve&.all)
+      hourly = blend(stays) { |stay, hour| stay[:curve].at(hour) }
+      band = band_curves(stays)&.then do |bounds|
+        bounds.transform_values { |key| blend(stays) { |stay, hour| stay[:bounds][key].at(hour) } }
+      end
+      rain = stays.filter_map { |stay| stay[:result].precip_probability }.max
+      Weather.new(max_c: hourly.values.max, min_c: hourly.values.min, rain_percent: rain&.round, hourly: hourly,
+                  band: band)
+    end
+
+    # The timeline's waypoints that have weather, with when the car arrives and leaves.
+    def weather_stays
+      timeline.filter_map do |entry|
+        result = estimate_for(entry[:waypoint])
+        next unless result
+
+        { arrival: entry[:arrival], departure: entry[:clock], result: result, curve: curve_for(entry[:waypoint]),
+          waypoint: entry[:waypoint] }
+      end
+    end
+
+    # One value per hour of the day from the stays' own curves. The block returns
+    # a stay's value at an hour.
+    def blend(stays)
+      (0..23).to_h do |hour|
+        seconds = hour * 3600
+        [hour, blended_value(stays, seconds) { |stay| yield(stay, hour) }]
+      end
+    end
+
+    def blended_value(stays, seconds)
+      stays.each_cons(2) do |before, after|
+        return yield(before) if seconds <= before[:departure]
+        next if seconds >= after[:arrival]
+
+        share = (seconds - before[:departure]) / (after[:arrival] - before[:departure])
+        return (yield(before) * (1 - share)) + (yield(after) * share)
+      end
+      seconds >= stays.last[:arrival] ? yield(stays.last) : yield(stays.first)
+    end
+
+    # The expected range around the curve, as on the admin waypoint chart: one
+    # standard deviation either side of each climate normal's daily min and max.
+    # Only climate normals carry the deviations, so a day with any waypoint
+    # lacking them (a forecast) gets no band rather than a half-true one.
+    # Returns { warm: :warm, cold: :cold } after attaching the bound curves to
+    # each stay, or nil.
+    def band_curves(stays)
+      return unless stays.all? { |stay| band_possible?(stay[:result]) }
+
+      stays.each do |stay|
+        stay[:bounds] = { warm: bound_curve(stay, 1), cold: bound_curve(stay, -1) }
+      end
+      { warm: :warm, cold: :cold }
+    end
+
+    def band_possible?(result)
+      result.climate_normal? && result.temp_min_std.present? && result.temp_max_std.present?
+    end
+
+    def bound_curve(stay, factor)
+      result = stay[:result]
+      shifted = ::Weather::Result.new(
+        temp_min: Units::Temperature.new(result.temp_min_c + (factor * result.temp_min_std), units: :celsius),
+        temp_max: Units::Temperature.new(result.temp_max_c + (factor * result.temp_max_std), units: :celsius),
+        source: :climate_normal
+      )
+      ::Weather::HourlyTemperature.new(shifted, solar_for(stay[:waypoint]))
     end
   end
 end

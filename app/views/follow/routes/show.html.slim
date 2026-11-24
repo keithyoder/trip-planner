@@ -3,7 +3,7 @@
 - content_for :scripts do
   = javascript_include_tag 'application', defer: true
 = render 'follow/header', current: :days
-- prev_id, next_id = @day.neighbours
+- prev_day, next_day = @day.neighbours
 
 main.main.wrap
   .crumbs
@@ -12,21 +12,23 @@ main.main.wrap
         path d="M15 6l-6 6 6 6"
       = t('follow.all_days')
     .daynav
-      - if prev_id
-        = link_to follow_route_path(prev_id), class: 'btn-ghost', aria: { label: t('follow.prev_day') } do
+      - if prev_day
+        = link_to follow_route_path(prev_day[0]), class: 'btn-ghost', aria: { label: t('follow.prev_day') } do
           svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
             path d="M15 6l-6 6 6 6"
-          = t('follow.day')
-      - if next_id
-        = link_to follow_route_path(next_id), class: 'btn-ghost', aria: { label: t('follow.next_day') } do
-          = t('follow.day')
+          = "#{t('follow.day')} #{prev_day[1]}"
+      - if next_day
+        = link_to follow_route_path(next_day[0]), class: 'btn-ghost', aria: { label: t('follow.next_day') } do
+          = "#{t('follow.day')} #{next_day[1]}"
           svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
             path d="M9 6l6 6-6 6"
 
   .day-head
     div
       p.eyebrow = l(@day.date, format: :landing)
-      h1.h1 = "#{t('follow.day')} #{@day.number} · #{@day.from} → #{@day.to}"
+      h1.h1
+        span.day-badge = "#{t('follow.day')} #{@day.number}"
+        = " · #{@day.from} → #{@day.to}"
     span.chip.chip-planned = t('follow.planned')
 
   .day-grid
@@ -36,7 +38,9 @@ main.main.wrap
         section.card.panel aria-labelledby="plan-h"
           .panel-head
             h2#plan-h = t('follow.plan_title')
-          .plan-text = plan
+          div data-controller="clamp" data-clamp-more-value=t('follow.see_more') data-clamp-less-value=t('follow.see_less')
+            .plan-text data-clamp-target="body" = plan
+            button.plan-toggle type="button" hidden=true data-clamp-target="button" data-action="clamp#toggle" aria-expanded="false" = t('follow.see_more')
 
       section.card.panel aria-labelledby="map-h"
         .panel-head
@@ -50,7 +54,7 @@ main.main.wrap
             = t('follow.leg_planned')
           span
             svg viewBox="0 0 28 8" aria-hidden="true"
-              circle cx="14" cy="4" r="4" fill="#ffc20e"
+              circle cx="14" cy="4" r="3.2" fill="#1a4d9c" stroke="#f4efe6" stroke-width="1.4"
             = t('follow.leg_stops')
 
       - paths = follow_elevation_paths(@day.elevation_profile)
@@ -61,7 +65,15 @@ main.main.wrap
             span.small.muted = "#{follow_elevation(paths[:low], abbr: false)}–#{follow_elevation(paths[:high])}"
           svg.elev viewBox="0 0 640 140" role="img" aria-label=t('follow.altitude')
             polygon points=paths[:area] fill="#3a3835"
+            - paths[:grid].each do |g|
+              line x1="10" y1=g[:y] x2="630" y2=g[:y] stroke="#bdb6aa" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="3 4"
             polyline points=paths[:line] fill="none" stroke="#f4efe6" stroke-width="2.5" stroke-linejoin="round"
+            - follow_elevation_markers(paths, @day.stops, @day.meters).each do |marker|
+              circle cx=marker[:x] cy=marker[:y] r="10" fill="#1a4d9c" stroke="#f4efe6" stroke-width="2"
+              text x=marker[:x] y=(marker[:y] + 4).round(1) text-anchor="middle" font-family="Poppins, system-ui, sans-serif" font-size="11" font-weight="700" fill="#ffffff" = marker[:number]
+            / Labels last so nothing in the chart covers them.
+            - paths[:grid].each do |g|
+              text x="12" y=(g[:y] - 4).round(1) font-family="Poppins, system-ui, sans-serif" font-size="11" font-weight="600" class="chart-label" = g[:label]
 
       section.card.panel aria-labelledby="log-h"
         .panel-head
@@ -107,8 +119,8 @@ main.main.wrap
           svg.sunbar viewBox="0 0 320 70" role="img" aria-label=t('follow.sun_aria')
             rect x="16" y="10" width="288" height="18" rx="9" fill="#141414" stroke="#3a3835"
             - dawn_x, rise_x, set_x, dusk_x = [sun.dawn, sun.sunrise, sun.sunset, sun.dusk].map { |time| follow_time_x(time) }
-            rect x=dawn_x y="10" width=(rise_x - dawn_x).round(1) height="18" fill="#bdb6aa"
-            rect x=set_x y="10" width=(dusk_x - set_x).round(1) height="18" fill="#bdb6aa"
+            rect x=dawn_x y="10" width=(rise_x - dawn_x).round(1) height="18" fill="#1a4d9c"
+            rect x=set_x y="10" width=(dusk_x - set_x).round(1) height="18" fill="#1a4d9c"
             rect x=rise_x y="10" width=(set_x - rise_x).round(1) height="18" fill="#f4efe6"
             - drive_from = follow_seconds_x(sun.driving_from)
             rect x=drive_from y="34" width=(follow_seconds_x(sun.driving_to) - drive_from).round(1) height="8" rx="4" fill="#ffc20e"
@@ -121,7 +133,7 @@ main.main.wrap
               = t('follow.leg_day')
             span
               svg viewBox="0 0 28 8" aria-hidden="true"
-                rect x="2" y="0" width="24" height="8" rx="2" fill="#bdb6aa"
+                rect x="2" y="0" width="24" height="8" rx="2" fill="#1a4d9c"
               = t('follow.leg_twilight')
             span
               svg viewBox="0 0 28 8" aria-hidden="true"
@@ -173,25 +185,31 @@ main.main.wrap
                 span
                   = "#{weather.rain_percent}% "
                   span.muted = t('follow.rain_chance')
-          - curve = follow_curve(weather.hourly)
+          - curve = follow_curve(weather.hourly, weather.band)
           - if curve.present?
             h3.curve-title = t('follow.curve_title')
             svg.tcurve viewBox="0 0 320 150" role="img" aria-label=t('follow.curve_aria')
               - curve[:grid].each do |g|
                 line x1="16" y1=g[:y] x2="304" y2=g[:y] stroke="#3a3835" stroke-width="1" stroke-dasharray="3 4"
-                text x="18" y=(g[:y] - 4).round(1) font-family="Poppins, system-ui, sans-serif" font-size="11" fill="#bdb6aa" = g[:label]
               line x1="16" y1="118" x2="304" y2="118" stroke="#3a3835" stroke-width="2"
+              - if curve[:band]
+                polygon points=curve[:band] fill="#1a4d9c" fill-opacity="0.7" stroke="none"
               polyline points=curve[:line] fill="none" stroke="#f4efe6" stroke-width="3" stroke-linejoin="round"
               - @day.stops.each do |stop|
                 - hour = (stop.time / 3600.0)
-                - temp = weather.hourly[hour.floor % 24]
+                - temp = stop.temp_c || weather.hourly[hour.floor % 24]
                 - if temp
-                  circle cx=follow_hour_x(hour) cy=curve[:y].call(temp) r="10" fill="#ffc20e" stroke="#141414" stroke-width="2"
-                  text x=follow_hour_x(hour) y=(curve[:y].call(temp) + 4).round(1) text-anchor="middle" font-family="Poppins, system-ui, sans-serif" font-size="11" font-weight="700" fill="#141414" = stop.number
+                  circle cx=follow_hour_x(hour) cy=curve[:y].call(temp) r="10" fill="#1a4d9c" stroke="#f4efe6" stroke-width="2"
+                  text x=follow_hour_x(hour) y=(curve[:y].call(temp) + 4).round(1) text-anchor="middle" font-family="Poppins, system-ui, sans-serif" font-size="11" font-weight="700" fill="#ffffff" = stop.number
+              / Labels last so nothing in the chart covers them.
+              - curve[:grid].each do |g|
+                text x="18" y=(g[:y] - 4).round(1) font-family="Poppins, system-ui, sans-serif" font-size="11" font-weight="600" class="chart-label" = g[:label]
               - [0, 6, 12, 18, 23].each do |hour|
                 line x1=follow_hour_x(hour) y1="118" x2=follow_hour_x(hour) y2="123" stroke="#3a3835" stroke-width="2"
                 text x=follow_hour_x(hour) y="138" text-anchor="middle" font-family="Poppins, system-ui, sans-serif" font-size="12" fill="#bdb6aa" = "#{hour}h"
             p.note = t('follow.curve_note')
+            - if curve[:band]
+              p.note = t('follow.curve_band_note')
 
       - overnight = @day.overnight
       - borders = @day.borders

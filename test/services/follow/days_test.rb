@@ -25,7 +25,7 @@ module Follow
     end
 
     def days(today:)
-      Days.new(@trip, today: today).call.groups.flat_map(&:days)
+      Days.new(@trip, today: today).call.days
     end
 
     test 'a route is a day, and the days nobody drives become rest days' do
@@ -52,6 +52,14 @@ module Follow
       ordered_routes.last.update_columns(status: Route.statuses[:skipped])
 
       assert_equal [1, 2], days(today: Date.new(2027, 1, 30)).map(&:number)
+    end
+
+    test 'with fewer days than a window, everything shows and there are no arrows' do
+      result = Days.new(@trip, today: Date.new(2027, 1, 30)).call
+
+      assert_equal [1, 2, 3, 4], result.days.map(&:number)
+      assert_nil result.earlier
+      assert_nil result.later
     end
 
     test 'a route without a computed date raises instead of vanishing from the list' do

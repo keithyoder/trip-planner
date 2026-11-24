@@ -14,21 +14,17 @@ main.main.wrap#dias
       .now
         = link_to t('follow.live_dashboard'), dashboard_path, class: 'btn btn-primary btn-sm', data: { turbo: false }
 
-  - @days.groups.each do |group|
-    section.group
-      .group-head
-        h2.h2 = group.country
-        span.small.muted = "#{group.days.size} #{t('follow.later_days')}"
-      ul.days
-        - group.days.each do |day|
-          li = render 'follow/day', day: day
-
-  - if @days.later.any?
-    section.group
-      .group-head
-        h2.h2 = t('follow.later')
-      ul.later
-        - @days.later.each do |later|
-          li
-            strong = later.country
-            span.small.muted = "#{later.total} #{t('follow.later_days')}"
+  section.group aria-label=t('follow.title')
+    - if @days.earlier
+      = link_to follow_path(day: @days.earlier), class: 'pager pager-up', rel: 'prev' do
+        svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+          path d="M6 15l6-6 6 6"
+        = t('follow.earlier_days')
+    ul.days
+      - @days.days.each do |day|
+        li = render 'follow/day', day: day
+    - if @days.later
+      = link_to follow_path(day: @days.later), class: 'pager pager-down', rel: 'next' do
+        = t('follow.later_days')
+        svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+          path d="M6 9l6 6 6-6"
