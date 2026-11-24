@@ -102,6 +102,49 @@ class FollowPageTest < ActionDispatch::IntegrationTest
     assert_in_delta from + ((to - from) * (3600.0 / 5400)), hourly[9], 0.01
   end
 
+  # Gives a waypoint a boundary that carries a timezone, the way imported boundaries do.
+  def set_timezone(sequence, zone)
+    wp = @trip.waypoints.find_by!(sequence: sequence)
+    boundary = Boundary.create!(name: "tz #{zone}", level: 2, osm_id: 9100 + wp.id, timezone: zone)
+    ActiveRecord::Base.connection.execute(
+      "INSERT INTO boundaries_waypoints (boundary_id, waypoint_id) VALUES (#{boundary.id}, #{wp.id})"
+    )
+  end
+
+  test 'good to know calls out clocks that change between the start and the end of the day' do
+    @trip.update_columns(start_on: Date.new(2027, 4, 5)) # Chile is on -4 by then, Argentina stays on -3
+    set_timezone(100, 'America/Santiago')
+    set_timezone(200, 'America/Argentina/Buenos_Aires')
+    route = @trip.routes.joins(:waypoint_start).order('waypoints.sequence').first
+    route.update_columns(segments: [{ 'distance' => 111_000, 'duration' => 5400 }])
+    get follow_route_path(route)
+
+    assert_select '.facts li strong', 'Time change'
+    assert_select '.facts li span', /Clocks go forward 1 h 00 on the way/
+    # Leaves 08:00 in Chile and drives 1 h 30: 09:30 there, which is 10:30 on the clock in Argentina.
+    times = css_select('.tl-time').map { |node| node.text.strip }
+    assert_equal ['~08:00', '~10:30'], times
+  end
+
+  test 'good to know says when daylight saving changed overnight' do
+    @trip.update_columns(start_on: Date.new(2027, 4, 4)) # Chile's clocks went back the night before
+    set_timezone(100, 'America/Santiago')
+    set_timezone(200, 'America/Santiago')
+    route = @trip.routes.joins(:waypoint_start).order('waypoints.sequence').first
+    route.update_columns(segments: [{ 'distance' => 111_000, 'duration' => 5400 }])
+    get follow_route_path(route)
+
+    assert_select '.facts li span', /Clocks went back 1 h 00 overnight/
+  end
+
+  test 'a day with no clock change has no time change line' do
+    route = @trip.routes.joins(:waypoint_start).order('waypoints.sequence').first
+    route.update_columns(segments: [{ 'distance' => 111_000, 'duration' => 5400 }])
+    get follow_route_path(route)
+
+    assert_select '.facts li strong', text: 'Time change', count: 0
+  end
+
   test 'a day opens its planned-day page for a viewer' do
     route = @trip.routes.joins(:waypoint_start).order('waypoints.sequence').first
     route.update_columns(segments: [{ 'distance' => 111_000, 'duration' => 5400 }])
@@ -112,6 +155,7 @@ class FollowPageTest < ActionDispatch::IntegrationTest
     assert_select '[data-controller="follow-map"]'
     assert_select '.tl', 2
     assert_select 'svg.elev circle', 2 # the same two stops, numbered on the altitude profile
+    assert_select 'a.crumb[href=?]', follow_path(day: 1) # back to the list, centred on this day
     assert_select '.stat-box .stat-num', '69 mi' # English shows miles, like the rest of the app
     last = @trip.routes.joins(:waypoint_start).order('waypoints.sequence').last
     assert_select 'a.btn-ghost[href=?]', follow_route_path(last), 'Day 3' # day 2 is a rest day in between

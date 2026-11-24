@@ -7,7 +7,8 @@
 
 main.main.wrap
   .crumbs
-    = link_to follow_path, class: 'crumb' do
+    / Back to the list opens on this day, so the visitor lands where they were.
+    = link_to follow_path(day: @day.number), class: 'crumb' do
       svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
         path d="M15 6l-6 6 6 6"
       = t('follow.all_days')
@@ -50,7 +51,8 @@ main.main.wrap
         .legend
           span
             svg viewBox="0 0 28 8" aria-hidden="true"
-              path d="M2 4h24" stroke="#f4efe6" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round"
+              path d="M3 4h22" stroke="#ffffff" stroke-width="8" stroke-linecap="round"
+              path d="M3 4h22" stroke="#141414" stroke-width="4" stroke-linecap="round"
             = t('follow.leg_planned')
           span
             svg viewBox="0 0 28 8" aria-hidden="true"
@@ -151,19 +153,19 @@ main.main.wrap
               dd = follow_time(sun.noon)
             div
               dt = t('follow.sunset')
-              dd = follow_time(sun.sunset)
+              dd = follow_time(sun.sunset_local)
             div
               dt = t('follow.dusk')
-              dd = follow_time(sun.dusk)
+              dd = follow_time(sun.dusk_local)
             div
               dt = t('follow.daylight')
               dd = follow_duration((sun.daylight.to_i / 60.0).round)
           - arrive_h = sun.driving_to / 3600.0
           - set_h = sun.sunset.hour + sun.sunset.min / 60.0
           - if arrive_h < set_h
-            p.note = t('follow.sun_note', from: follow_clock(sun.driving_from), to: follow_clock(sun.driving_to), margin: follow_duration(((set_h - arrive_h) * 60).round))
+            p.note = t('follow.sun_note', from: follow_clock(sun.driving_from), to: follow_clock(sun.arrival_local), margin: follow_duration(((set_h - arrive_h) * 60).round))
           - else
-            p.note = t('follow.sun_note_dark', sunset: follow_time(sun.sunset))
+            p.note = t('follow.sun_note_dark', sunset: follow_time(sun.sunset_local))
 
       - weather = @day.weather
       - if weather
@@ -196,7 +198,7 @@ main.main.wrap
                 polygon points=curve[:band] fill="#1a4d9c" fill-opacity="0.7" stroke="none"
               polyline points=curve[:line] fill="none" stroke="#f4efe6" stroke-width="3" stroke-linejoin="round"
               - @day.stops.each do |stop|
-                - hour = (stop.time / 3600.0)
+                - hour = (stop.axis_time / 3600.0)
                 - temp = stop.temp_c || weather.hourly[hour.floor % 24]
                 - if temp
                   circle cx=follow_hour_x(hour) cy=curve[:y].call(temp) r="10" fill="#1a4d9c" stroke="#f4efe6" stroke-width="2"
@@ -214,11 +216,18 @@ main.main.wrap
       - overnight = @day.overnight
       - borders = @day.borders
       - surfaces = @day.surfaces
-      - if overnight || borders.any? || surfaces.any?
+      - changes = @day.clock_changes
+      - if overnight || borders.any? || surfaces.any? || changes.any?
         section.card.panel aria-labelledby="know-h"
           .panel-head
             h2#know-h = t('follow.good_to_know')
           ul.facts
+            - changes.each do |change|
+              li
+                div
+                  strong = t('follow.time_change')
+                  - direction = change.minutes.positive? ? 'forward' : 'back'
+                  span = t("follow.clock_#{change.kind}_#{direction}", amount: follow_duration(change.minutes.abs))
             - if overnight
               li
                 div

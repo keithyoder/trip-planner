@@ -30,7 +30,9 @@ class SolarPosition
   def initialize(date, coordinates, timezone = DEFAULT_TIMEZONE)
     @date = date.to_datetime
     @coordinates = coordinates
-    @offset = @date.in_time_zone(timezone).utc_offset
+    # The offset at local noon, not at the UTC midnight that @date is: that instant is still the
+    # previous evening locally, so on the day clocks change it picked the offset from before the change.
+    @offset = Time.find_zone!(timezone).local(@date.year, @date.month, @date.day, 12).utc_offset
   end
 
   # @return [ActiveSupport::TimeWithZone] start of civil twilight in the morning
