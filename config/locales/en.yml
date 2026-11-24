@@ -280,7 +280,7 @@ en:
       success: "Stop updated"
   waypoints:
     overnight: "Overnight"
-    lunch: "Lunch"
+    meal: "Meal"
     ferry_boarding: "Ferry Boarding"
     ferry_disembarkment: "Ferry Disembark"
     toll_booth: "Toll"

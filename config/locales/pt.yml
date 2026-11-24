@@ -282,7 +282,7 @@ pt:
       success: "Parada atualizada"
   waypoints:
     overnight: "Pernoite"
-    lunch: "Almoço"
+    meal: "Refeição"
     ferry_boarding: "Embarque de Balsa"
     ferry_disembarkment: "Desembarque de Balsa"
     toll_booth: "Pedágio"

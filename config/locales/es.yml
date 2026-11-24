@@ -277,7 +277,7 @@ es:
       success: "Parada actualizada"
   waypoints:
     overnight: "Alojamiento"
-    lunch: "Almuerzo"
+    meal: "Comida"
     ferry_boarding: "Embarque de Ferry"
     ferry_disembarkment: "Desembarque de Ferry"
     toll_booth: "Peaje"

@@ -5,11 +5,11 @@ export const WaypointIcons = {
         backgroundColor: '#e7d9ff',
         label: 'Overnight'
     },
-    lunch: {
+    meal: {
         icon: 'bi-cup-hot-fill',
         color: '#fd7e14',
         backgroundColor: '#ffe5d0',
-        label: 'Lunch'
+        label: 'Meal'
     },
     ferry_boarding: {
         icon: 'bi-water',

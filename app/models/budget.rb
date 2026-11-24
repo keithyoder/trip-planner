@@ -11,7 +11,7 @@
 #   gas_station      -> litres of fuel consumed (toll × local gas price = cost)
 #   toll_booth       -> road toll amount in local currency
 #   overnight        -> lodging cost in local currency
-#   lunch            -> meal cost in local currency
+#   meal             -> meal cost in local currency
 #   ferry_boarding   -> ferry fare in local currency
 #   attraction       -> entrance fee in local currency
 #   parking          -> parking fee in local currency
@@ -35,7 +35,7 @@ class Budget
   # nil means the type carries no cost and is excluded from the budget.
   CATEGORY_MAP = {
     overnight: :lodging,
-    lunch: :meals,
+    meal: :meals,
     toll_booth: :tolls,
     ferry_boarding: :ferry,
     ferry_disembarkment: nil,

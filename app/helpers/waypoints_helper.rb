@@ -55,7 +55,7 @@ module WaypointsHelper
   def waypoint_icon_class(waypoint_type) # rubocop:disable Metrics/MethodLength
     icons = {
       'overnight' => 'bi-moon-stars-fill',
-      'lunch' => 'bi-cup-hot-fill',
+      'meal' => 'bi-cup-hot-fill',
       'ferry_boarding' => 'bi-water',
       'ferry_disembarkment' => 'bi-water',
       'toll_booth' => 'bi-cash-coin',
@@ -77,7 +77,7 @@ module WaypointsHelper
   def waypoint_color(waypoint_type)
     colors = {
       'overnight' => '#6f42c1',
-      'lunch' => '#fd7e14',
+      'meal' => '#fd7e14',
       'ferry_boarding' => '#0dcaf0',
       'ferry_disembarkment' => '#0d6efd',
       'toll_booth' => '#198754',
@@ -99,7 +99,7 @@ module WaypointsHelper
   def waypoint_background_color(waypoint_type)
     bg_colors = {
       'overnight' => '#e7d9ff',
-      'lunch' => '#ffe5d0',
+      'meal' => '#ffe5d0',
       'ferry_boarding' => '#cff4fc',
       'ferry_disembarkment' => '#cfe2ff',
       'toll_booth' => '#d1e7dd',
@@ -221,7 +221,7 @@ module WaypointsHelper
   def waypoint_text_color_class(waypoint_type)
     classes = {
       'overnight' => 'text-primary',
-      'lunch' => 'text-warning',
+      'meal' => 'text-warning',
       'ferry_boarding' => 'text-info',
       'ferry_disembarkment' => 'text-info',
       'toll_booth' => 'text-secondary',
