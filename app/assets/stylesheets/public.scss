@@ -263,6 +263,7 @@ html,body{margin:0;background:#141414}
 // the cascade): matching its specificity is not enough, hence the extra .page.
 .page .leaflet-container .leaflet-control-attribution{background:#141414;color:#f4efe6;font:400 11px/16px "Poppins",system-ui,sans-serif;padding:2px 8px;border-radius:6px 0 0 0}
 .page .leaflet-container .leaflet-control-attribution a{color:#f4efe6;text-decoration:underline;text-underline-offset:2px}
+.page .leaflet-container .leaflet-control-attribution a + a{margin-left:6px}
 .page .leaflet-container .leaflet-control-attribution a:hover{color:#ffc20e}
 // The + and − are drawn as bars instead of text: a font's plus sits above or below the middle of the
 // box depending on the font, so no line-height centres it reliably. The text stays for screen readers.

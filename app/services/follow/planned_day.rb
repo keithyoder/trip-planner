@@ -10,8 +10,18 @@ module Follow
   # visitor's page load must not wait on, or trigger, a third-party request.
   # Without cached weather the weather blocks are simply absent.
   class PlannedDay
-    Stop = Struct.new(:number, :time, :name, :type, :meters, :delay_minutes, :temp_c, :lat, :lon, keyword_init: true)
-    Sun = Struct.new(:dawn, :sunrise, :noon, :sunset, :dusk, :daylight, :driving_from, :driving_to, keyword_init: true)
+    # time is the arrival on the clock at the stop's own place; axis_time is the same moment on the
+    # clock where the day starts, which is what the charts plot.
+    Stop = Struct.new(:number, :time, :axis_time, :name, :type, :meters, :delay_minutes, :temp_c, :lat, :lon,
+                      keyword_init: true)
+    # dawn..dusk and driving_* are on the clock where the day starts, so they share one axis on the
+    # sun bar. The *_local fields are the same moments on the clock at the place they belong to
+    # (sunset and dusk and the arrival are at the end of the day), which is what gets printed.
+    Sun = Struct.new(:dawn, :sunrise, :noon, :sunset, :dusk, :daylight, :driving_from, :driving_to,
+                     :sunset_local, :dusk_local, :arrival_local, keyword_init: true)
+    # How the clock changes on this day: kind is :zone (arriving in another timezone) or :dst
+    # (daylight saving changed overnight); minutes is signed, positive when clocks go forward.
+    ClockChange = Struct.new(:kind, :minutes, keyword_init: true)
     Peak = Struct.new(:altitude_m, :meters, :places, keyword_init: true)
     Weather = Struct.new(:max_c, :min_c, :rain_percent, :hourly, :band, keyword_init: true)
 
@@ -59,8 +69,10 @@ module Follow
 
     def stops
       @stops ||= timeline.reject { |entry| entry[:hidden] }.each_with_index.map do |entry, index|
-        Stop.new(number: index + 1, time: entry[:arrival], name: entry[:waypoint].name, type: entry[:type],
-                 meters: entry[:metres], delay_minutes: entry[:waypoint].delay.to_i / 60, temp_c: temp_at(entry),
+        local_time = entry[:arrival] - clock_shift(entry[:waypoint])
+        Stop.new(number: index + 1, time: local_time, axis_time: entry[:arrival], name: entry[:waypoint].name,
+                 type: entry[:type], meters: entry[:metres], delay_minutes: entry[:waypoint].delay.to_i / 60,
+                 temp_c: temp_at(entry),
                  lat: entry[:waypoint].lonlat.y.round(5), lon: entry[:waypoint].lonlat.x.round(5))
       end
     end
@@ -114,6 +126,12 @@ module Follow
     def overnight = waypoints[1..].to_a.find(&:overnight?)
     def borders = timeline.select { |e| e[:type] == 'border_crossing' }
     def surfaces = route.significant_surfaces.first(3)
+
+    # Every time on the page is in the clock where the day starts, so the stops, the sun bar
+    # and the weather share one axis; this lists where that clock differs from the wall clock.
+    def clock_changes
+      @clock_changes ||= [zone_change, dst_change].compact
+    end
 
     # The previous/next day as [route_id, day_number] (nil at the ends): neighbours
     # by sequence within the same trip. The number is for the link label, and can
@@ -177,7 +195,33 @@ module Follow
 
     def temp_at(entry)
       curve = curve_for(entry[:waypoint])
-      curve&.at((entry[:arrival] / 3600).floor % 24)
+      curve&.at(local_hour(entry[:arrival] / 3600.0, entry[:waypoint]))
+    end
+
+    # A start-clock hour as the hour on the clock at a waypoint's own place, for reading its curve.
+    def local_hour(hours, waypoint)
+      (hours - (clock_shift(waypoint) / 3600.0)).floor % 24
+    end
+
+    def timezone_for(waypoint) = waypoint.timezone || SolarPosition::DEFAULT_TIMEZONE
+
+    # Local noon, not midnight, so a clock change in the small hours counts for the day it happens on.
+    def utc_offset(zone, day) = Time.find_zone!(zone).local(day.year, day.month, day.day, 12).utc_offset
+
+    # Seconds to add to a time on a waypoint's clock to get it on the clock of the day's first waypoint.
+    def clock_shift(waypoint)
+      utc_offset(timezone_for(waypoints.first), date) - utc_offset(timezone_for(waypoint), date)
+    end
+
+    def zone_change
+      seconds = -clock_shift(waypoints.last)
+      ClockChange.new(kind: :zone, minutes: seconds / 60) unless seconds.zero?
+    end
+
+    def dst_change
+      zone = timezone_for(waypoints.first)
+      seconds = utc_offset(zone, date) - utc_offset(zone, date - 1)
+      ClockChange.new(kind: :dst, minutes: seconds / 60) unless seconds.zero?
     end
 
     def estimate_for(waypoint)
@@ -222,11 +266,15 @@ module Follow
       last = waypoints.last
       return unless first&.lonlat && last&.lonlat
 
+      # Dawn, sunrise and noon are where the day starts, sunset and dusk where it ends. The
+      # evening ones are moved onto the starting clock when the two places keep different time.
       morning = solar_for(first)
       evening = solar_for(last)
-      Sun.new(dawn: morning.dawn, sunrise: morning.sunrise, noon: evening.solar_noon, sunset: evening.sunset,
-              dusk: evening.dusk, daylight: evening.day_length,
-              driving_from: timeline.first[:arrival], driving_to: timeline.last[:arrival])
+      shift = clock_shift(last).seconds
+      Sun.new(dawn: morning.dawn, sunrise: morning.sunrise, noon: morning.solar_noon, sunset: evening.sunset + shift,
+              dusk: evening.dusk + shift, daylight: evening.day_length,
+              driving_from: timeline.first[:arrival], driving_to: timeline.last[:arrival],
+              sunset_local: evening.sunset, dusk_local: evening.dusk, arrival_local: timeline.last[:arrival] - shift)
     end
 
     # The day's weather is one curve that follows the car from waypoint to
@@ -241,9 +289,11 @@ module Follow
       stays = weather_stays
       return if stays.empty?
 
-      hourly = blend(stays) { |stay, hour| stay[:curve].at(hour) }
+      hourly = blend(stays) { |stay, hour| stay[:curve].at(local_hour(hour, stay[:waypoint])) }
       band = band_curves(stays)&.then do |bounds|
-        bounds.transform_values { |key| blend(stays) { |stay, hour| stay[:bounds][key].at(hour) } }
+        bounds.transform_values do |key|
+          blend(stays) { |stay, hour| stay[:bounds][key].at(local_hour(hour, stay[:waypoint])) }
+        end
       end
       rain = stays.filter_map { |stay| stay[:result].precip_probability }.max
       Weather.new(max_c: hourly.values.max, min_c: hourly.values.min, rain_percent: rain&.round, hourly: hourly,
