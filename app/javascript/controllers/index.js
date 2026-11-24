@@ -35,3 +35,6 @@ import TripLogsController from "./trip_logs_controller"
 application.register("trip-logs", TripLogsController)
 import FollowMapController from "./follow_map_controller"
 application.register("follow-map", FollowMapController)
+
+import ClampController from "./clamp_controller"
+application.register("clamp", ClampController)

@@ -33,7 +33,7 @@ module Waypoints
       when :border_crossing then [:border_crossing, 1800]
       when :toll            then [:toll_booth,          0]
       when :ferry           then [:ferry_boarding,   1800]
-      when :restaurant      then [:lunch,            3600]
+      when :restaurant      then [:meal,             3600]
       when :accommodation   then [:overnight,           0]
       when :tourism         then [:attraction, 1800]
       when :barrier         then [:attraction, 600]

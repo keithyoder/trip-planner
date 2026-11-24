@@ -9,6 +9,6 @@ class FollowController < ApplicationController
   def index
     @overview = Landing::Overview.build
     @map = @overview.map
-    @days = Follow::Days.new(@overview.trip, today: @overview.today).call
+    @days = Follow::Days.new(@overview.trip, today: @overview.today, around: params[:day].presence&.to_i).call
   end
 end

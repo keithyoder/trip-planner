@@ -31,7 +31,7 @@ class Waypoint < ApplicationRecord
 
   enum :waypoint_type, {
     overnight: 1,
-    lunch: 2,
+    meal: 2,
     ferry_boarding: 3,
     ferry_disembarkment: 4,
     toll_booth: 5,
