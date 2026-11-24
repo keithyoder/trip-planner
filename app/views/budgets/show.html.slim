@@ -81,11 +81,14 @@
                   - wp = item.waypoint
                   tr
                     td.ps-0
-                      / Translated waypoint type
-                      span.text-muted.small.me-1
-                        = t("waypoint.#{wp.waypoint_type}", default: wp.waypoint_type&.humanize)
-                      / Linked waypoint name
-                      = link_to wp.name, trip_waypoint_path(@trip, wp), class: 'text-decoration-none'
+                      - if item.waypoint
+                        span.text-muted.small.me-1
+                          = t("waypoint.#{item.waypoint.waypoint_type}", default: item.waypoint.waypoint_type&.humanize)
+                        = link_to item.description, trip_waypoint_path(@trip, item.waypoint), class: 'text-decoration-none'
+                      - else
+                        span.text-muted.small.me-1
+                          = t("budget.category.#{item.category}", default: item.category.to_s.humanize)
+                        span = item.description
                     td.text-muted.small = item.country
                     td.text-end.text-muted.small = item.amount.format
                     td.text-end.fw-medium = item.amount.exchange_to(@budget.currency).format
