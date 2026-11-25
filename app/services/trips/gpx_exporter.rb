@@ -198,13 +198,16 @@ module Trips
       end
     end
 
-    def farthest_from_chord(coordinates, a, b)
+    def farthest_from_chord(coordinates, first, last)
       # Flat-earth metres around the chord's start: plenty accurate at day scale.
-      lat0 = coordinates[a][1] * Math::PI / 180
-      to_xy = ->(c) { [(c[0] - coordinates[a][0]) * 111_320 * Math.cos(lat0), (c[1] - coordinates[a][1]) * 110_540] }
-      bx, by = to_xy.call(coordinates[b])
+      lon0, lat_start = coordinates[first]
+      lat0 = lat_start * Math::PI / 180
+      to_xy = lambda do |coord|
+        [(coord[0] - lon0) * 111_320 * Math.cos(lat0), (coord[1] - lat_start) * 110_540]
+      end
+      bx, by = to_xy.call(coordinates[last])
       len = Math.hypot(bx, by)
-      ((a + 1)...b).map do |i|
+      ((first + 1)...last).map do |i|
         x, y = to_xy.call(coordinates[i])
         d = len.zero? ? Math.hypot(x, y) : ((x * by) - (y * bx)).abs / len
         [i, d]
