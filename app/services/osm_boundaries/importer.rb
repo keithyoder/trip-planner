@@ -23,9 +23,10 @@ module OsmBoundaries
     # @param osm_id [Integer]
     # @param level [Integer] target admin_level
     # @param hierarchy_prefix [String, nil]
+    # @param land_only [Boolean] clip to the coastline (see Client#fetch_boundary)
     # @return [Integer] number of boundaries imported
-    def fetch_and_import(osm_id, level: 2, hierarchy_prefix: nil)
-      geojson = client.fetch_boundary(osm_id, level: level)
+    def fetch_and_import(osm_id, level: 2, hierarchy_prefix: nil, land_only: false)
+      geojson = client.fetch_boundary(osm_id, level: level, land_only: land_only)
       import_boundaries(geojson, hierarchy_prefix: hierarchy_prefix)
     end
 
@@ -49,7 +50,9 @@ module OsmBoundaries
                       (props[:name_en] || props[:name]).parameterize.underscore
                     end
 
-        geometry = RGeo::GeoJSON.decode(feature.to_json, json_parser: :json, geo_factory: factory)
+        # decode takes a Hash as well as a string; this avoids serialising the
+        # feature only to parse it again.
+        geometry = RGeo::GeoJSON.decode(feature.deep_stringify_keys, geo_factory: factory)
 
         boundary = Boundary.find_or_initialize_by(osm_id: props[:osm_id])
 

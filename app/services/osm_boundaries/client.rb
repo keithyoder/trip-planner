@@ -27,11 +27,13 @@ module OsmBoundaries
 
     # @param osm_id [Integer]
     # @param level [Integer] target admin_level
+    # @param land_only [Boolean] clip to the coastline instead of including
+    #   territorial waters (a paid-plan option on osm-boundaries.com)
     # @return [Hash] parsed GeoJSON (symbolized keys)
     # @raise [RuntimeError] if the API returns a non-success, non-gzip response
-    def fetch_boundary(osm_id, level: 2)
+    def fetch_boundary(osm_id, level: 2, land_only: false)
       uri = URI.join(base_url, 'api/v1/download')
-      uri.query = URI.encode_www_form(
+      params = {
         db: DB_VERSION,
         osmIds: osm_id,
         recursive: false,
@@ -40,7 +42,9 @@ module OsmBoundaries
         boundary: 'administrative',
         format: 'GeoJSON',
         srid: 4326
-      )
+      }
+      params[:landOnly] = true if land_only
+      uri.query = URI.encode_www_form(params)
       perform_request(uri, Net::HTTP::Get.new(uri))
     end
 
